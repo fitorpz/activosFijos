@@ -1,0 +1,120 @@
+@import './styles/colors.css';
+@import './styles/global.css';
+
+/* === Fondo y tipografía global === */
+html,
+body,
+#root {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: var(--color-secondary-100);
+  /* fondo institucional claro */
+  color: var(--color-secondary-900);
+  font-family: 'Segoe UI', 'Poppins', 'Roboto', Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  box-sizing: border-box;
+}
+
+/* === Código === */
+code {
+  font-family: 'Fira Mono', 'Menlo', 'Monaco', 'Consolas', 'Courier New', monospace;
+  background: var(--color-secondary-200);
+  color: var(--color-secondary-900);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 0.98em;
+}
+
+/* === Scrollbar institucional === */
+::-webkit-scrollbar {
+  width: 10px;
+  background: var(--color-secondary-200);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-secondary-400);
+  border-radius: 5px;
+}
+
+/* === Enlaces === */
+a {
+  color: var(--color-info-800);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+a:hover,
+a:focus {
+  color: var(--color-warning-700);
+  text-decoration: underline;
+}
+
+/* === Inputs y selects === */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  outline: none;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-info-700);
+  box-shadow: 0 0 0 2px var(--color-info-100);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+/* === Tablas === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  font-size: 0.99rem;
+}
+
+th,
+td {
+  border: 1px solid var(--color-secondary-300);
+  padding: 0.5rem 0.8rem;
+  text-align: left;
+}
+
+th {
+  background: var(--color-secondary-200);
+  color: var(--color-secondary-900);
+  font-weight: 600;
+}
+
+/* === Deshabilitados === */
+:disabled,
+[aria-disabled='true'] {
+  background: var(--color-secondary-200) !important;
+  color: var(--color-secondary-500) !important;
+  cursor: not-allowed !important;
+}
+
+/* === Otros estilos generales === */
+hr {
+  border: none;
+  border-top: 1px solid var(--color-secondary-300);
+  margin: 2rem 0;
+}
+
+::-webkit-selection {
+  background: var(--color-warning-100);
+}
+
+::selection {
+  background: var(--color-warning-100);
+}
+
+/* === Ajuste para modal react-bootstrap === */
+.modal-backdrop {
+  background: rgba(60, 60, 80, 0.33) !important;
+}
+
+/* Agrega aquí cualquier regla global adicional que requieras */

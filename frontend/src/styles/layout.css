@@ -1,0 +1,208 @@
+.vscode-layout {
+    display: flex;
+    height: 100vh;
+    background: var(--color-secondary-100);
+    /* fondo general */
+}
+
+/* === SIDEBAR === */
+.vscode-sidebar {
+    background: var(--color-secondary-900);
+    /* azul institucional */
+    color: #fff;
+    width: 70px;
+    transition: width 0.3s ease, left 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    z-index: 1001;
+}
+
+.vscode-sidebar.expanded {
+    width: 220px;
+}
+
+/* Encabezado del sidebar */
+.sidebar-top {
+    padding: 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+    background: var(--color-secondary-900);
+    /* amarillo institucional */
+    color: var(--color-secondary-900);
+    font-weight: bold;
+    border-bottom: 1px solid var(--color-secondary-800);
+}
+
+.sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex-grow: 1;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem;
+    color: var(--color-secondary-100);
+    /* texto menú */
+    text-decoration: none;
+    transition: background 0.2s;
+    font-weight: 500;
+}
+
+.sidebar-menu li a:hover {
+    background: var(--color-info-800);
+    /* azul vibrante en hover */
+    color: #fff;
+}
+
+.sidebar-bottom {
+    padding: 1rem;
+    border-top: 1px solid var(--color-secondary-700);
+    background: var(--color-secondary-800);
+    /* para distinguir la zona de cierre */
+}
+
+.sidebar-bottom button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    color: var(--color-error-500);
+    /* rojo institucional */
+    font-size: 0.95rem;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Ocultar texto si está colapsado */
+.vscode-sidebar:not(.expanded) .sidebar-menu span,
+.vscode-sidebar:not(.expanded) .sidebar-bottom span {
+    display: none;
+}
+
+/* === CONTENT === */
+.vscode-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-secondary-100);
+    /* fondo claro */
+}
+
+.vscode-topbar {
+    background: var(--color-secondary-200);
+    /* gris más claro para header */
+    padding: 0.7rem 1rem;
+    border-bottom: 3px solid var(--color-warning-500);
+    /* línea amarilla */
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: bold;
+    color: var(--color-secondary-900);
+}
+
+.page-content {
+    flex-grow: 1;
+    background: var(--color-secondary-100);
+    /* mismo fondo institucional */
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+/* Botón hamburguesa */
+.toggle-btn {
+    background: none;
+    border: none;
+    color: var(--color-secondary-900);
+    font-size: 1.6rem;
+    cursor: pointer;
+}
+
+/* === MOBILE === */
+
+@media (min-width: 769px) {
+    .toggle-btn {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .vscode-sidebar {
+        position: fixed;
+        top: 0;
+        left: -240px;
+        height: 100%;
+        width: 220px;
+        transition: left 0.3s ease;
+    }
+
+    /* Cuando está abierto */
+    .vscode-sidebar.mobile-open {
+        left: 0;
+    }
+
+    /* Mostrar siempre expandido en móvil */
+    .vscode-sidebar .sidebar-menu span,
+    .vscode-sidebar .sidebar-bottom span {
+        display: inline !important;
+    }
+
+    /* Overlay oscuro */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+    }
+}
+
+
+/* === Dropdown institucional en el sidebar === */
+.vscode-sidebar .dropdown-menu {
+    background: var(--color-secondary-800) !important;
+    /* Fondo oscuro institucional */
+    border: none;
+    min-width: 180px;
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.12);
+    padding: 0.3em 0;
+    margin-top: 0.2em;
+}
+
+.vscode-sidebar .dropdown-item {
+    color: #fff !important;
+    background: transparent !important;
+    border-radius: 7px;
+    padding: 0.7em 1.3em;
+    font-weight: 500;
+    margin: 0 4px;
+    transition: background 0.16s, color 0.16s;
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+}
+
+.vscode-sidebar .dropdown-item:hover,
+.vscode-sidebar .dropdown-item:focus,
+.vscode-sidebar .dropdown-item.active {
+    background: var(--color-info-700) !important;
+    /* Turquesa institucional */
+    color: #fff !important;
+}
+
+.vscode-sidebar .dropdown-item .bi {
+    margin-right: 8px;
+    font-size: 1.13em;
+    vertical-align: -0.1em;
+}

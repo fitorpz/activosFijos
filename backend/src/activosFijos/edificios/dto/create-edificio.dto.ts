@@ -1,0 +1,110 @@
+import { EstadoActivo } from '../entities/edificio.entity';
+
+export class CreateEdificioDto {
+    codigo_311: string;
+    descripcion_edificio?: string;
+    area_id?: number;
+    nombre_area?: string;
+    codigo_area?: string;
+    unidad_organizacional_id?: number;
+    ambiente_id?: number;
+    ingreso_311: string;
+    ingreso_des_311: string;
+    fecha_alta_311: Date;
+    proveedor_311?: string;
+    fecha_factura_311?: Date;
+    num_factura_311?: string;
+    observaciones_311?: string;
+    estado_conservacion_311?: string;
+    valor_311?: number;
+    vida_util_311?: number;
+    estado_activo?: EstadoActivo;
+    fecha_estado_311?: Date;
+    descripcion_estado_311?: string;
+    estado_311?: string;
+    estado_faltante_311?: Date;
+    id_func_311?: number;
+    id_clasi_311?: number;
+    id_ufv_311?: number;
+    id_311_1?: number;
+    legal_311_1?: string;
+    d_legal_311_1?: string;
+    clasificacion_311_1?: string;
+    uso_311_1?: string;
+    superficie_311_1?: string;
+    servicio_311_1?: string;
+    id_per?: number;
+    tdi_per?: string;
+    ndi_per?: string;
+    expedido_per?: string;
+    nombre_per?: string;
+    ap_paterno_per?: string;
+    ap_materno_per?: string;
+    ap_conyuge_per?: string;
+    sexo_per?: string;
+    f_nacimiento_per?: Date;
+    e_civil_per?: string;
+    profesion_per?: string;
+    direccion_per?: string;
+    telefono_per?: string;
+    celular_per?: string;
+    email_per?: string;
+    estado_per?: string;
+    id_clasi?: number;
+    codigo_clasi?: string;
+    nombre_clasi?: string;
+    descripcion_clasi?: string;
+    id_sg_clasi?: number;
+    id_func?: number;
+    tipo_func?: string;
+    num_file?: string;
+    item_func?: string;
+    telefono_func?: string;
+    interno_func?: string;
+    estado_func?: string;
+    id_cargo_func?: number;
+    id_ubi_func?: number;
+    id_act_func?: number;
+    id_cargo?: number;
+    codigo_cargo?: string;
+    nombre_cargo?: string;
+    descripcion_cargo?: string;
+    estado_cargo?: string;
+    id_af_cargo?: number;
+    id_ubi?: number;
+    codigo_ubi?: string;
+    nombre_ubi?: string;
+    direccion_ubi?: string;
+    distrito_ubi?: string;
+    observaciones_ubi?: string;
+    estado_ubi?: string;
+    id_af?: number;
+    codigo_af?: string;
+    nombre_af?: string;
+    estado_af?: string;
+
+    // 📌 DATOS TÉCNICOS
+    nombre_bien_311?: string;
+    clasificacion_311?: string;
+    uso_tecnico_311?: string;
+    superficie_tecnica_311?: number;
+
+    tiene_energia?: boolean;
+    tiene_gas?: boolean;
+    tiene_alcantarillado?: boolean;
+    tiene_agua?: boolean;
+    tiene_telefono?: boolean;
+    tiene_celular?: boolean;
+    tiene_internet?: boolean;
+
+    observaciones_tecnicas?: string;
+
+    cargo_id?: number;
+    auxiliar_id?: number;
+    nucleo_id?: number;
+    distrito_id?: number;
+    direccion_administrativa_id?: number;
+    ciudad_id?: number;
+
+
+}

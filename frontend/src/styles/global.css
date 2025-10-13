@@ -1,0 +1,37 @@
+@import './colors.css';
+
+/* Fondo y estilos globales */
+body,
+html,
+#root {
+    min-height: 100vh;
+    background: var(--color-secondary-100);
+    /* fondo institucional */
+    color: var(--color-secondary-900);
+    font-family: 'Segoe UI', 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Scrollbar y otros estilos globales opcionales */
+::-webkit-scrollbar {
+    width: 10px;
+    background: var(--color-secondary-200);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-secondary-400);
+    border-radius: 5px;
+}
+
+a {
+    color: var(--color-info-700);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--color-warning-700);
+    text-decoration: underline;
+}
+
