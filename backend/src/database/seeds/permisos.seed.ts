@@ -23,6 +23,14 @@ export class PermisosSeed implements OnApplicationBootstrap {
             { nombre: 'usuarios:ver-detalle', descripcion: 'Ver el detalle de un usuario específico', modulo: 'Usuarios' },
             { nombre: 'usuarios:actualizar-permisos', descripcion: 'Actualizar los permisos o roles asignados a un usuario', modulo: 'Usuarios' },
 
+            // Permisos para ROLES
+            { nombre: 'roles:listar', descripcion: 'Acceso al listado de roles', modulo: 'Roles' },
+            { nombre: 'roles:crear', descripcion: 'Registrar nuevos roles', modulo: 'Roles' },
+            { nombre: 'roles:editar', descripcion: 'Editar roles existentes', modulo: 'Roles' },
+            { nombre: 'roles:eliminar', descripcion: 'Eliminar roles del sistema', modulo: 'Roles' },
+            { nombre: 'roles:exportar-pdf', descripcion: 'Exportar reporte PDF de roles', modulo: 'Roles' },
+
+
             //  Permisos para GRUPOS CONTABLES
             { nombre: 'grupos-contables:listar', descripcion: 'Acceso al listado de grupos contables', modulo: 'Grupos Contables' },
             { nombre: 'grupos-contables:crear', descripcion: 'Crear nuevos grupos contables', modulo: 'Grupos Contables' },

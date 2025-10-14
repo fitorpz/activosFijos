@@ -2,12 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { listarRoles } from '../../../api/roles';
 import { Rol } from '../../../interfaces/interfaces';
 import { useNavigate } from "react-router-dom";
+import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ Importación
 
 const ListaRoles: React.FC = () => {
     const [roles, setRoles] = useState<Rol[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string>('');
+    const [permisos, setPermisos] = useState<string[]>([]); // ✅ Estado para permisos
+
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const permisosUsuario = obtenerPermisosUsuario();
+        setPermisos(permisosUsuario);
+    }, []);
 
     useEffect(() => {
         const cargarRoles = async () => {
@@ -21,23 +29,42 @@ const ListaRoles: React.FC = () => {
                 console.error('Error al cargar roles:', err);
                 setError('Error al cargar roles');
             } finally {
-                setLoading(false); // ← Esto evita que se quede en "Cargando..."
+                setLoading(false);
             }
         };
 
-        cargarRoles();
-    }, []);
+        if (permisos.includes('roles:listar')) {
+            cargarRoles();
+        } else {
+            setLoading(false); // No mostrar cargando si no tiene permiso
+        }
+    }, [permisos]);
+
+    // 🔒 Mostrar acceso denegado si no tiene permiso para listar
+    if (!permisos.includes('roles:listar')) {
+        return (
+            <div className="container mt-5 text-center">
+                <h4 className="text-danger">
+                    <i className="bi bi-shield-lock-fill me-2"></i>
+                    Acceso denegado
+                </h4>
+                <p>No tienes permiso para ver los roles.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h2 className="mb-0">Roles Registrados</h2>
-                <button
-                    className="btn btn-success"
-                    onClick={() => navigate('/usuarios/roles/crear')}
-                >
-                    <i className="bi bi-plus-circle me-2"></i> Nuevo Rol
-                </button>
+                {permisos.includes('roles:crear') && (
+                    <button
+                        className="btn btn-success"
+                        onClick={() => navigate('/usuarios/roles/crear')}
+                    >
+                        <i className="bi bi-plus-circle me-2"></i> Nuevo Rol
+                    </button>
+                )}
             </div>
 
             {loading && <p>Cargando...</p>}
@@ -78,12 +105,14 @@ const ListaRoles: React.FC = () => {
                                         )}
                                     </td>
                                     <td>
-                                        <button
-                                            className="btn btn-sm btn-primary"
-                                            onClick={() => navigate(`/usuarios/roles/editar/${rol.id}`)}
-                                        >
-                                            <i className="bi bi-pencil-square"></i> Editar
-                                        </button>
+                                        {permisos.includes('roles:editar') && (
+                                            <button
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => navigate(`/usuarios/roles/editar/${rol.id}`)}
+                                            >
+                                                <i className="bi bi-pencil-square"></i> Editar
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
