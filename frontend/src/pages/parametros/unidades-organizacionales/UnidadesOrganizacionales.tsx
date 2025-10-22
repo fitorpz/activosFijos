@@ -1,8 +1,11 @@
+// frontend/src/pages/parametros/unidades-organizacionales/UnidadesOrganizacionales.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
-import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ para control de permisos
+import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ Control de permisos
 
+// 🧩 Tipos
 export interface Usuario {
     id: number;
     nombre: string;
@@ -28,9 +31,9 @@ export interface UnidadOrganizacional {
     updated_at?: string | null;
 }
 
-const UnidadesOrganizacionales = () => {
+const UnidadesOrganizacionales: React.FC = () => {
     const [unidades, setUnidades] = useState<UnidadOrganizacional[]>([]);
-    const [permisos, setPermisos] = useState<string[]>([]); // ✅ permisos del usuario
+    const [permisos, setPermisos] = useState<string[]>([]);
     const [cargando, setCargando] = useState(true);
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [filtros, setFiltros] = useState({
@@ -41,15 +44,16 @@ const UnidadesOrganizacionales = () => {
         creado_por: '',
         actualizado_por: '',
     });
+
     const navigate = useNavigate();
 
-    // ✅ Cargar permisos del usuario
+    // 🔑 Cargar permisos del usuario logueado
     useEffect(() => {
         const permisosUsuario = obtenerPermisosUsuario();
         setPermisos(permisosUsuario);
     }, []);
 
-    // ✅ Obtener unidades solo si el usuario tiene permiso
+    // 📦 Obtener unidades (solo si tiene permiso)
     useEffect(() => {
         if (permisos.includes('unidades-organizacionales:listar')) {
             obtenerUnidades();
@@ -131,7 +135,7 @@ const UnidadesOrganizacionales = () => {
         }
     };
 
-    // 🔒 Si no tiene permiso para listar
+    // 🔒 Acceso restringido
     if (!permisos.includes('unidades-organizacionales:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -144,6 +148,7 @@ const UnidadesOrganizacionales = () => {
         );
     }
 
+    // 🔍 Filtros locales
     const unidadesFiltradas = [...unidades]
         .sort((a, b) => a.codigo.localeCompare(b.codigo))
         .filter((unidad) => {
@@ -170,6 +175,7 @@ const UnidadesOrganizacionales = () => {
             );
         });
 
+    // 🧱 Render
     return (
         <div className="container mt-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -231,6 +237,75 @@ const UnidadesOrganizacionales = () => {
                             <th>Fecha de Actualización</th>
                             <th>Acciones</th>
                         </tr>
+                        {/* 🔎 Filtros por columna */}
+                        <tr>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="codigo"
+                                    value={filtros.codigo}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar código"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="descripcion"
+                                    value={filtros.descripcion}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar descripción"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="area"
+                                    value={filtros.area}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar área"
+                                />
+                            </th>
+                            <th>
+                                <select
+                                    name="estado"
+                                    value={filtros.estado}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-select form-select-sm"
+                                >
+                                    <option value="">Todos</option>
+                                    <option value="ACTIVO">Activo</option>
+                                    <option value="INACTIVO">Inactivo</option>
+                                </select>
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="creado_por"
+                                    value={filtros.creado_por}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar creador"
+                                />
+                            </th>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="actualizado_por"
+                                    value={filtros.actualizado_por}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar actualizador"
+                                />
+                            </th>
+                            <th></th>
+                            <th></th>
+                        </tr>
                     </thead>
 
                     <tbody>
@@ -246,9 +321,17 @@ const UnidadesOrganizacionales = () => {
                                     <td>{item.descripcion}</td>
                                     <td>{item.area?.codigo || '—'}</td>
                                     <td>{item.estado}</td>
-                                    <td>{item.creado_por?.nombre || '—'}</td>
-                                    <td>{new Date(item.created_at).toLocaleDateString('es-BO')}</td>
-                                    <td>{item.actualizado_por?.nombre || '—'}</td>
+                                    <td>
+                                        {item.creado_por
+                                            ? `${item.creado_por.nombre}${item.creado_por.rol ? ` (${item.creado_por.rol})` : ''}`
+                                            : '—'}
+                                    </td>
+                                    <td>{item.created_at ? new Date(item.created_at).toLocaleDateString('es-BO') : '—'}</td>
+                                    <td>
+                                        {item.actualizado_por
+                                            ? `${item.actualizado_por.nombre}${item.actualizado_por.rol ? ` (${item.actualizado_por.rol})` : ''}`
+                                            : '—'}
+                                    </td>
                                     <td>{item.updated_at ? new Date(item.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
                                         {permisos.includes('unidades-organizacionales:editar') && (

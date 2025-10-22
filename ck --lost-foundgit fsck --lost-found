@@ -1,0 +1,11 @@
+[33m2a46f87[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{0}: checkout: moving from f5aba24155d17ca597cd104154eb0914c6c61285 to 2a46f87
+[33mf5aba24[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{1}: checkout: moving from main to f5aba24
+[33mf5aba24[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m HEAD@{2}: commit: actualizacion 20 de octubre
+[33m2a46f87[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{3}: commit: Forzar actualización visible - 20 de octubre
+[33m23e83ee[m HEAD@{4}: checkout: moving from heroui-migration to main
+[33mf45cc3b[m[33m ([m[1;32mheroui-migration[m[33m)[m HEAD@{5}: commit: actualizacion 20 de octubre
+[33m23e83ee[m HEAD@{6}: checkout: moving from main to heroui-migration
+[33m23e83ee[m HEAD@{7}: commit: actualizacion 14 de octubre
+[33md907199[m HEAD@{8}: Branch: renamed refs/heads/main to refs/heads/main
+[33md907199[m HEAD@{10}: Branch: renamed refs/heads/master to refs/heads/main
+[33md907199[m HEAD@{12}: commit (initial): actualizacion 13 de octubre
