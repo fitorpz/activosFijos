@@ -34,32 +34,33 @@ export class PersonalesController {
     private readonly personalRepository: Repository<Personal>,
   ) { }
 
-  // 🟢 Crear un nuevo personal
+  // 🟢 Crear nuevo personal
   @Post()
-  create(@Body() dto: CreatePersonalesDto, @Req() req: RequestWithUser) {
+  async create(@Body() dto: CreatePersonalesDto, @Req() req: RequestWithUser) {
     const userId = req.user.id;
     return this.personalesService.create(dto, userId);
   }
 
-  // 🟡 Obtener todos los registros de personal
+  // 🟡 Obtener todos los registros
   @Get()
-  findAll(): Promise<Personal[]> {
+  async findAll(): Promise<Personal[]> {
     return this.personalesService.findAll();
   }
 
-  // 🧩 Obtener usuarios disponibles (no asignados a personal)
+  // 🟢 Obtener usuarios disponibles (con opción de exclusión del actual)
   @Get('usuarios-disponibles')
-  async obtenerUsuariosDisponibles() {
-    return this.personalesService.obtenerUsuariosDisponibles();
+  async obtenerUsuariosDisponibles(@Query('idPersonal') idPersonal?: string) {
+    const id = idPersonal ? parseInt(idPersonal, 10) : undefined;
+    return this.personalesService.obtenerUsuariosDisponibles(id);
   }
 
-  // 🔍 Obtener un solo personal por ID
+  // 🔍 Obtener un registro por ID
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.personalesService.findOne(id);
   }
 
-  // 🧾 Exportar PDF de personales
+  // 🧾 Exportar listado en PDF
   @Get('exportar/pdf')
   async exportarPDF(@Res() res: Response, @Query('estado') estado: string) {
     try {
@@ -134,9 +135,9 @@ export class PersonalesController {
     }
   }
 
-  // 🟠 Actualizar un registro de personal
+  // 🟠 Actualizar un registro
   @Put(':id')
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePersonalesDto,
     @Req() req: RequestWithUser,
@@ -147,7 +148,7 @@ export class PersonalesController {
 
   // 🔁 Cambiar estado ACTIVO/INACTIVO
   @Put(':id/estado')
-  cambiarEstado(
+  async cambiarEstado(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: RequestWithUser,
   ) {

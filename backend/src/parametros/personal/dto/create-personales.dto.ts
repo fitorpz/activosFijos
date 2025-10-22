@@ -1,47 +1,58 @@
-import { IsNotEmpty } from 'class-validator';
+import {
+    IsString,
+    IsOptional,
+    IsNotEmpty,
+    IsNumber,
+    IsEmail,
+    IsDateString,
+} from 'class-validator';
 
 export class CreatePersonalesDto {
-
+    @IsNumber()
     @IsNotEmpty()
     documento: number;
 
-    @IsNotEmpty()
-    ci: string;
-
-    @IsNotEmpty()
-    nombre: string;
-
-    @IsNotEmpty()
-    usuario_id?: number;
-
-    @IsNotEmpty()
-    estado: string;
-
+    @IsString()
     @IsNotEmpty()
     expedido: string;
 
+    @IsString()
     @IsNotEmpty()
-    profesion: string;
+    ci: string;
 
+    @IsString()
     @IsNotEmpty()
-    direccion: string;
+    nombre: string;
 
-    @IsNotEmpty()
-    celular: string;
+    @IsString()
+    @IsOptional()
+    profesion?: string;
 
-    @IsNotEmpty()
-    telefono: string;
+    @IsString()
+    @IsOptional()
+    direccion?: string;
 
-    @IsNotEmpty()
-    email: string;
+    @IsString()
+    @IsOptional()
+    celular?: string;
 
-    @IsNotEmpty()
-    fecnac: string;
+    @IsString()
+    @IsOptional()
+    telefono?: string;
 
-    @IsNotEmpty()
-    estciv: number;
+    @IsEmail()
+    @IsOptional()
+    email?: string;
 
-    @IsNotEmpty()
-    sexo: number;
+    @IsDateString()
+    @IsOptional()
+    fecnac?: string;
 
+    @IsNumber()
+    @IsOptional()
+    estciv?: number;
+
+    @IsNumber()
+    @IsOptional()
+    sexo?: number;
 }

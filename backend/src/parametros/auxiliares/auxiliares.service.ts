@@ -17,23 +17,23 @@ export class AuxiliaresService {
   ) { }
 
   // Crear auxiliar
-  async create(
-    dto: CreateAuxiliaresDto,
-    userId: number,
-  ): Promise<Auxiliar> {
+  async create(dto: CreateAuxiliaresDto, userId: number): Promise<Auxiliar> {
     const usuario = await this.usuarioRepo.findOneBy({ id: userId });
-    if (!usuario) {
-      throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
-    }
+    if (!usuario) throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
+
+    // Generar código correlativo
+    const siguienteCodigo = await this.getSiguienteCodigoAuxiliar(dto.codigo_grupo);
 
     const nuevoAuxiliar = this.auxiliarRepo.create({
       ...dto,
+      codigo: siguienteCodigo,
       estado: dto.estado ?? 'ACTIVO',
       creado_por: usuario,
     });
 
     return this.auxiliarRepo.save(nuevoAuxiliar);
   }
+
 
   // Obtener todos los auxiliares (con filtro por estado)
   // servicio
@@ -121,27 +121,34 @@ export class AuxiliaresService {
   }
 
   async getSiguienteCodigoAuxiliar(codigo_grupo: string): Promise<string> {
-    // Buscar todos los auxiliares con ese grupo contable
     const auxiliares = await this.auxiliarRepo.find({
       where: { codigo_grupo },
       order: { codigo: 'DESC' },
     });
 
-
+    // Si no hay auxiliares previos, empezamos en 0001
     if (auxiliares.length === 0) {
-      return '0001';
+      return `${codigo_grupo}.0001`;
     }
 
-
-    // Obtener el último auxiliar registrado y extraer su correlativo
-    const ultimoCodigo = auxiliares[0].codigo; // Ej: "125.01.0007"
+    // Tomar el último código y dividirlo
+    const ultimoCodigo = auxiliares[0].codigo; // ej: "M001.0005"
     const partes = ultimoCodigo.split('.');
-    const correlativoActual = partes[2];
-    const siguienteNumero = (parseInt(correlativoActual, 10) + 1).toString().padStart(4, '0');
 
+    // Validar estructura
+    let correlativoActual = '0000';
+    if (partes.length > 1) {
+      correlativoActual = partes[1];
+    }
 
-    return siguienteNumero; // Ej: "0008"
+    const siguienteNumero = (parseInt(correlativoActual, 10) + 1)
+      .toString()
+      .padStart(4, '0');
+
+    // Retornar el nuevo código completo
+    return `${codigo_grupo}.${siguienteNumero}`;
   }
+
 
   async buscarAuxiliares(search: string, estado?: string, codigo_grupo?: string): Promise<Auxiliar[]> {
     const query = this.auxiliarRepo.createQueryBuilder('auxiliar')

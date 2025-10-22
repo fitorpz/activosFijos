@@ -47,12 +47,16 @@ const EditarPersonal = () => {
         sexo: '',
     });
 
+    const [usuariosDisponibles, setUsuariosDisponibles] = useState<Usuario[]>([]);
     const [cargando, setCargando] = useState(true);
 
+    // 🔹 Cargar datos iniciales
     useEffect(() => {
         obtenerPersonal();
+        obtenerUsuariosDisponibles();
     }, []);
 
+    // 🔹 Obtener datos del personal
     const obtenerPersonal = async () => {
         try {
             const token = localStorage.getItem('token');
@@ -86,6 +90,21 @@ const EditarPersonal = () => {
         }
     };
 
+    const obtenerUsuariosDisponibles = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get<Usuario[]>(`/parametros/personal/usuarios-disponibles`, {
+                headers: { Authorization: `Bearer ${token}` },
+                params: { idPersonal: id },
+            });
+            setUsuariosDisponibles(res.data); // ✅ ya no da error
+        } catch (error) {
+            console.error('❌ Error al cargar usuarios disponibles:', error);
+        }
+    };
+
+
+    // 🔹 Manejar cambios en los inputs
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
@@ -104,6 +123,7 @@ const EditarPersonal = () => {
                 documento: Number(formData.documento),
                 estciv: Number(formData.estciv),
                 sexo: Number(formData.sexo),
+                usuario_id: formData.usuario ? formData.usuario.id : null, // 👈 clave
             };
 
             await axios.put(`/parametros/personal/${id}`, payload, {
@@ -120,6 +140,7 @@ const EditarPersonal = () => {
         }
     };
 
+
     return (
         <div className="container mt-4">
             <div className="form-container">
@@ -131,19 +152,27 @@ const EditarPersonal = () => {
                     <form onSubmit={handleSubmit}>
                         <div className="row">
 
-                            {/* 🧩 Campo usuario asignado (solo lectura) */}
+                            {/* 🧩 Usuario asignado */}
                             <div className="col-md-6 mb-3">
-                                <label className="form-label">Usuario asignado</label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={
-                                        formData.usuario
-                                            ? `${formData.usuario.nombre} (${formData.usuario.correo})`
-                                            : 'Sin usuario asignado'
-                                    }
-                                    readOnly
-                                />
+                                <label htmlFor="usuario_id" className="form-label">Usuario asignado</label>
+                                <select
+                                    id="usuario_id"
+                                    name="usuario_id"
+                                    className="form-select"
+                                    value={formData.usuario?.id || ''}
+                                    onChange={(e) => {
+                                        const userId = e.target.value;
+                                        const selectedUser = usuariosDisponibles.find(u => u.id === Number(userId)) || null;
+                                        setFormData((prev) => ({ ...prev, usuario: selectedUser }));
+                                    }}
+                                >
+                                    <option value="">Sin usuario asignado</option>
+                                    {usuariosDisponibles.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.nombre} ({u.correo})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="col-md-6 mb-3">
@@ -192,11 +221,11 @@ const EditarPersonal = () => {
                                     id="nombre"
                                     name="nombre"
                                     className="form-control"
-                                    value={formData.nombre}
-                                    onChange={handleChange}
-                                    required
+                                    value={formData.usuario ? formData.usuario.nombre : formData.nombre}
+                                    readOnly
                                 />
                             </div>
+
 
                             <div className="col-md-6 mb-3">
                                 <label htmlFor="profesion" className="form-label">Profesión</label>

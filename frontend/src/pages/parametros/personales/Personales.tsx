@@ -54,12 +54,14 @@ const Personales = () => {
         }
     }, [estadoFiltro, permisos]);
 
+    // 🔹 Obtener personales desde el backend
     const obtenerPersonales = async () => {
         const token = localStorage.getItem('token');
         try {
             const res = await axios.get<Personal[]>('/parametros/personal', {
                 headers: { Authorization: `Bearer ${token}` },
             });
+
             const filtrados = res.data.filter((p) =>
                 estadoFiltro === 'todos'
                     ? true
@@ -69,12 +71,13 @@ const Personales = () => {
             );
             setPersonales(filtrados);
         } catch (error) {
-            console.error('Error al obtener personales:', error);
+            console.error('❌ Error al obtener personales:', error);
         } finally {
             setCargando(false);
         }
     };
 
+    // 🔹 Texto de estado civil
     const obtenerTextoEstadoCivil = (valor?: number): string => {
         switch (valor) {
             case 1:
@@ -92,6 +95,7 @@ const Personales = () => {
         }
     };
 
+    // 🔹 Texto de sexo
     const obtenerTextoSexo = (valor?: number): string => {
         switch (valor) {
             case 1:
@@ -103,6 +107,20 @@ const Personales = () => {
         }
     };
 
+    // 🔹 Formatear fechas de forma segura
+    const formatearFecha = (fecha?: string) => {
+        if (!fecha) return '—';
+        const d = new Date(fecha);
+        return isNaN(d.getTime())
+            ? '—'
+            : d.toLocaleDateString('es-BO', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            });
+    };
+
+    // 🔹 Cambiar estado (activar/inactivar)
     const cambiarEstado = async (id: number) => {
         if (!window.confirm('¿Estás seguro de cambiar el estado de este personal?')) return;
         try {
@@ -112,10 +130,11 @@ const Personales = () => {
             });
             obtenerPersonales();
         } catch (error) {
-            console.error('Error al cambiar estado:', error);
+            console.error('❌ Error al cambiar estado:', error);
         }
     };
 
+    // 🔹 Exportar PDF
     const exportarPDF = async () => {
         const token = localStorage.getItem('token');
         const estado =
@@ -152,6 +171,7 @@ const Personales = () => {
 
     return (
         <div className="container mt-4">
+            {/* 🔹 Encabezado */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h4 className="mb-0">Registro de Personal</h4>
@@ -195,6 +215,7 @@ const Personales = () => {
                 </div>
             </div>
 
+            {/* 🔹 Tabla */}
             <div className="table-responsive">
                 <table className="table table-bordered table-hover align-middle text-center">
                     <thead className="table-light">
@@ -241,7 +262,7 @@ const Personales = () => {
                                             : 'Sin usuario'}
                                     </td>
 
-                                    <td>{p.documento}</td>
+                                    <td>{p.documento ?? '—'}</td>
                                     <td>{p.expedido ?? '—'}</td>
                                     <td>{p.ci ?? '—'}</td>
                                     <td>{p.nombre ?? '—'}</td>
@@ -250,18 +271,14 @@ const Personales = () => {
                                     <td>{p.celular ?? '—'}</td>
                                     <td>{p.telefono ?? '—'}</td>
                                     <td>{p.email ?? '—'}</td>
-                                    <td>{p.fecnac ?? '—'}</td>
+                                    <td>{formatearFecha(p.fecnac)}</td>
                                     <td>{obtenerTextoEstadoCivil(p.estciv)}</td>
                                     <td>{obtenerTextoSexo(p.sexo)}</td>
                                     <td>{p.estado}</td>
                                     <td>{p.creado_por?.nombre ?? '—'}</td>
-                                    <td>{new Date(p.created_at).toLocaleDateString('es-BO')}</td>
+                                    <td>{formatearFecha(p.created_at)}</td>
                                     <td>{p.actualizado_por?.nombre ?? '—'}</td>
-                                    <td>
-                                        {p.updated_at
-                                            ? new Date(p.updated_at).toLocaleDateString('es-BO')
-                                            : '—'}
-                                    </td>
+                                    <td>{formatearFecha(p.updated_at)}</td>
 
                                     <td>
                                         {permisos.includes('personales:editar') && (
@@ -279,8 +296,8 @@ const Personales = () => {
                                             permisos.includes('personales:eliminar')) && (
                                                 <button
                                                     className={`btn btn-sm ${p.estado === 'ACTIVO'
-                                                            ? 'btn-secondary'
-                                                            : 'btn-success'
+                                                        ? 'btn-secondary'
+                                                        : 'btn-success'
                                                         }`}
                                                     title={
                                                         p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'

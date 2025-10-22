@@ -9,9 +9,10 @@ import {
     JoinColumn,
 } from 'typeorm';
 import { Rol } from './rol.entity';
+import { FechaAuditada } from 'src/common/entities/FechaAuditada';
 
 @Entity('usuarios')
-export class Usuario {
+export class Usuario extends FechaAuditada{
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -44,18 +45,12 @@ export class Usuario {
     @JoinColumn({ name: 'creadoPorId' })
     creadoPor: Usuario;
 
-    @CreateDateColumn({ type: 'timestamp' })
-    creadoEn: Date;
-
     @Column({ nullable: true, type: 'int' })
     modificadoPorId: number | null;
 
     @ManyToOne(() => Usuario, { nullable: true, eager: false })
     @JoinColumn({ name: 'modificadoPorId' })
     modificadoPor: Usuario;
-
-    @UpdateDateColumn({ type: 'timestamp' })
-    modificadoEn: Date;
 
     @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
     deletedAt: Date | null;

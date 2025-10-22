@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Usuario } from '../../interfaces/usuario';
 
-
-
 const Usuarios = () => {
     const navigate = useNavigate();
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+    const [roles, setRoles] = useState<{ id: number; nombre: string }[]>([]);
+    const [rolFiltro, setRolFiltro] = useState<number | 'todos'>('todos');
     const [error, setError] = useState<string | null>(null);
     const [cargando, setCargando] = useState<boolean>(true);
 
-    // 🔹 Cerrar sesión (por seguridad)
+    // 🔹 Cerrar sesión
     const cerrarSesion = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('auth');
@@ -44,6 +44,28 @@ const Usuarios = () => {
         }
     };
 
+    // 🔹 Cargar roles para filtro
+    const cargarRoles = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) throw new Error('No autenticado');
+
+            const response = await fetch('http://localhost:3001/roles', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) throw new Error('Error al obtener roles');
+
+            const data = await response.json();
+            setRoles(Array.isArray(data) ? data : data.data || []);
+
+        } catch (err: any) {
+            console.error('❌ Error al cargar roles:', err.message);
+        }
+    };
+
     // 🔹 Eliminar usuario
     const eliminarUsuario = async (id: number) => {
         if (!window.confirm('¿Deseas eliminar este usuario?')) return;
@@ -71,20 +93,66 @@ const Usuarios = () => {
         }
     };
 
+    // 🔹 Cargar datos al montar componente
     useEffect(() => {
         cargarUsuarios();
+        cargarRoles();
     }, []);
+
+    // 🔹 Filtrar usuarios por rol seleccionado
+    const usuariosFiltrados = usuarios.filter((usuario) =>
+        rolFiltro === 'todos'
+            ? true
+            : typeof usuario.rol === 'object'
+                ? usuario.rol.id === rolFiltro
+                : false
+    );
 
     return (
         <div className="container mt-4">
             {error && <div className="alert alert-danger">{error}</div>}
 
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h2>Usuarios registrados</h2>
-                <button className="btn btn-primary" onClick={() => navigate('/usuarios/crear')}>
-                    + Nuevo Usuario
-                </button>
+            <div className="container mb-4">
+                <div className="row g-3 align-items-end">
+                    {/* Título */}
+                    <div className="col-12">
+                        <h2 className="mb-0">Usuarios registrados</h2>
+                    </div>
+
+                    {/* Filtro por rol */}
+                    <div className="col-md-6 col-lg-4">
+                        <label htmlFor="rolFiltro" className="form-label">Filtrar por Rol:</label>
+                        <select
+                            id="rolFiltro"
+                            className="form-select"
+                            value={rolFiltro}
+                            onChange={(e) =>
+                                setRolFiltro(e.target.value === 'todos' ? 'todos' : parseInt(e.target.value))
+                            }
+                        >
+                            <option value="todos">Todos los roles</option>
+                            {Array.isArray(roles) &&
+                                roles.map((rol) => (
+                                    <option key={rol.id} value={rol.id}>
+                                        {rol.nombre}
+                                    </option>
+                                ))}
+                        </select>
+                    </div>
+
+                    {/* Botón “+ Nuevo Usuario” */}
+                    <div className="col-md-6 col-lg-4 d-flex align-items-end">
+                        <button
+                            className="btn btn-primary w-100"
+                            onClick={() => navigate('/usuarios/crear')}
+                        >
+                            + Nuevo Usuario
+                        </button>
+                    </div>
+                </div>
             </div>
+
+
 
             {cargando ? (
                 <div className="text-center mt-4">
@@ -109,8 +177,8 @@ const Usuarios = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {usuarios.length > 0 ? (
-                                usuarios.map((usuario, index) => {
+                            {usuariosFiltrados.length > 0 ? (
+                                usuariosFiltrados.map((usuario, index) => {
                                     const expira = usuario.fecha_expiracion ? new Date(usuario.fecha_expiracion) : null;
                                     const hoy = new Date();
 
@@ -157,7 +225,7 @@ const Usuarios = () => {
                             ) : (
                                 <tr>
                                     <td colSpan={10} className="text-center text-muted">
-                                        No hay usuarios registrados.
+                                        No hay usuarios registrados para el rol seleccionado.
                                     </td>
                                 </tr>
                             )}

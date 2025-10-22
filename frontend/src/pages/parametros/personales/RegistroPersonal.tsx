@@ -10,6 +10,7 @@ interface Usuario {
 
 const RegistroPersonal = () => {
     const [formData, setFormData] = useState({
+        usuario: null as Usuario | null,
         usuario_id: '',
         documento: '',
         ci: '',
@@ -47,11 +48,26 @@ const RegistroPersonal = () => {
         }
     };
 
+    // 🧩 Actualizar campos
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // 🧠 Rellenar automáticamente nombre y correo al seleccionar usuario
+    const handleUsuarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const userId = e.target.value;
+        const selectedUser = usuarios.find(u => u.id === Number(userId)) || null;
+
+        setFormData((prev) => ({
+            ...prev,
+            usuario_id: userId,
+            usuario: selectedUser,
+            nombre: selectedUser ? selectedUser.nombre : '',
+            email: selectedUser ? selectedUser.correo : '',
+        }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -63,16 +79,17 @@ const RegistroPersonal = () => {
 
             const payload = {
                 ...formData,
-                usuario_id: formData.usuario_id ? Number(formData.usuario_id) : null,
-                documento: Number(formData.documento),
-                estciv: Number(formData.estciv),
-                sexo: Number(formData.sexo),
+                usuario_id: formData.usuario ? formData.usuario.id : null,
+                documento: formData.documento ? Number(formData.documento) : null,
+                estciv: formData.estciv ? Number(formData.estciv) : null,
+                sexo: formData.sexo ? Number(formData.sexo) : null,
+                fecnac: formData.fecnac || null, // ✅ si está vacío, que vaya como null
+                nombre: formData.nombre?.trim() || '', // limpia espacios en blanco
+                email: formData.email?.trim() || '',
             };
 
             await axios.post('/parametros/personal', payload, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             alert('✅ Personal registrado correctamente.');
@@ -85,6 +102,7 @@ const RegistroPersonal = () => {
         }
     };
 
+
     return (
         <div className="container mt-4">
             <div className="form-container">
@@ -92,7 +110,7 @@ const RegistroPersonal = () => {
                 <form onSubmit={handleSubmit}>
                     <div className="row">
 
-                        {/* 🧩 Campo para seleccionar el usuario */}
+                        {/* 🧩 Usuario asignado */}
                         <div className="col-md-6 mb-3">
                             <label htmlFor="usuario_id" className="form-label">
                                 Usuario del Sistema (Nombre Completo)
@@ -102,7 +120,7 @@ const RegistroPersonal = () => {
                                 name="usuario_id"
                                 className="form-select"
                                 value={formData.usuario_id}
-                                onChange={handleChange}
+                                onChange={handleUsuarioChange}
                                 required
                             >
                                 <option value="">Seleccionar usuario</option>
@@ -153,10 +171,10 @@ const RegistroPersonal = () => {
                                 className="form-control"
                                 value={formData.expedido}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
 
+                        {/* 🧩 Nombre completo del usuario (auto llenado) */}
                         <div className="col-md-6 mb-3">
                             <label htmlFor="nombre" className="form-label">Nombre Completo (Personal)</label>
                             <input
@@ -165,8 +183,7 @@ const RegistroPersonal = () => {
                                 name="nombre"
                                 className="form-control"
                                 value={formData.nombre}
-                                onChange={handleChange}
-                                required
+                                readOnly
                             />
                         </div>
 
@@ -227,6 +244,7 @@ const RegistroPersonal = () => {
                                 className="form-control"
                                 value={formData.email}
                                 onChange={handleChange}
+                                readOnly
                             />
                         </div>
 

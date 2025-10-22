@@ -21,9 +21,6 @@ import { DistritosModule } from './parametros/distritos/distritos.module';
 import { DatabaseModule } from './database/database.module';
 
 
-
-
-
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -33,7 +30,6 @@ import { DatabaseModule } from './database/database.module';
       username: 'postgres',
       password: 'password123',
       database: 'activos_fijos',
-
       synchronize: true,     
       dropSchema: false,   
       autoLoadEntities: true, 
