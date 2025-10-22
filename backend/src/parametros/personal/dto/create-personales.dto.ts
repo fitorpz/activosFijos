@@ -8,9 +8,12 @@ export class CreatePersonalesDto {
     @IsNotEmpty()
     ci: string;
 
-     @IsNotEmpty()
+    @IsNotEmpty()
     nombre: string;
-    
+
+    @IsNotEmpty()
+    usuario_id?: number;
+
     @IsNotEmpty()
     estado: string;
 

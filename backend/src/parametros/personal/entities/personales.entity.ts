@@ -23,6 +23,13 @@ export class Personal {
   @Column({ nullable: false })
   nombre: string;
 
+  @ManyToOne(() => Usuario, { nullable: true, eager: true })
+  @JoinColumn({ name: 'usuario_id' })
+  usuario?: Usuario;
+
+  @Column({ nullable: true })
+  usuario_id?: number;
+
   @Column({ nullable: false })
   estado: string;
 

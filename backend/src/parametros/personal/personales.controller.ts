@@ -5,12 +5,11 @@ import {
   Body,
   Put,
   Param,
-  Delete,
   ParseIntPipe,
   UseGuards,
   Req,
   Query,
-  Res
+  Res,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -29,68 +28,90 @@ import { generarPDFDesdeHTML } from '../../pdf/generarPDF';
 @UseGuards(JwtAuthGuard)
 export class PersonalesController {
   constructor(
-    private readonly direccionesService: PersonalesService,
+    private readonly personalesService: PersonalesService,
 
     @InjectRepository(Personal)
     private readonly personalRepository: Repository<Personal>,
   ) { }
 
+  // 🟢 Crear un nuevo personal
   @Post()
-  create(
-    @Body() dto: CreatePersonalesDto,
-    @Req() req: RequestWithUser,
-  ) {
+  create(@Body() dto: CreatePersonalesDto, @Req() req: RequestWithUser) {
     const userId = req.user.id;
-    return this.direccionesService.create(dto, userId);
+    return this.personalesService.create(dto, userId);
   }
 
+  // 🟡 Obtener todos los registros de personal
   @Get()
   findAll(): Promise<Personal[]> {
-    return this.personalRepository.find();
+    return this.personalesService.findAll();
   }
 
+  // 🧩 Obtener usuarios disponibles (no asignados a personal)
+  @Get('usuarios-disponibles')
+  async obtenerUsuariosDisponibles() {
+    return this.personalesService.obtenerUsuariosDisponibles();
+  }
+
+  // 🔍 Obtener un solo personal por ID
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.direccionesService.findOne(id);
+    return this.personalesService.findOne(id);
   }
 
+  // 🧾 Exportar PDF de personales
   @Get('exportar/pdf')
   async exportarPDF(@Res() res: Response, @Query('estado') estado: string) {
     try {
-      const personales = await this.direccionesService.findAll(); // Puedes agregar filtro si lo deseas
+      const personales = await this.personalesService.findAll();
 
       const filasHTML = personales
-        .filter(p => estado === 'todos' || p.estado === estado.toUpperCase())
-        .map((p, i) => `
-    <tr>
-      <td>${i + 1}</td>
-      <td>${p.documento ?? ''}</td>
-      <td>${p.expedido ?? ''}</td>
-      <td>${p.ci}</td>
-      <td>${p.nombre}</td>
-      <td>${p.profesion ?? ''}</td>
-      <td>${p.direccion ?? ''}</td>
-      <td>${p.celular ?? ''}</td>
-      <td>${p.telefono ?? ''}</td>
-      <td>${p.email ?? ''}</td>
-      <td>${p.fecnac ?? ''}</td>
-      <td>${p.estciv === 1 ? 'Soltero' :
-            p.estciv === 2 ? 'Casado' :
-              p.estciv === 3 ? 'Viudo' :
-                p.estciv === 4 ? 'Divorciado' :
-                  p.estciv === 5 ? 'Unión libre' :
-                    'No definido'
-          }</td>
-      <td>${p.sexo === 1 ? 'Masculino' :
-            p.sexo === 2 ? 'Femenino' :
-              'No definido'
-          }</td>
-      <td>${p.estado}</td>
-    </tr>
-  `).join('');
+        .filter((p) => estado === 'todos' || p.estado === estado.toUpperCase())
+        .map(
+          (p, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${p.documento ?? ''}</td>
+            <td>${p.expedido ?? ''}</td>
+            <td>${p.ci ?? ''}</td>
+            <td>${p.nombre ?? ''}</td>
+            <td>${p.profesion ?? ''}</td>
+            <td>${p.direccion ?? ''}</td>
+            <td>${p.celular ?? ''}</td>
+            <td>${p.telefono ?? ''}</td>
+            <td>${p.email ?? ''}</td>
+            <td>${p.fecnac ?? ''}</td>
+            <td>${p.estciv === 1
+              ? 'Soltero'
+              : p.estciv === 2
+                ? 'Casado'
+                : p.estciv === 3
+                  ? 'Viudo'
+                  : p.estciv === 4
+                    ? 'Divorciado'
+                    : p.estciv === 5
+                      ? 'Unión libre'
+                      : 'No definido'
+            }</td>
+            <td>${p.sexo === 1
+              ? 'Masculino'
+              : p.sexo === 2
+                ? 'Femenino'
+                : 'No definido'
+            }</td>
+            <td>${p.estado}</td>
+          </tr>
+        `,
+        )
+        .join('');
 
-
-      const templatePath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'personales-pdf.html');
+      const templatePath = path.join(
+        process.cwd(),
+        'templates',
+        'pdf',
+        'parametros',
+        'personales-pdf.html',
+      );
 
       let html: string;
       try {
@@ -113,6 +134,7 @@ export class PersonalesController {
     }
   }
 
+  // 🟠 Actualizar un registro de personal
   @Put(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -120,15 +142,16 @@ export class PersonalesController {
     @Req() req: RequestWithUser,
   ) {
     const userId = req.user.id;
-    return this.direccionesService.update(id, dto, userId);
+    return this.personalesService.update(id, dto, userId);
   }
 
+  // 🔁 Cambiar estado ACTIVO/INACTIVO
   @Put(':id/estado')
   cambiarEstado(
     @Param('id', ParseIntPipe) id: number,
     @Req() req: RequestWithUser,
   ) {
     const userId = req.user.id;
-    return this.direccionesService.cambiarEstado(id, userId);
+    return this.personalesService.cambiarEstado(id, userId);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Personal } from './entities/personales.entity';
@@ -10,125 +10,121 @@ import { Usuario } from '../../usuarios/entities/usuario.entity';
 export class PersonalesService {
   constructor(
     @InjectRepository(Personal)
-    private readonly direccionRepo: Repository<Personal>,
+    private readonly personalRepo: Repository<Personal>,
 
     @InjectRepository(Usuario)
     private readonly usuarioRepo: Repository<Usuario>,
   ) { }
 
-  // Crear una nueva area
-  async create(
-    dto: CreatePersonalesDto,
-    userId: number,
-  ): Promise<Personal> {
-    const usuario = await this.usuarioRepo.findOneBy({ id: userId });
-
-    if (!usuario) {
+  // 🟢 Crear nuevo Personal
+  async create(dto: CreatePersonalesDto, userId: number): Promise<Personal> {
+    const usuarioCreador = await this.usuarioRepo.findOneBy({ id: userId });
+    if (!usuarioCreador) {
       throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
     }
 
-    const nuevaDireccion = this.direccionRepo.create({
+    // Validar si el usuario seleccionado ya fue asignado
+    if (dto.usuario_id) {
+      const existe = await this.personalRepo.findOne({
+        where: { usuario: { id: dto.usuario_id } },
+        relations: ['usuario'],
+      });
+      if (existe) {
+        throw new BadRequestException(
+          `El usuario seleccionado ya está asignado a otro personal.`,
+        );
+      }
+    }
+
+    // Buscar el usuario a asignar (si hay)
+    const usuarioAsociado = dto.usuario_id
+      ? await this.usuarioRepo.findOneBy({ id: dto.usuario_id })
+      : undefined;
+
+    const nuevoPersonal = this.personalRepo.create({
       ...dto,
-      creado_por: usuario,
+      usuario: usuarioAsociado ?? undefined,
+      creado_por: usuarioCreador,
     });
 
-    return this.direccionRepo.save(nuevaDireccion);
+    return this.personalRepo.save(nuevoPersonal);
   }
 
-  // Obtener todas las direcciones
+
+  // 🟡 Obtener todos los personales
   async findAll(): Promise<Personal[]> {
-    return this.direccionRepo.find({
+    return this.personalRepo.find({
       order: { id: 'DESC' },
-      relations: ['creado_por', 'actualizado_por'],
+      relations: ['creado_por', 'actualizado_por', 'usuario'],
     });
   }
 
-  // Obtener una sola dirección por ID
+  // 🔍 Obtener un solo personal
   async findOne(id: number): Promise<Personal> {
-    const direccion = await this.direccionRepo.findOne({
+    const personal = await this.personalRepo.findOne({
       where: { id },
-      relations: ['creado_por', 'actualizado_por'],
+      relations: ['creado_por', 'actualizado_por', 'usuario'],
     });
 
-    if (!direccion) {
-      throw new NotFoundException(`PErsonal ${id} no encontrado`);
+    if (!personal) {
+      throw new NotFoundException(`Personal con ID ${id} no encontrado`);
     }
 
-    return direccion;
+    return personal;
   }
 
-  // Actualizar una dirección
-  async update(
-    id: number,
-    dto: UpdatePersonalesDto,
-    userId: number,
-  ): Promise<Personal> {
-    const direccion = await this.findOne(id);
+  async update(id: number, dto: UpdatePersonalesDto, userId: number): Promise<Personal> {
+    const personal = await this.findOne(id);
+    const usuarioActualizador = await this.usuarioRepo.findOneBy({ id: userId });
 
-    const usuario = await this.usuarioRepo.findOneBy({ id: userId });
-    if (!usuario) {
+    if (!usuarioActualizador) {
       throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
     }
 
-    if (dto.documento !== undefined) {
-      direccion.documento = dto.documento;
+    // Validar reasignación de usuario
+    if (dto.usuario_id && dto.usuario_id !== personal.usuario?.id) {
+      const yaAsignado = await this.personalRepo.findOne({
+        where: { usuario: { id: dto.usuario_id } },
+        relations: ['usuario'],
+      });
+
+      if (yaAsignado) {
+        throw new BadRequestException(`El usuario seleccionado ya está asignado a otro personal.`);
+      }
+
+      const nuevoUsuario = await this.usuarioRepo.findOneBy({ id: dto.usuario_id });
+      personal.usuario = nuevoUsuario ?? undefined; // ✅ evitar null
     }
 
-    if (dto.ci !== undefined) {
-      direccion.ci = dto.ci;
-    }
+    // Actualizar otros campos
+    personal.documento = dto.documento ?? personal.documento;
+    personal.ci = dto.ci ?? personal.ci;
+    personal.nombre = dto.nombre ?? personal.nombre;
+    personal.estado = dto.estado ?? personal.estado;
+    personal.expedido = dto.expedido ?? personal.expedido;
+    personal.profesion = dto.profesion ?? personal.profesion;
+    personal.direccion = dto.direccion ?? personal.direccion;
+    personal.celular = dto.celular ?? personal.celular;
+    personal.telefono = dto.telefono ?? personal.telefono;
+    personal.email = dto.email ?? personal.email;
+    personal.fecnac = dto.fecnac ?? personal.fecnac;
+    personal.estciv = dto.estciv ?? personal.estciv;
+    personal.sexo = dto.sexo ?? personal.sexo;
+    personal.actualizado_por = usuarioActualizador;
 
-    if (dto.nombre !== undefined) {
-      direccion.nombre = dto.nombre;
-    }
-
-    if (dto.estado !== undefined) {
-      direccion.estado = dto.estado;
-    }
-
-    if (dto.expedido !== undefined) {
-      direccion.expedido = dto.expedido;
-    }
-
-    if (dto.profesion !== undefined) {
-      direccion.profesion = dto.profesion;
-    }
-
-    if (dto.direccion !== undefined) {
-      direccion.direccion = dto.direccion;
-    }
-
-    if (dto.celular !== undefined) {
-      direccion.celular = dto.celular;
-    }
-
-    if (dto.telefono !== undefined) {
-      direccion.telefono = dto.telefono;
-    }
-
-    if (dto.email !== undefined) {
-      direccion.email = dto.email;
-    }
-
-    if (dto.fecnac !== undefined) {
-      direccion.fecnac = dto.fecnac;
-    }
-
-    if (dto.estciv !== undefined) {
-      direccion.estciv = dto.estciv;
-    }
-
-    if (dto.sexo !== undefined) {
-      direccion.sexo = dto.sexo;
-    }
-
-    direccion.actualizado_por = usuario;
-
-
-    return this.direccionRepo.save(direccion);
+    return this.personalRepo.save(personal);
   }
-  async cambiarEstado(id: number, userId: number): Promise<{ nuevoEstado: string; message: string }> {
-    const personal = await this.direccionRepo.findOne({ where: { id } });
+
+
+  // 🔁 Cambiar estado ACTIVO/INACTIVO
+  async cambiarEstado(
+    id: number,
+    userId: number,
+  ): Promise<{ nuevoEstado: string; message: string }> {
+    const personal = await this.personalRepo.findOne({
+      where: { id },
+      relations: ['actualizado_por'],
+    });
 
     if (!personal) throw new NotFoundException('Personal no encontrado');
 
@@ -138,7 +134,7 @@ export class PersonalesService {
     personal.estado = personal.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
     personal.actualizado_por = usuario;
 
-    await this.direccionRepo.save(personal);
+    await this.personalRepo.save(personal);
 
     return {
       nuevoEstado: personal.estado,
@@ -146,4 +142,16 @@ export class PersonalesService {
     };
   }
 
+  // 🧩 Nuevo: Obtener usuarios disponibles (no asignados a personal)
+  async obtenerUsuariosDisponibles(): Promise<Usuario[]> {
+    const personales = await this.personalRepo.find({ relations: ['usuario'] });
+    const usados = personales
+      .map((p) => p.usuario?.id)
+      .filter((id): id is number => !!id);
+
+    const todosUsuarios = await this.usuarioRepo.find();
+    const disponibles = todosUsuarios.filter((u) => !usados.includes(u.id));
+
+    return disponibles;
+  }
 }

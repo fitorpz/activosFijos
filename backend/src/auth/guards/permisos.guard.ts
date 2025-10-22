@@ -35,9 +35,6 @@ export class PermisosGuard implements CanActivate {
             ) ||
             [];
 
-        console.log('🧩 [PermisosGuard] Permisos del usuario:', permisosUsuario);
-        console.log('🧩 [PermisosGuard] Permisos requeridos:', permisosRequeridos);
-
         if (!Array.isArray(permisosUsuario) || permisosUsuario.length === 0) {
             console.log('❌ [PermisosGuard] Usuario sin permisos asignados');
             throw new ForbiddenException('Usuario sin permisos asignados');
@@ -48,13 +45,11 @@ export class PermisosGuard implements CanActivate {
         );
 
         if (!tienePermiso) {
-            console.log('🚫 [PermisosGuard] Acceso denegado (sin permiso)');
             throw new ForbiddenException(
                 `Acceso denegado: requiere (${permisosRequeridos.join(', ')})`,
             );
         }
 
-        console.log('✅ [PermisosGuard] Acceso concedido');
         return true;
     }
 }
