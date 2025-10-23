@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
-import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ Importar control de permisos
+import { obtenerPermisosUsuario } from '../../../utils/permisos';
 
 export interface Usuario {
     id: number;
@@ -39,7 +39,7 @@ const Ambientes = () => {
     const [ambientes, setAmbientes] = useState<Ambiente[]>([]);
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
-    const [permisos, setPermisos] = useState<string[]>([]); // ✅ Permisos del usuario
+    const [permisos, setPermisos] = useState<string[]>([]);
     const [filtros, setFiltros] = useState({
         codigo: '',
         descripcion: '',
@@ -135,7 +135,6 @@ const Ambientes = () => {
         }
     };
 
-    // 🔒 Si no tiene permiso para listar
     if (!permisos.includes('ambientes:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -243,6 +242,19 @@ const Ambientes = () => {
                             <th>Actualizado por</th>
                             <th>Fecha de Actualización</th>
                             <th>Acciones</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th><input type="text" name="area" value={filtros.area} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar área" /></th>
+                            <th><input type="text" name="unidad_organizacional" value={filtros.unidad_organizacional} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar unidad" /></th>
+                            <th><input type="text" name="codigo" value={filtros.codigo} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar código" /></th>
+                            <th><input type="text" name="descripcion" value={filtros.descripcion} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar descripción" /></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
