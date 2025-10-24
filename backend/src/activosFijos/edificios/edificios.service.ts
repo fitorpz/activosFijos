@@ -1,158 +1,91 @@
-import {
-    Injectable,
-    NotFoundException,
-    BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Edificio } from './entities/edificio.entity';
 import { CreateEdificioDto } from './dto/create-edificio.dto';
 import { UpdateEdificioDto } from './dto/update-edificio.dto';
-import { Area } from '../../parametros/areas/entities/areas.entity';
-import { UnidadOrganizacional } from '../../parametros/unidades-organizacionales/entities/unidad-organizacional.entity';
-import { Ambiente } from '../../parametros/ambientes/entities/ambiente.entity';
-
-
-import { Cargo } from '../../parametros/cargos/entities/cargos.entity';
-import { Auxiliar } from '../../parametros/auxiliares/entities/auxiliares.entity';
-import { Nucleo } from '../../parametros/nucleos/entities/nucleos.entity';
-import { Distrito } from '../../parametros/distritos/entities/distritos.entity';
-import { DireccionAdministrativa } from '../../parametros/direcciones-administrativas/entities/direcciones-administrativas.entity';
-import { Ciudad } from '../../parametros/ciudades/entities/ciudades.entity';
-
-
-
+import { Personal } from 'src/parametros/personal/entities/personales.entity';
+import { UnidadOrganizacional } from 'src/parametros/unidades-organizacionales/entities/unidad-organizacional.entity';
+import { Cargo } from 'src/parametros/cargos/entities/cargos.entity';
+import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { generarPDFDesdeHTML } from 'src/utils/generarPDF';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { HistorialEdificioService } from './historial/historial-edificio.service';
 
 @Injectable()
 export class EdificiosService {
     constructor(
         @InjectRepository(Edificio)
-        private readonly edificioRepository: Repository<Edificio>,
+        private readonly edificioRepo: Repository<Edificio>,
 
-        @InjectRepository(Area)
-        private readonly areaRepository: Repository<Area>,
-
-        @InjectRepository(UnidadOrganizacional)
-        private readonly unidadRepository: Repository<UnidadOrganizacional>,
-
-        @InjectRepository(Ambiente)
-        private readonly ambienteRepository: Repository<Ambiente>,
+        @InjectRepository(Personal)
+        private readonly personalRepo: Repository<Personal>,
 
         @InjectRepository(Cargo)
-        private readonly cargoRepository: Repository<Cargo>,
+        private readonly cargoRepo: Repository<Cargo>,
 
-        @InjectRepository(Auxiliar)
-        private readonly auxiliarRepository: Repository<Auxiliar>,
+        @InjectRepository(UnidadOrganizacional)
+        private readonly unidadOrgRepo: Repository<UnidadOrganizacional>,
 
-        @InjectRepository(Nucleo)
-        private readonly nucleoRepository: Repository<Nucleo>,
+        @InjectRepository(Usuario)
+        private readonly usuarioRepo: Repository<Usuario>,
 
-        @InjectRepository(Distrito)
-        private readonly distritoRepository: Repository<Distrito>,
-
-        @InjectRepository(DireccionAdministrativa)
-        private readonly direccionAdministrativaRepository: Repository<DireccionAdministrativa>,
-
-        @InjectRepository(Ciudad)
-        private readonly ciudadRepository: Repository<Ciudad>,
-
+        private readonly historialService: HistorialEdificioService,
     ) { }
 
-    // ✅ Crear nuevo edificio con trazabilidad
-    async create(dto: CreateEdificioDto, userId: number): Promise<Edificio> {
-        // Validar duplicado por código
-        const existente = await this.edificioRepository.findOneBy({
-            codigo_311: dto.codigo_311,
-        });
+    async create(dto: CreateEdificioDto): Promise<Edificio> {
+        const responsable = await this.personalRepo.findOneBy({ id: dto.responsable_id });
+        const cargo = await this.cargoRepo.findOneBy({ id: dto.cargo_id });
+        const unidad = await this.unidadOrgRepo.findOneBy({ id: dto.unidad_organizacional_id });
+        const creadoPor = await this.usuarioRepo.findOneBy({ id: dto.creado_por_id });
 
-        if (existente) {
-            throw new BadRequestException(
-                `Ya existe un edificio con código ${dto.codigo_311}`,
-            );
+        if (!responsable || !cargo || !unidad || !creadoPor) {
+            throw new NotFoundException('Referencias inválidas en la creación del edificio');
         }
 
-        // Crear instancia del edificio con los datos del DTO
-        const nuevo = this.edificioRepository.create({
+        const actualizadoPor = dto.actualizado_por_id
+            ? await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id })
+            : undefined;
+
+        const payload: Partial<Edificio> = {
             ...dto,
-            creado_por: userId,
-            actualizado_por: userId,
-        });
+            responsable,
+            cargo,
+            unidad_organizacional: unidad,
+            creado_por: creadoPor,
+        };
 
-        // Buscar y asignar nombres de Área
-        if (dto.area_id) {
-            const area = await this.areaRepository.findOne({ where: { id: dto.area_id } });
-            nuevo.nombre_area = area?.descripcion?.toUpperCase() || '-';
-            nuevo.codigo_area = area?.codigo || '-';
-        }
+        if (actualizadoPor) payload.actualizado_por = actualizadoPor;
 
-        // Buscar y asignar nombre de Unidad Organizacional
-        if (dto.unidad_organizacional_id) {
-            const unidad = await this.unidadRepository.findOne({ where: { id: dto.unidad_organizacional_id } });
-            nuevo.unidad_organizacional_nombre = unidad?.descripcion?.toUpperCase() || '-';
-        }
-
-        // Buscar y asignar nombre de Ambiente
-        if (dto.ambiente_id) {
-            const ambiente = await this.ambienteRepository.findOne({ where: { id: dto.ambiente_id } });
-            nuevo.ambiente_nombre = ambiente?.descripcion?.toUpperCase() || '-';
-        }
-
-        // Cargo
-        if (dto.cargo_id) {
-            const cargo = await this.cargoRepository.findOne({ where: { id: dto.cargo_id } });
-            nuevo.nombre_cargo = cargo?.cargo?.toUpperCase() || '-'; // ← aquí el cambio
-        }
-
-
-        // Auxiliar
-        if (dto.auxiliar_id) {
-            const auxiliar = await this.auxiliarRepository.findOne({ where: { id: dto.auxiliar_id } });
-            nuevo.nombre_auxiliar = auxiliar?.descripcion?.toUpperCase() || '-';
-        }
-
-        // Núcleo
-        if (dto.nucleo_id) {
-            const nucleo = await this.nucleoRepository.findOne({ where: { id: dto.nucleo_id } });
-            nuevo.nombre_nucleo = nucleo?.descripcion?.toUpperCase() || '-';
-        }
-
-        // Distrito
-        if (dto.distrito_id) {
-            const distrito = await this.distritoRepository.findOne({ where: { id: dto.distrito_id } });
-            nuevo.nombre_distrito = distrito?.descripcion?.toUpperCase() || '-';
-        }
-
-        // Dirección Administrativa
-        if (dto.direccion_administrativa_id) {
-            const direccion = await this.direccionAdministrativaRepository.findOne({ where: { id: dto.direccion_administrativa_id } });
-            nuevo.nombre_direccion_administrativa = direccion?.descripcion?.toUpperCase() || '-';
-
-        }
-
-        // Ciudad
-        if (dto.ciudad_id) {
-            const ciudad = await this.ciudadRepository.findOne({ where: { id: dto.ciudad_id } });
-            nuevo.nombre_ciudad = ciudad?.descripcion?.toUpperCase() || '-';
-        }
-
-
-        return await this.edificioRepository.save(nuevo);
+        const nuevo = this.edificioRepo.create(payload);
+        const edificioCreado = await this.edificioRepo.save(nuevo);
+        await this.historialService.registrarAccion(edificioCreado, creadoPor, 'Creó un nuevo edificio');
+        return this.edificioRepo.save(nuevo);
     }
 
-
-    async findAll(estado?: string): Promise<Edificio[]> {
-        const where = estado && estado !== 'todos' ? { estado } : {};
-        return await this.edificioRepository.find({
-            where,
-            relations: ['creadoPor', 'actualizadoPor'],
-            order: { id_311: 'DESC' },
+    async findAll(): Promise<Edificio[]> {
+        return this.edificioRepo.find({
+            relations: [
+                'responsable',
+                'cargo',
+                'unidad_organizacional',
+                'creado_por',
+                'actualizado_por',
+            ],
         });
     }
 
     async findOne(id: number): Promise<Edificio> {
-        const edificio = await this.edificioRepository.findOne({
-            where: { id_311: id },
-            withDeleted: false,
+        const edificio = await this.edificioRepo.findOne({
+            where: { id },
+            relations: [
+                'responsable',
+                'cargo',
+                'unidad_organizacional',
+                'creado_por',
+                'actualizado_por',
+            ],
         });
 
         if (!edificio) {
@@ -162,37 +95,133 @@ export class EdificiosService {
         return edificio;
     }
 
-    // ✅ Actualizar edificio con trazabilidad
-    async update(id: number, dto: UpdateEdificioDto, userId: number): Promise<Edificio> {
-        const edificio = await this.findOne(id);
-        const actualizado = this.edificioRepository.merge(edificio, {
-            ...dto,
-            actualizado_por: userId,
+    async update(id: number, dto: UpdateEdificioDto): Promise<Edificio> {
+        const edificio = await this.edificioRepo.findOne({
+            where: { id },
+            relations: [
+                'responsable',
+                'cargo',
+                'unidad_organizacional',
+                'creado_por',
+                'actualizado_por',
+            ],
         });
 
-        return await this.edificioRepository.save(actualizado);
+        if (!edificio) {
+            throw new NotFoundException(`Edificio con ID ${id} no encontrado`);
+        }
+
+        if (dto.responsable_id) {
+            const responsable = await this.personalRepo.findOneBy({ id: dto.responsable_id });
+            if (responsable) edificio.responsable = responsable;
+        }
+
+        if (dto.cargo_id) {
+            const cargo = await this.cargoRepo.findOneBy({ id: dto.cargo_id });
+            if (cargo) edificio.cargo = cargo;
+        }
+
+        if (dto.unidad_organizacional_id) {
+            const unidad = await this.unidadOrgRepo.findOneBy({ id: dto.unidad_organizacional_id });
+            if (unidad) edificio.unidad_organizacional = unidad;
+        }
+
+        if (dto.actualizado_por_id) {
+            const actualizadoPor = await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id });
+            if (actualizadoPor) edificio.actualizado_por = actualizadoPor;
+        }
+
+        Object.assign(edificio, dto);
+
+        const edificioActualizado = await this.edificioRepo.save(edificio);
+
+        // 👇 Solo registrar si existe el usuario que actualiza
+        if (dto.actualizado_por_id) {
+            const usuario = await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id });
+            if (usuario) {
+                await this.historialService.registrarAccion(
+                    edificioActualizado,
+                    usuario,
+                    `Actualizó datos del edificio (ID: ${id})`,
+                );
+            }
+        }
+
+
+        return this.edificioRepo.save(edificio);
     }
 
-    // Desactivar un edificio (cambiar a INACTIVO)
-    async remove(id: number): Promise<{ message: string }> {
-        const edificio = await this.findOne(id);
-        edificio.estado = 'INACTIVO';
-        await this.edificioRepository.save(edificio);
-
-        return {
-            message: `Edificio con ID ${id} marcado como INACTIVO`,
-        };
+    async remove(id: number): Promise<void> {
+        const edificio = await this.edificioRepo.findOneBy({ id });
+        if (!edificio) {
+            throw new NotFoundException(`Edificio con ID ${id} no encontrado`);
+        }
+        await this.edificioRepo.softDelete(id);
     }
 
-    // Activar un edificio (cambiar a ACTIVO)
-    async restore(id: number): Promise<{ message: string }> {
-        const edificio = await this.findOne(id);
-        edificio.estado = 'ACTIVO';
-        await this.edificioRepository.save(edificio);
+    async cambiarEstado(id: number, userId: number): Promise<Edificio> {
+        const edificio = await this.edificioRepo.findOneBy({ id });
+        if (!edificio) {
+            throw new NotFoundException(`Edificio con ID ${id} no encontrado`);
+        }
 
-        return {
-            message: `Edificio con ID ${id} marcado como ACTIVO`,
-        };
+        const usuario = await this.usuarioRepo.findOneBy({ id: userId });
+        if (!usuario) {
+            throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
+        }
+
+        edificio.estado = edificio.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+        edificio.actualizado_por = usuario;
+
+        const edificioGuardado = await this.edificioRepo.save(edificio);
+
+        // 👇 Registrar en historial
+        await this.historialService.registrarAccion(
+            edificioGuardado,
+            usuario,
+            `Cambió el estado del edificio a ${edificioGuardado.estado}`,
+        );
+
+        return this.edificioRepo.save(edificio);
+    }
+
+    async exportarPdf(estado: string): Promise<Buffer> {
+        const registros = await this.findAll();
+
+        const filtrados = estado && estado !== 'todos'
+            ? registros.filter(e => e.estado === estado)
+            : registros;
+
+        const filasHTML = filtrados.map((edificio, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${edificio.nro_da}</td>
+        <td>${edificio.nombre_bien}</td>
+        <td>${edificio.clasificacion}</td>
+        <td>${edificio.unidad_organizacional?.descripcion || ''}</td>
+        <td>${edificio.ubicacion}</td>
+        <td>${edificio.estado}</td>
+      </tr>`
+        ).join('');
+
+        const rutaTemplate = join(__dirname, '../../../templates/pdf/activosFijos/edificios-pdf.html');
+        const template = readFileSync(rutaTemplate, 'utf8');
+        const htmlFinal = template.replace('<!-- FILAS_EDIFICIOS -->', filasHTML);
+
+        return generarPDFDesdeHTML(htmlFinal);
+    }
+    async actualizarArchivoPdf(id: number, ruta: string): Promise<Edificio> {
+        const edificio = await this.edificioRepo.findOneBy({ id });
+        if (!edificio) throw new NotFoundException('Edificio no encontrado');
+        edificio.archivo_respaldo_pdf = ruta;
+        return this.edificioRepo.save(edificio);
+    }
+
+    async actualizarFotos(id: number, rutas: string[]): Promise<Edificio> {
+        const edificio = await this.edificioRepo.findOneBy({ id });
+        if (!edificio) throw new NotFoundException('Edificio no encontrado');
+        edificio.fotos_edificio = [...(edificio.fotos_edificio || []), ...rutas];
+        return this.edificioRepo.save(edificio);
     }
 
 }

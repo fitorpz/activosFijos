@@ -3,164 +3,118 @@ import {
     Get,
     Post,
     Body,
-    Put,
     Param,
     Delete,
-    Req,
-    UseGuards,
+    Put,
     ParseIntPipe,
-    Query,
     Res,
+    Query,
+    UploadedFile,
+    UploadedFiles,
+    UseInterceptors,
+    BadRequestException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import type { Response } from 'express';
+import {
+    FileInterceptor,
+    FilesInterceptor,
+} from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
 import { EdificiosService } from './edificios.service';
 import { CreateEdificioDto } from './dto/create-edificio.dto';
 import { UpdateEdificioDto } from './dto/update-edificio.dto';
-import { Edificio } from './entities/edificio.entity';
-import type { RequestWithUser } from '../../interfaces/request-with-user.interface';
+import type { Express } from 'express';
 
-// ⬇️ IMPORTS para generación de PDF
-import * as fs from 'fs';
-import * as path from 'path';
-import type { Response } from 'express';
-import { generarPDFDesdeHTML } from '../../pdf/generarPDF';
 
-@Controller('edificios')
-@UseGuards(AuthGuard('jwt'))
+@Controller('activos-fijos/edificios')
 export class EdificiosController {
-    constructor(
-        private readonly edificiosService: EdificiosService,
-        @InjectRepository(Edificio)
-        private readonly edificioRepository: Repository<Edificio>,
-    ) { }
+    constructor(private readonly edificiosService: EdificiosService) { }
 
     @Post()
-    async create(@Body() dto: CreateEdificioDto, @Req() req: RequestWithUser) {
-        const userId = req.user.id;
-        const result = await this.edificiosService.create(dto, userId);
-        return {
-            message: 'Edificio creado correctamente',
-            data: result,
-        };
-    }
-
-    @Get(':id')
-    async findOne(
-        @Param('id', ParseIntPipe) id: number,
-        @Req() req: RequestWithUser,
-    ) {
-        const result = await this.edificiosService.findOne(id);
-        return {
-            message: 'Edificio encontrado',
-            data: result,
-        };
+    create(@Body() createEdificioDto: CreateEdificioDto) {
+        return this.edificiosService.create(createEdificioDto);
     }
 
     @Get()
-    async findAll(@Query('estado') estado?: string) {
-        const edificios = await this.edificiosService.findAll(estado);
-        const resultado = edificios.map((e) => ({
-            ...e,
-            creado_por: e.creadoPor?.nombre || null,
-            actualizado_por: e.actualizadoPor?.nombre || null,
-        }));
-
-        return {
-            message: 'Listado de edificios',
-            data: resultado,
-        };
+    findAll() {
+        return this.edificiosService.findAll();
     }
 
-    @Get('siguiente-codigo')
-    async getSiguienteCodigo(
-        @Query('prefijo') prefijo: string,
-    ): Promise<{ correlativo: string }> {
-        const last = await this.edificioRepository
-            .createQueryBuilder('edificio')
-            .where('edificio.codigo_311 LIKE :prefijo', { prefijo: `${prefijo}.%` })
-            .orderBy('edificio.codigo_311', 'DESC')
-            .getOne();
-
-        let correlativo = '0001';
-        if (last) {
-            const partes = last.codigo_311.split('.');
-            const ultCorrelativo = partes[partes.length - 1];
-            correlativo = (parseInt(ultCorrelativo) + 1).toString().padStart(4, '0');
-        }
-
-        return { correlativo };
+    @Get(':id')
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.edificiosService.findOne(id);
     }
 
     @Put(':id')
-    async update(
+    update(
         @Param('id', ParseIntPipe) id: number,
-        @Body() dto: UpdateEdificioDto,
-        @Req() req: RequestWithUser,
+        @Body() updateEdificioDto: UpdateEdificioDto,
     ) {
-        const userId = req.user.id;
-        const result = await this.edificiosService.update(id, dto, userId);
-        return {
-            message: `Edificio con ID ${id} actualizado correctamente`,
-            data: result,
-        };
+        return this.edificiosService.update(id, updateEdificioDto);
     }
 
     @Delete(':id')
-    async remove(@Param('id', ParseIntPipe) id: number) {
-        const result = await this.edificiosService.remove(id);
-        return result;
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.edificiosService.remove(id);
     }
 
-    @Put('restaurar/:id')
-    async restore(@Param('id', ParseIntPipe) id: number) {
-        const result = await this.edificiosService.restore(id);
-        return result;
+    @Put(':id/cambiar-estado')
+    cambiarEstado(
+        @Param('id', ParseIntPipe) id: number,
+        @Body('userId', ParseIntPipe) userId: number,
+    ) {
+        return this.edificiosService.cambiarEstado(id, userId);
     }
 
-    // ✅ Exportar PDF (nuevo método completo y corregido)
     @Get('exportar/pdf')
-    async exportarPDF(@Res() res: Response, @Query('estado') estado: string) {
-        try {
-            const edificios = await this.edificiosService.findAll(estado); // ✅ ahora filtra por estado
+    async exportarPdf(@Res() res: Response, @Query('estado') estado: string) {
+        const pdfBuffer = await this.edificiosService.exportarPdf(estado);
 
-            const filasHTML = edificios
-                .map(
-                    (e, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${e.codigo_311 || '-'}</td>
-        <td>${e.descripcion_edificio || 'Sin descripción'}</td>
-        <td>${e.nombre_area || '-'}</td>
-        <td>${(e as any).unidad_organizacional_nombre || '-'}</td>
-        <td>${(e as any).ambiente_nombre || '-'}</td>
-        <td>${e.estado || '-'}</td>
-      </tr>
-    `,
-                )
-                .join('');
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': 'attachment; filename="edificios.pdf"',
+            'Content-Length': pdfBuffer.length,
+        });
 
-            const templatePath = path.join(
-                process.cwd(),
-                'templates',
-                'pdf',
-                'activosFijos',
-                'edificios-pdf.html',
-            );
-
-            let html = fs.readFileSync(templatePath, 'utf-8');
-            html = html.replace('<!-- FILAS_EDIFICIOS -->', filasHTML);
-
-            const buffer = await generarPDFDesdeHTML(html);
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'inline; filename=edificios.pdf');
-            res.end(buffer);
-        } catch (error) {
-            console.error('❌ Error al generar PDF de edificios:', error);
-            return res.status(500).json({ message: 'Error al exportar PDF' });
-        }
+        res.end(pdfBuffer);
     }
 
+    @Post(':id/upload/pdf')
+    @UseInterceptors(FileInterceptor('file', {
+        storage: diskStorage({
+            destination: './uploads/edificios/pdf',
+            filename: (req, file, cb) => {
+                const unique = Date.now() + extname(file.originalname);
+                cb(null, `pdf-${unique}`);
+            },
+        }),
+    }))
+    async uploadPdf(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file) throw new BadRequestException('No se envió ningún archivo');
+        const filePath = `/uploads/edificios/pdf/${file.filename}`;
+        return this.edificiosService.actualizarArchivoPdf(id, filePath);
+    }
+
+    @Post(':id/upload/fotos')
+    @UseInterceptors(FilesInterceptor('fotos', 5, {
+        storage: diskStorage({
+            destination: './uploads/edificios/fotos',
+            filename: (req, file, cb) => {
+                const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+                cb(null, `foto-${unique}${extname(file.originalname)}`);
+            },
+        }),
+    }))
+    async uploadFotos(
+        @Param('id', ParseIntPipe) id: number,
+        @UploadedFiles() files: Express.Multer.File[],
+    ) {
+        if (!files || files.length === 0) throw new BadRequestException('No se enviaron fotos');
+        const paths = files.map((f) => `/uploads/edificios/fotos/${f.filename}`);
+        return this.edificiosService.actualizarFotos(id, paths);
+    }
 }
