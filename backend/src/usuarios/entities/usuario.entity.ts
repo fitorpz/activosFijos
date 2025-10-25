@@ -7,12 +7,15 @@ import {
     DeleteDateColumn,
     ManyToOne,
     JoinColumn,
+    OneToOne,
 } from 'typeorm';
 import { Rol } from './rol.entity';
 import { FechaAuditada } from 'src/common/entities/FechaAuditada';
+import { Personal } from 'src/parametros/personal/entities/personales.entity';
+
 
 @Entity('usuarios')
-export class Usuario extends FechaAuditada{
+export class Usuario extends FechaAuditada {
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -54,4 +57,9 @@ export class Usuario extends FechaAuditada{
 
     @DeleteDateColumn({ name: 'deleted_at', type: 'timestamp', nullable: true })
     deletedAt: Date | null;
+
+    @OneToOne(() => Personal, (personal) => personal.usuario, { nullable: true })
+    personal: Personal;
+
+
 }

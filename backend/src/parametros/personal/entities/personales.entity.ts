@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  OneToOne,
   ManyToOne,
   JoinColumn,
   CreateDateColumn,
@@ -15,20 +16,17 @@ export class Personal {
   @PrimaryGeneratedColumn()
   id: number;
 
-  // 🔹 Documento oficial (por ejemplo, carnet o registro interno)
   @Column({ type: 'bigint', nullable: true })
   documento?: number;
 
-  // 🔹 Carnet de identidad sin extensión
   @Column({ type: 'varchar', length: 50, nullable: true })
   ci?: string;
 
-  // 🔹 Nombre completo del personal
-  @Column({ type: 'varchar', length: 255, nullable: true }) // ← cambiado a true para evitar error por datos existentes
+  @Column({ type: 'varchar', length: 255, nullable: true })
   nombre?: string;
 
-  // 🔹 Usuario vinculado (login del sistema)
-  @ManyToOne(() => Usuario, { nullable: true, eager: false })
+  // 🔹 Relación 1:1 con Usuario (login)
+  @OneToOne(() => Usuario, (usuario) => usuario.personal, { nullable: true })
   @JoinColumn({ name: 'usuario_id' })
   usuario?: Usuario | null;
 
@@ -43,7 +41,7 @@ export class Personal {
   @Column({ name: 'usuario_asignado_id', nullable: true })
   usuario_asignado_id?: number;
 
-  // 🔹 Estado lógico del registro (ACTIVO/INACTIVO)
+  // 🔹 Estado lógico
   @Column({ type: 'varchar', length: 20, nullable: true, default: 'ACTIVO' })
   estado?: string;
 
@@ -70,10 +68,10 @@ export class Personal {
   fecnac?: string;
 
   @Column({ type: 'int', nullable: true })
-  estciv?: number; // 1=Soltero, 2=Casado, etc.
+  estciv?: number;
 
   @Column({ type: 'int', nullable: true })
-  sexo?: number; // 1=Masculino, 2=Femenino, etc.
+  sexo?: number;
 
   // 🔹 Auditoría
   @CreateDateColumn({ type: 'timestamp' })
@@ -85,7 +83,6 @@ export class Personal {
   @DeleteDateColumn({ type: 'timestamp', nullable: true })
   deleted_at?: Date;
 
-  // 🔹 Usuario que creó el registro
   @ManyToOne(() => Usuario, { nullable: true, eager: false })
   @JoinColumn({ name: 'creado_por_id' })
   creado_por?: Usuario | null;
@@ -93,7 +90,6 @@ export class Personal {
   @Column({ name: 'creado_por_id', nullable: true })
   creado_por_id?: number;
 
-  // 🔹 Usuario que actualizó el registro
   @ManyToOne(() => Usuario, { nullable: true, eager: false })
   @JoinColumn({ name: 'actualizado_por_id' })
   actualizado_por?: Usuario | null;

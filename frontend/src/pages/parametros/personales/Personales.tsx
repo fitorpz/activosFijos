@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../utils/axiosConfig';
+import axiosInstance from '../../../utils/axiosConfig';
 import { obtenerPermisosUsuario } from '../../../utils/permisos';
 
 export interface Usuario {
@@ -37,16 +37,18 @@ const Personales = () => {
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
     const [permisos, setPermisos] = useState<string[]>([]);
-    const navigate = useNavigate();
     const [filtroCI, setFiltroCI] = useState('');
     const [filtroNombre, setFiltroNombre] = useState('');
     const [personalesFiltrados, setPersonalesFiltrados] = useState<Personal[]>([]);
+    const navigate = useNavigate();
 
+    // 🔹 Cargar permisos del usuario
     useEffect(() => {
         const permisosUsuario = obtenerPermisosUsuario();
         setPermisos(permisosUsuario);
     }, []);
 
+    // 🔹 Obtener registros si tiene permiso
     useEffect(() => {
         if (permisos.includes('personales:listar')) {
             obtenerPersonales();
@@ -55,21 +57,20 @@ const Personales = () => {
         }
     }, [estadoFiltro, permisos]);
 
+    // 🔹 Aplicar filtros por CI y nombre
     useEffect(() => {
         const filtrados = personales.filter((p) => {
-            const coincideCI = p.ci.toLowerCase().includes(filtroCI.toLowerCase());
-            const coincideNombre = p.nombre.toLowerCase().includes(filtroNombre.toLowerCase());
+            const coincideCI = p.ci?.toLowerCase().includes(filtroCI.toLowerCase());
+            const coincideNombre = p.nombre?.toLowerCase().includes(filtroNombre.toLowerCase());
             return coincideCI && coincideNombre;
         });
         setPersonalesFiltrados(filtrados);
     }, [filtroCI, filtroNombre, personales]);
 
+    // 🔹 Obtener todos los personales
     const obtenerPersonales = async () => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await axios.get<Personal[]>('/parametros/personal', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await axiosInstance.get<Personal[]>('/parametros/personal');
             const filtrados = res.data.filter((p) =>
                 estadoFiltro === 'todos'
                     ? true
@@ -85,6 +86,7 @@ const Personales = () => {
         }
     };
 
+    // 🔹 Formateadores visuales
     const obtenerTextoEstadoCivil = (valor?: number): string => {
         switch (valor) {
             case 1: return 'Soltero';
@@ -110,28 +112,30 @@ const Personales = () => {
         return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-BO');
     };
 
+    // 🔹 Cambiar estado (activo/inactivo)
     const cambiarEstado = async (id: number) => {
         if (!window.confirm('¿Estás seguro de cambiar el estado de este personal?')) return;
         try {
-            const token = localStorage.getItem('token');
-            await axios.put(`/parametros/personal/${id}/estado`, null, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await axiosInstance.put(`/parametros/personal/${id}/estado`);
             obtenerPersonales();
         } catch (error) {
             console.error('Error al cambiar estado:', error);
         }
     };
 
+    // 🔹 Exportar PDF
     const exportarPDF = async () => {
-        const token = localStorage.getItem('token');
-        const estado = estadoFiltro === 'activos' ? 'ACTIVO' : estadoFiltro === 'inactivos' ? 'INACTIVO' : 'todos';
+        const estado =
+            estadoFiltro === 'activos'
+                ? 'ACTIVO'
+                : estadoFiltro === 'inactivos'
+                    ? 'INACTIVO'
+                    : 'todos';
         try {
-            const res = await axios.get(`/parametros/personal/exportar/pdf?estado=${estado}`, {
+            const res = await axiosInstance.get(`/parametros/personal/exportar/pdf?estado=${estado}`, {
                 responseType: 'blob',
-                headers: { Authorization: `Bearer ${token}` },
             });
-            const blob = new Blob([res.data as Blob], { type: 'application/pdf' });
+            const blob = new Blob([res.data], { type: 'application/pdf' });
             const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
         } catch (error) {
@@ -139,6 +143,7 @@ const Personales = () => {
         }
     };
 
+    // 🔹 Si no tiene permiso de listar
     if (!permisos.includes('personales:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -153,13 +158,14 @@ const Personales = () => {
 
     return (
         <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            {/* Encabezado y acciones */}
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                 <div>
-                    <h4 className="mb-0">Personal</h4>
-                    <p className="text-muted small">Gestión de registros de personal</p>
+                    <h4 className="mb-0 text-primary fw-bold">Personal</h4>
+                    <p className="text-muted small mb-0">Gestión de registros de personal</p>
                 </div>
 
-                <div className="d-flex flex-wrap align-items-center gap-2">
+                <div className="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
                     {permisos.includes('personales:crear') && (
                         <button
                             className="btn btn-primary"
@@ -175,31 +181,34 @@ const Personales = () => {
                         </button>
                     )}
 
-                    <button className="btn btn-outline-secondary" onClick={() => navigate('/parametros')}>
+                    <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => navigate('/parametros')}
+                    >
                         <i className="bi bi-arrow-left me-1"></i> Volver a Parámetros
                     </button>
 
-                    <div style={{ minWidth: '160px' }}>
-                        <select
-                            className="form-select"
-                            value={estadoFiltro}
-                            onChange={(e) => setEstadoFiltro(e.target.value)}
-                        >
-                            <option value="todos">Todos</option>
-                            <option value="activos">Solo Activos</option>
-                            <option value="inactivos">Solo Inactivos</option>
-                        </select>
-                    </div>
+                    <select
+                        className="form-select"
+                        style={{ minWidth: '160px' }}
+                        value={estadoFiltro}
+                        onChange={(e) => setEstadoFiltro(e.target.value)}
+                    >
+                        <option value="todos">Todos</option>
+                        <option value="activos">Solo Activos</option>
+                        <option value="inactivos">Solo Inactivos</option>
+                    </select>
                 </div>
             </div>
 
+            {/* Tabla de datos */}
             <div className="table-responsive">
-                <table className="table table-bordered table-hover align-middle">
+                <table className="table table-bordered table-hover table-striped align-middle">
                     <thead className="table-light">
                         <tr>
-                            <th>Nro.</th>
+                            <th>#</th>
                             <th>Usuario</th>
-                            <th>Nro. Documento</th>
+                            <th>Documento</th>
                             <th>Expedido</th>
                             <th>CI</th>
                             <th>Nombre</th>
@@ -219,10 +228,7 @@ const Personales = () => {
                             <th>Acciones</th>
                         </tr>
                         <tr>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
+                            <th colSpan={4}></th>
                             <th>
                                 <input
                                     type="text"
@@ -241,19 +247,22 @@ const Personales = () => {
                                     onChange={(e) => setFiltroNombre(e.target.value)}
                                 />
                             </th>
-                            <th colSpan={14}></th>
+                            <th colSpan={13}></th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {cargando ? (
                             <tr>
-                                <td colSpan={20} className="text-center">Cargando datos...</td>
+                                <td colSpan={20} className="text-center py-3">
+                                    Cargando datos...
+                                </td>
                             </tr>
                         ) : personalesFiltrados.length > 0 ? (
                             personalesFiltrados.map((p, index) => (
                                 <tr key={p.id}>
                                     <td>{index + 1}</td>
-                                    <td>{p.usuario ? `${p.usuario.nombre} (${p.usuario.correo})` : 'Sin usuario'}</td>
+                                    <td>{p.usuario ? `${p.usuario.nombre} (${p.usuario.correo})` : '—'}</td>
                                     <td>{p.documento ?? '—'}</td>
                                     <td>{p.expedido ?? '—'}</td>
                                     <td>{p.ci ?? '—'}</td>
@@ -271,7 +280,7 @@ const Personales = () => {
                                     <td>{formatearFecha(p.created_at)}</td>
                                     <td>{p.actualizado_por?.nombre ?? '—'}</td>
                                     <td>{formatearFecha(p.updated_at)}</td>
-                                    <td>
+                                    <td className="text-center">
                                         {permisos.includes('personales:editar') && (
                                             <button
                                                 className="btn btn-sm btn-warning me-2"
@@ -280,10 +289,12 @@ const Personales = () => {
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
                                         )}
+
                                         {(permisos.includes('personales:cambiar-estado') ||
                                             permisos.includes('personales:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'
+                                                        }`}
                                                     title={p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                     onClick={() => cambiarEstado(p.id)}
                                                 >
@@ -295,7 +306,9 @@ const Personales = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={20} className="text-center">No hay registros.</td>
+                                <td colSpan={20} className="text-center py-3">
+                                    No hay registros.
+                                </td>
                             </tr>
                         )}
                     </tbody>

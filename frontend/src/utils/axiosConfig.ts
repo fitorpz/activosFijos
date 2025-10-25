@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:3001',
@@ -6,10 +7,12 @@ const axiosInstance = axios.create({
 
 // 🟢 Agregar token a todas las solicitudes
 axiosInstance.interceptors.request.use(
-    (config) => {
+    (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('token');
-        if (!config.headers) config.headers = {};
-        if (token) config.headers.Authorization = `Bearer ${token}`;
+        if (token) {
+            config.headers = config.headers ?? new Headers();
+            (config.headers as any).Authorization = `Bearer ${token}`;
+        }
         return config;
     },
     (error) => Promise.reject(error)

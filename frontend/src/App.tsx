@@ -141,8 +141,10 @@ function App() {
 
             {/* Otros */}
             <Route path="/edificios" element={<ListaEdificios />} />
-            <Route path="/edificios/nuevo" element={<RegistroEdificio />} />
-            <Route path="/edificios/editar/:id" element={<EditarEdificio />} />
+            <Route path="/edificios/registrar" element={<RegistroEdificio />} />
+            <Route path="/activosFijos/edificios/editar/:id" element={<EditarEdificio />} />
+
+
             <Route path="/ufvs" element={<Ufvs />} />
             <Route path="/ufvs/nuevo" element={<RegistroUfv />} />
             <Route path="/ufvs/editar/:id" element={<EditarUfv />} />

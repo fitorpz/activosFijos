@@ -63,20 +63,19 @@ const Login = () => {
             style={{ minHeight: '100vh', backgroundColor: 'var(--color-secondary-100)' }}
         >
             <div className="card shadow p-4" style={{ maxWidth: '400px', width: '100%', borderRadius: '12px' }}>
-                <div
-                    className="d-flex justify-content-center align-items-center mb-4"
-                    style={{ width: '100%' }}
-                >
+                <div className="text-center mb-4">
                     <img
                         src={logo}
                         alt="Logo GAMS"
                         style={{
-                            maxWidth: '80%',
+                            width: '300px',
                             height: 'auto',
-                            objectFit: 'contain',
+                            display: 'block',
+                            margin: '0 auto',
                         }}
                     />
                 </div>
+
 
 
                 {errores.length > 0 && (

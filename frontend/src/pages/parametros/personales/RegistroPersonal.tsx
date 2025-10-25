@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../utils/axiosConfig';
+import axiosInstance from '../../../utils/axiosConfig';
+import { Form, Button, Spinner, Card, Row, Col, Alert } from 'react-bootstrap';
 
 interface Usuario {
     id: number;
@@ -8,9 +9,30 @@ interface Usuario {
     correo: string;
 }
 
+interface FormData {
+    usuario: Usuario | null;
+    usuario_id: string;
+    documento: string;
+    ci: string;
+    nombre: string;
+    estado: string;
+    expedido: string;
+    profesion: string;
+    direccion: string;
+    celular: string;
+    telefono: string;
+    email: string;
+    fecnac: string;
+    estciv: string;
+    sexo: string;
+}
+
 const RegistroPersonal = () => {
-    const [formData, setFormData] = useState({
-        usuario: null as Usuario | null,
+    const navigate = useNavigate();
+
+    // 🔹 Estado del formulario
+    const [formData, setFormData] = useState<FormData>({
+        usuario: null,
         usuario_id: '',
         documento: '',
         ci: '',
@@ -27,39 +49,40 @@ const RegistroPersonal = () => {
         sexo: '',
     });
 
+    // 🔹 Listado de usuarios disponibles
     const [usuarios, setUsuarios] = useState<Usuario[]>([]);
     const [cargando, setCargando] = useState(false);
-    const navigate = useNavigate();
+    const [alerta, setAlerta] = useState<{ tipo: 'success' | 'danger'; mensaje: string } | null>(null);
 
-    // 🧩 Cargar usuarios disponibles
+    // 🧩 Cargar usuarios disponibles al montar el componente
     useEffect(() => {
         obtenerUsuariosDisponibles();
     }, []);
 
     const obtenerUsuariosDisponibles = async () => {
-        const token = localStorage.getItem('token');
         try {
-            const res = await axios.get<Usuario[]>('/parametros/personal/usuarios-disponibles', {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const res = await axiosInstance.get<Usuario[]>('/usuarios/disponibles');
             setUsuarios(res.data);
         } catch (error) {
             console.error('❌ Error al obtener usuarios disponibles:', error);
+            setAlerta({
+                tipo: 'danger',
+                mensaje: 'No se pudieron cargar los usuarios disponibles.',
+            });
         }
     };
 
-    // 🧩 Actualizar campos
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-    ) => {
+    // 🧩 Manejar cambios de campos generales
+    const handleChange = (e: any) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // 🧠 Rellenar automáticamente nombre y correo al seleccionar usuario
+
+    // 🧠 Cuando se selecciona un usuario del sistema
     const handleUsuarioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const userId = e.target.value;
-        const selectedUser = usuarios.find(u => u.id === Number(userId)) || null;
+        const selectedUser = usuarios.find((u) => u.id === Number(userId)) || null;
 
         setFormData((prev) => ({
             ...prev,
@@ -70,260 +93,272 @@ const RegistroPersonal = () => {
         }));
     };
 
+    // 🧩 Envío del formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setCargando(true);
+        setAlerta(null);
 
         try {
-            const token = localStorage.getItem('token');
-
             const payload = {
                 ...formData,
                 usuario_id: formData.usuario ? formData.usuario.id : null,
                 documento: formData.documento ? Number(formData.documento) : null,
                 estciv: formData.estciv ? Number(formData.estciv) : null,
                 sexo: formData.sexo ? Number(formData.sexo) : null,
-                fecnac: formData.fecnac || null, // ✅ si está vacío, que vaya como null
-                nombre: formData.nombre?.trim() || '', // limpia espacios en blanco
+                fecnac: formData.fecnac || null,
+                nombre: formData.nombre?.trim() || '',
                 email: formData.email?.trim() || '',
             };
 
-            await axios.post('/parametros/personal', payload, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await axiosInstance.post('/parametros/personal', payload);
 
-            alert('✅ Personal registrado correctamente.');
-            navigate('/parametros/personales');
+            setAlerta({ tipo: 'success', mensaje: '✅ Personal registrado correctamente.' });
+
+            // Redirigir después de unos segundos
+            setTimeout(() => navigate('/parametros/personales'), 1500);
         } catch (error: any) {
             console.error('❌ Error al registrar personal:', error);
-            alert(error?.response?.data?.message || '❌ Error al registrar el personal.');
+            setAlerta({
+                tipo: 'danger',
+                mensaje: error?.response?.data?.message || 'Error al registrar el personal.',
+            });
         } finally {
             setCargando(false);
         }
     };
 
-
     return (
-        <div className="container mt-4">
-            <div className="form-container">
-                <h4 className="mb-4">Nuevo Registro de Personal</h4>
-                <form onSubmit={handleSubmit}>
-                    <div className="row">
-
-                        {/* 🧩 Usuario asignado */}
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="usuario_id" className="form-label">
-                                Usuario del Sistema (Nombre Completo)
-                            </label>
-                            <select
-                                id="usuario_id"
-                                name="usuario_id"
-                                className="form-select"
-                                value={formData.usuario_id}
-                                onChange={handleUsuarioChange}
-                                required
-                            >
-                                <option value="">Seleccionar usuario</option>
-                                {usuarios.length > 0 ? (
-                                    usuarios.map((u) => (
-                                        <option key={u.id} value={u.id}>
-                                            {u.nombre} ({u.correo})
-                                        </option>
-                                    ))
-                                ) : (
-                                    <option value="">No hay usuarios disponibles</option>
-                                )}
-                            </select>
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="documento" className="form-label">Nro Documento</label>
-                            <input
-                                type="number"
-                                id="documento"
-                                name="documento"
-                                className="form-control"
-                                value={formData.documento}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="ci" className="form-label">Documento</label>
-                            <input
-                                type="text"
-                                id="ci"
-                                name="ci"
-                                className="form-control"
-                                value={formData.ci}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="expedido" className="form-label">Expedido</label>
-                            <input
-                                type="text"
-                                id="expedido"
-                                name="expedido"
-                                className="form-control"
-                                value={formData.expedido}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        {/* 🧩 Nombre completo del usuario (auto llenado) */}
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="nombre" className="form-label">Nombre Completo (Personal)</label>
-                            <input
-                                type="text"
-                                id="nombre"
-                                name="nombre"
-                                className="form-control"
-                                value={formData.nombre}
-                                readOnly
-                            />
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="profesion" className="form-label">Profesión</label>
-                            <input
-                                type="text"
-                                id="profesion"
-                                name="profesion"
-                                className="form-control"
-                                value={formData.profesion}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="direccion" className="form-label">Dirección</label>
-                            <input
-                                type="text"
-                                id="direccion"
-                                name="direccion"
-                                className="form-control"
-                                value={formData.direccion}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="col-md-4 mb-3">
-                            <label htmlFor="celular" className="form-label">Celular</label>
-                            <input
-                                type="text"
-                                id="celular"
-                                name="celular"
-                                className="form-control"
-                                value={formData.celular}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="col-md-4 mb-3">
-                            <label htmlFor="telefono" className="form-label">Teléfono</label>
-                            <input
-                                type="text"
-                                id="telefono"
-                                name="telefono"
-                                className="form-control"
-                                value={formData.telefono}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="col-md-4 mb-3">
-                            <label htmlFor="email" className="form-label">Correo electrónico</label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                className="form-control"
-                                value={formData.email}
-                                onChange={handleChange}
-                                readOnly
-                            />
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="fecnac" className="form-label">Fecha de nacimiento</label>
-                            <input
-                                type="date"
-                                id="fecnac"
-                                name="fecnac"
-                                className="form-control"
-                                value={formData.fecnac}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="col-md-3 mb-3">
-                            <label htmlFor="estciv" className="form-label">Estado Civil</label>
-                            <select
-                                id="estciv"
-                                name="estciv"
-                                className="form-select"
-                                value={formData.estciv}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">Seleccionar</option>
-                                <option value="1">Soltero</option>
-                                <option value="2">Casado</option>
-                                <option value="3">Viudo</option>
-                                <option value="4">Divorciado</option>
-                                <option value="5">Unión libre</option>
-                            </select>
-                        </div>
-
-                        <div className="col-md-3 mb-3">
-                            <label htmlFor="sexo" className="form-label">Sexo</label>
-                            <select
-                                id="sexo"
-                                name="sexo"
-                                className="form-select"
-                                value={formData.sexo}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">Seleccionar</option>
-                                <option value="1">Masculino</option>
-                                <option value="2">Femenino</option>
-                            </select>
-                        </div>
-
-                        <div className="col-md-6 mb-3">
-                            <label htmlFor="estado" className="form-label">Estado</label>
-                            <select
-                                id="estado"
-                                name="estado"
-                                className="form-select"
-                                value={formData.estado}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="ACTIVO">ACTIVO</option>
-                                <option value="INACTIVO">INACTIVO</option>
-                            </select>
-                        </div>
+        <div className="d-flex justify-content-center mt-4">
+            <Card className="shadow-lg border-0 w-100" style={{ maxWidth: '900px' }}>
+                <Card.Body>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h4 className="text-primary fw-bold">Registrar Personal</h4>
+                        <Button variant="secondary" size="sm" onClick={() => navigate(-1)}>
+                            ← Volver
+                        </Button>
                     </div>
 
-                    <button type="submit" className="btn btn-primary" disabled={cargando}>
-                        {cargando ? 'Guardando...' : 'Registrar'}
-                    </button>
+                    {alerta && <Alert variant={alerta.tipo}>{alerta.mensaje}</Alert>}
 
-                    <button
-                        type="button"
-                        className="btn btn-secondary ms-2"
-                        onClick={() => navigate('/parametros/personales')}
-                    >
-                        Cancelar
-                    </button>
-                </form>
-            </div>
+                    <Form onSubmit={handleSubmit}>
+                        <Row>
+                            {/* Usuario del sistema */}
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Usuario del Sistema</Form.Label>
+                                    <Form.Select
+                                        name="usuario_id"
+                                        value={formData.usuario_id}
+                                        onChange={handleUsuarioChange}
+                                        required
+                                    >
+                                        <option value="">Seleccionar usuario</option>
+                                        {usuarios.length > 0 ? (
+                                            usuarios.map((u) => (
+                                                <option key={u.id} value={u.id}>
+                                                    {u.nombre} ({u.correo})
+                                                </option>
+                                            ))
+                                        ) : (
+                                            <option value="">No hay usuarios disponibles</option>
+                                        )}
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>N° Documento</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        name="documento"
+                                        value={formData.documento}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>CI</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="ci"
+                                        value={formData.ci}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Expedido</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="expedido"
+                                        value={formData.expedido}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Nombre Completo</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="nombre"
+                                        value={formData.nombre}
+                                        readOnly
+                                        placeholder="Selecciona un usuario para autocompletar"
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Profesión</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="profesion"
+                                        value={formData.profesion}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Dirección</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="direccion"
+                                        value={formData.direccion}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={3}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Celular</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="celular"
+                                        value={formData.celular}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={3}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Teléfono</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="telefono"
+                                        value={formData.telefono}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Correo electrónico</Form.Label>
+                                    <Form.Control
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        readOnly
+                                        placeholder="Autocompletado al seleccionar usuario"
+                                    />
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Fecha de Nacimiento</Form.Label>
+                                    <Form.Control
+                                        type="date"
+                                        name="fecnac"
+                                        value={formData.fecnac}
+                                        onChange={handleChange}
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col md={3}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Estado Civil</Form.Label>
+                                    <Form.Select name="estciv" value={formData.estciv} onChange={handleChange} required>
+                                        <option value="">Seleccionar</option>
+                                        <option value="1">Soltero</option>
+                                        <option value="2">Casado</option>
+                                        <option value="3">Viudo</option>
+                                        <option value="4">Divorciado</option>
+                                        <option value="5">Unión libre</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={3}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Sexo</Form.Label>
+                                    <Form.Select name="sexo" value={formData.sexo} onChange={handleChange} required>
+                                        <option value="">Seleccionar</option>
+                                        <option value="1">Masculino</option>
+                                        <option value="2">Femenino</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Estado</Form.Label>
+                                    <Form.Select name="estado" value={formData.estado} onChange={handleChange} required>
+                                        <option value="ACTIVO">ACTIVO</option>
+                                        <option value="INACTIVO">INACTIVO</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+                        </Row>
+
+                        <div className="d-flex justify-content-end mt-3">
+                            <Button variant="primary" type="submit" disabled={cargando}>
+                                {cargando ? (
+                                    <>
+                                        <Spinner animation="border" size="sm" /> Guardando...
+                                    </>
+                                ) : (
+                                    'Registrar Personal'
+                                )}
+                            </Button>
+
+                            <Button
+                                variant="secondary"
+                                className="ms-2"
+                                onClick={() => navigate('/parametros/personales')}
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                    </Form>
+                </Card.Body>
+            </Card>
         </div>
     );
 };

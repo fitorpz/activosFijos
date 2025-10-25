@@ -66,6 +66,19 @@ export class UsuariosController {
         return usuario;
     }
 
+    // 🔹 Obtener usuarios disponibles (no asignados a un personal)
+    @Get('disponibles')
+    async findDisponibles() {
+        return this.usuariosService.findUsuariosDisponibles();
+    }
+
+    // 🔹 Obtener usuarios disponibles incluyendo el usuario asignado a un personal específico
+    @Get('disponibles/:idPersonal')
+    async findDisponiblesIncluyendo(@Param('idPersonal') idPersonal: string) {
+        return this.usuariosService.findUsuariosDisponibles(+idPersonal);
+    }
+
+
     // 🔹 Actualizar usuario (PUT)
     @Put(':id')
     @TienePermiso('usuarios:editar')

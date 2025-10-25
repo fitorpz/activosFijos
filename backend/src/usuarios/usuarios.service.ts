@@ -100,6 +100,26 @@ export class UsuariosService {
         });
     }
 
+    // 🔹 Devuelve usuarios que no están asignados a ningún personal.
+    // Si se proporciona un idPersonal, también incluirá al usuario asignado a ese personal.
+    async findUsuariosDisponibles(idPersonal?: number): Promise<Usuario[]> {
+        const query = this.usuarioRepository
+            .createQueryBuilder('usuario')
+            .leftJoin('usuario.personal', 'personal')
+            .where('usuario.estado = :estado', { estado: 'ACTIVO' });
+
+        if (idPersonal) {
+            // Incluir usuario asignado al personal actual o los que no tienen personal
+            query.andWhere('(personal.id IS NULL OR personal.id = :idPersonal)', { idPersonal });
+        } else {
+            // Solo los usuarios libres (sin personal asociado)
+            query.andWhere('personal.id IS NULL');
+        }
+
+        return await query.getMany();
+    }
+
+
     async remove(id: number): Promise<{ message: string }> {
         await this.usuarioRepository.softDelete(id);
         return { message: 'Usuario eliminado correctamente' };
