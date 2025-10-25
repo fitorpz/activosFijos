@@ -1,3 +1,5 @@
 export const jwtConstants = {
-    secret: 'mi_clave_secreta_ultra_segura', // cámbiala por una variable de entorno en producción
+    // 🔐 Puedes cambiar esta clave por una más larga y segura
+    secret: 'clave-ultra-segura-2025',
 };
+

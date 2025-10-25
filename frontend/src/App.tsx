@@ -57,7 +57,6 @@ import RegistroDistrito from './pages/parametros/distritos/RegistroDistritos';
 import EditarDistrito from './pages/parametros/distritos/EditarDistritos';
 
 // 🔹 Otros módulos
-import ImprimirTickets from './pages/tickets/ImprimirTickets';
 import Ufvs from './pages/activosFijos/ufvs/ufvs';
 import RegistroUfv from './pages/activosFijos/ufvs/RegistroUfv';
 import EditarUfv from './pages/activosFijos/ufvs/EditarUfv';
@@ -141,7 +140,6 @@ function App() {
             <Route path="/parametros/distritos/editar/:id" element={<EditarDistrito />} />
 
             {/* Otros */}
-            <Route path="/tickets/imprimir" element={<ImprimirTickets />} />
             <Route path="/edificios" element={<ListaEdificios />} />
             <Route path="/edificios/nuevo" element={<RegistroEdificio />} />
             <Route path="/edificios/editar/:id" element={<EditarEdificio />} />

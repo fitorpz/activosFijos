@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Usuario } from '../usuarios/entities/usuario.entity';
 import { Repository } from 'typeorm';
@@ -17,12 +17,16 @@ export class AuthService {
     async validarUsuario(correo: string, contrasena: string): Promise<Usuario> {
         console.log('🔹 Credenciales recibidas:', { correo });
 
+        // 🔸 Normalizar correo (minúsculas y sin espacios)
+        const correoNormalizado = correo.trim().toLowerCase();
+
         // 🔸 Buscar usuario con relaciones (rol + permisos)
         const usuario = await this.usuarioRepository.findOne({
-            where: { correo },
+            where: { correo: correoNormalizado },
             relations: ['rol', 'rol.permisos'],
         });
 
+        // 🔸 Usuario no encontrado
         if (!usuario) {
             console.log('❌ Usuario no encontrado');
             throw new UnauthorizedException('Credenciales incorrectas');
@@ -31,14 +35,14 @@ export class AuthService {
         // 🔸 Verificar contraseña
         const isMatch = await bcrypt.compare(contrasena, usuario.contrasena);
         if (!isMatch) {
-            console.log('❌ Contraseña incorrecta');
+            console.log('❌ Contraseña incorrecta para:', usuario.correo);
             throw new UnauthorizedException('Credenciales incorrectas');
         }
 
         // 🔹 Verificar fecha de inicio (si existe)
         if (usuario.fecha_inicio && new Date() < new Date(usuario.fecha_inicio)) {
             console.log('⏳ Usuario aún no habilitado:', usuario.correo);
-            throw new UnauthorizedException(
+            throw new ForbiddenException(
                 'Tu acceso aún no está habilitado. Comunícate con el administrador.',
             );
         }
@@ -46,10 +50,10 @@ export class AuthService {
         // 🔹 Verificar fecha de expiración (si existe)
         if (usuario.fecha_expiracion && new Date() > new Date(usuario.fecha_expiracion)) {
             console.log('⛔ Usuario expirado:', usuario.correo);
-            throw new UnauthorizedException('El acceso de este usuario ha expirado.');
+            throw new ForbiddenException('El acceso de este usuario ha expirado.');
         }
 
-        console.log('✅ Usuario autenticado correctamente');
+        console.log('✅ Usuario autenticado correctamente:', usuario.correo);
         return usuario;
     }
 
@@ -66,8 +70,20 @@ export class AuthService {
             permisos,
         };
 
-        // 🔐 Generar token
-        const token = this.jwtService.sign(payload);
+        // 🔐 Calcular expiración del token dinámica
+        let expiresIn = '1d'; // valor por defecto (24 horas)
+        if (usuario.fecha_expiracion) {
+            const diferenciaMs = new Date(usuario.fecha_expiracion).getTime() - Date.now();
+            if (diferenciaMs <= 0) {
+                // El usuario ya expiró
+                throw new ForbiddenException('El acceso de este usuario ha expirado.');
+            }
+            // Convertir milisegundos a segundos y pasarlo al formato que acepta JWT
+            expiresIn = `${Math.floor(diferenciaMs / 1000)}s`;
+        }
+
+        // 🔐 Generar token con expiración personalizada
+        const token = this.jwtService.sign(payload, { expiresIn });
 
         // 🔸 Retornar estructura completa al frontend
         return {

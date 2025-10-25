@@ -98,12 +98,6 @@ const Layout = () => {
                             <span>Activos Fijos</span>
                         </a>
                     </li>
-                    <li>
-                        <a href="/tickets/imprimir">
-                            <i className="bi bi-printer-fill"></i>
-                            <span>Tickets</span>
-                        </a>
-                    </li>
                     <li className="nav-item dropdown">
                         <a
                             className="nav-link dropdown-toggle"

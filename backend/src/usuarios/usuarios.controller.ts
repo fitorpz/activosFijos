@@ -11,6 +11,7 @@ import {
     UseGuards,
     BadRequestException,
     NotFoundException,
+    ForbiddenException,
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
@@ -29,6 +30,7 @@ export class UsuariosController {
         private readonly userLogService: UserLogService,
     ) { }
 
+    // 🔹 Crear usuario
     @Post()
     @TienePermiso('usuarios:crear')
     async create(@Body() dto: CreateUsuarioDto, @Req() req: Request) {
@@ -48,12 +50,14 @@ export class UsuariosController {
         return { message: 'Usuario creado correctamente', usuario };
     }
 
+    // 🔹 Listar todos los usuarios
     @Get()
     @TienePermiso('usuarios:listar')
     findAll() {
         return this.usuariosService.findAll();
     }
 
+    // 🔹 Obtener un usuario por ID
     @Get(':id')
     @TienePermiso('usuarios:listar')
     async findOne(@Param('id') id: number) {
@@ -62,10 +66,13 @@ export class UsuariosController {
         return usuario;
     }
 
+    // 🔹 Actualizar usuario (PUT)
     @Put(':id')
     @TienePermiso('usuarios:editar')
     async update(@Param('id') id: string, @Body() dto: UpdateUsuarioDto, @Req() req: Request) {
         const user = req.user as any;
+        if (!user?.id) throw new BadRequestException('Usuario no autenticado.');
+
         const usuario = await this.usuariosService.update(+id, dto, user.id);
 
         await this.userLogService.registrarLog(
@@ -79,10 +86,13 @@ export class UsuariosController {
         return { message: 'Usuario actualizado correctamente', usuario };
     }
 
+    // 🔹 Actualizar parcialmente usuario (PATCH)
     @Patch(':id')
     @TienePermiso('usuarios:editar')
     async patch(@Param('id') id: string, @Body() dto: UpdateUsuarioDto, @Req() req: Request) {
         const user = req.user as any;
+        if (!user?.id) throw new BadRequestException('Usuario no autenticado.');
+
         const usuario = await this.usuariosService.update(+id, dto, user.id);
 
         await this.userLogService.registrarLog(
@@ -96,19 +106,47 @@ export class UsuariosController {
         return { message: 'Usuario parcialmente actualizado', usuario };
     }
 
+    // 🔹 Eliminar usuario
     @Delete(':id')
     @TienePermiso('usuarios:eliminar')
-    remove(@Param('id') id: number) {
-        return this.usuariosService.remove(id);
+    async remove(@Param('id') id: number, @Req() req: Request) {
+        const user = req.user as any;
+        if (!user?.id) throw new BadRequestException('Usuario no autenticado.');
+
+        const result = await this.usuariosService.remove(id);
+
+        await this.userLogService.registrarLog(
+            user.id,
+            'Eliminó un usuario',
+            JSON.stringify({ id }),
+            req.ip,
+            req.headers['user-agent'],
+        );
+
+        return { message: 'Usuario eliminado correctamente', result };
     }
 
+    // 🔹 Restaurar usuario eliminado
     @Patch('restaurar/:id')
     @TienePermiso('usuarios:editar')
-    async restaurar(@Param('id') id: number) {
+    async restaurar(@Param('id') id: number, @Req() req: Request) {
+        const user = req.user as any;
+        if (!user?.id) throw new BadRequestException('Usuario no autenticado.');
+
         await this.usuariosService.restaurar(id);
+
+        await this.userLogService.registrarLog(
+            user.id,
+            'Restauró un usuario',
+            JSON.stringify({ id }),
+            req.ip,
+            req.headers['user-agent'],
+        );
+
         return { message: 'Usuario restaurado correctamente' };
     }
 
+    // 🔹 Obtener permisos actualizados
     @Get('permisos/actualizados')
     async obtenerPermisosActualizados(@Req() req: Request) {
         const user = req.user as any;
