@@ -1,39 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
     <meta charset="UTF-8" />
     <title>Listado de Personal</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 40px;
+            color: #333;
+        }
+
+        /* Contenedor para logo y título */
+        .header-container {
+            position: relative;
+            height: 80px;
+            margin-bottom: 30px;
+        }
+
+        .header-container img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: auto;
+        }
+
+        .header-container h2 {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin: 0;
+            color: #2c3e50;
+            font-weight: 700;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
-            font-size: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 12px;
         }
 
         th,
         td {
-            border: 1px solid #000;
-            padding: 4px;
-            /* Reduce padding */
+            padding: 10px 12px;
             text-align: left;
             vertical-align: top;
         }
 
-        th {
-            background-color: #f2f2f2;
+        thead {
+            background-color: #2980b9;
+            color: white;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f4f8fb;
+        }
+
+        tbody tr:hover {
+            background-color: #eaf2f8;
+        }
+
+        th:first-child,
+        td:first-child {
+            text-align: center;
+            width: 40px;
         }
     </style>
 </head>
 
 <body>
-    <h2>Listado de Personal</h2>
+    <div class="header-container">
+        <img src="__LOGO__" alt="Logo" />
+        <h2>Listado de Personal</h2>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -60,3 +114,4 @@
 </body>
 
 </html>
+

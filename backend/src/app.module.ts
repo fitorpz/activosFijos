@@ -16,12 +16,8 @@ import { PersonalesModule } from './parametros/personal/personales.module';
 import { CargosModule } from './parametros/cargos/cargos.module';
 import { NucleosModule } from './parametros/nucleos/nucleos.module';
 import { CiudadesModule } from './parametros/ciudades/ciudades.module';
-import { TicketsModule } from './tickets/tickets.module';
 import { DistritosModule } from './parametros/distritos/distritos.module';
 import { DatabaseModule } from './database/database.module';
-
-
-
 
 
 @Module({
@@ -33,7 +29,6 @@ import { DatabaseModule } from './database/database.module';
       username: 'postgres',
       password: 'password123',
       database: 'activos_fijos',
-
       synchronize: true,     
       dropSchema: false,   
       autoLoadEntities: true, 
@@ -70,7 +65,6 @@ import { DatabaseModule } from './database/database.module';
     NucleosModule,
     DistritosModule,
     CiudadesModule,
-    TicketsModule,
   ],
   
 })

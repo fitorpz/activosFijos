@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
-import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ Importar control de permisos
+import { obtenerPermisosUsuario } from '../../../utils/permisos';
 
 export interface Usuario {
     id: number;
@@ -27,7 +27,7 @@ const Cargos = () => {
     const [cargosFiltrados, setCargosFiltrados] = useState<Cargo[]>([]);
     const [cargando, setCargando] = useState(true);
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
-    const [permisos, setPermisos] = useState<string[]>([]); // ✅ Permisos del usuario
+    const [permisos, setPermisos] = useState<string[]>([]);
     const navigate = useNavigate();
 
     const [filtroCodigo, setFiltroCodigo] = useState('');
@@ -35,13 +35,11 @@ const Cargos = () => {
     const [filtroCreadoPor, setFiltroCreadoPor] = useState('');
     const [filtroActualizadoPor, setFiltroActualizadoPor] = useState('');
 
-    // ✅ Cargar permisos del usuario
     useEffect(() => {
         const permisosUsuario = obtenerPermisosUsuario();
         setPermisos(permisosUsuario);
     }, []);
 
-    // ✅ Obtener cargos solo si tiene permiso
     useEffect(() => {
         if (permisos.includes('cargos:listar')) {
             obtenerCargos();
@@ -131,7 +129,6 @@ const Cargos = () => {
         }
     };
 
-    // 🔒 Si no tiene permiso para listar
     if (!permisos.includes('cargos:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -197,6 +194,33 @@ const Cargos = () => {
                             <th>Actualizado por</th>
                             <th>F. Actualización</th>
                             <th>Acciones</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    value={filtroCodigo}
+                                    onChange={(e) => setFiltroCodigo(e.target.value)}
+                                    placeholder="Filtrar código"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    value={filtroDescripcion}
+                                    onChange={(e) => setFiltroDescripcion(e.target.value)}
+                                    placeholder="Filtrar descripción"
+                                />
+                            </th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>

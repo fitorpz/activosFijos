@@ -16,134 +16,135 @@ export class PersonalesService {
     private readonly usuarioRepo: Repository<Usuario>,
   ) { }
 
-  // Crear una nueva area
-  async create(
-    dto: CreatePersonalesDto,
-    userId: number,
-  ): Promise<Personal> {
+  async create(dto: CreatePersonalesDto, userId: number): Promise<Personal> {
     const usuario = await this.usuarioRepo.findOneBy({ id: userId });
 
     if (!usuario) {
       throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
     }
 
-    const nuevaDireccion = this.direccionRepo.create({
-      ...dto,
+    const nuevoPersonal = this.direccionRepo.create({
+      documento: dto.documento,
+      expedido: dto.expedido,
+      ci: dto.ci,
+      nombre: dto.nombre,
+      profesion: dto.profesion,
+      direccion: dto.direccion,
+      celular: dto.celular,
+      telefono: dto.telefono,
+      email: dto.email,
+      fecnac: dto.fecnac,
+      estciv: dto.estciv,
+      sexo: dto.sexo,
+      estado: 'ACTIVO',
       creado_por: usuario,
     });
 
-    return this.direccionRepo.save(nuevaDireccion);
+    return await this.direccionRepo.save(nuevoPersonal);
   }
 
-  // Obtener todas las direcciones
   async findAll(): Promise<Personal[]> {
     return this.direccionRepo.find({
-      order: { id: 'DESC' },
-      relations: ['creado_por', 'actualizado_por'],
+      relations: ['creado_por', 'actualizado_por', 'usuario'],
     });
   }
 
-  // Obtener una sola dirección por ID
   async findOne(id: number): Promise<Personal> {
-    const direccion = await this.direccionRepo.findOne({
+    const personal = await this.direccionRepo.findOne({
       where: { id },
-      relations: ['creado_por', 'actualizado_por'],
+      relations: ['creado_por', 'actualizado_por', 'usuario'],
     });
 
-    if (!direccion) {
-      throw new NotFoundException(`PErsonal ${id} no encontrado`);
+    if (!personal) {
+      throw new NotFoundException(`Personal con ID ${id} no encontrado`);
     }
 
-    return direccion;
+    return personal;
   }
 
-  // Actualizar una dirección
-  async update(
-    id: number,
-    dto: UpdatePersonalesDto,
-    userId: number,
-  ): Promise<Personal> {
-    const direccion = await this.findOne(id);
+  async update(id: number, dto: UpdatePersonalesDto, userId: number): Promise<Personal> {
+    const personal = await this.direccionRepo.findOneBy({ id });
+    if (!personal) {
+      throw new NotFoundException(`Personal con ID ${id} no encontrado`);
+    }
 
     const usuario = await this.usuarioRepo.findOneBy({ id: userId });
     if (!usuario) {
       throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
     }
 
-    if (dto.documento !== undefined) {
-      direccion.documento = dto.documento;
-    }
+    await this.direccionRepo.update(id, {
+      documento: dto.documento,
+      expedido: dto.expedido,
+      ci: dto.ci,
+      nombre: dto.nombre,
+      profesion: dto.profesion,
+      direccion: dto.direccion,
+      celular: dto.celular,
+      telefono: dto.telefono,
+      email: dto.email,
+      fecnac: dto.fecnac,
+      estciv: dto.estciv,
+      sexo: dto.sexo,
+      actualizado_por: usuario,
+    });
 
-    if (dto.ci !== undefined) {
-      direccion.ci = dto.ci;
-    }
-
-    if (dto.nombre !== undefined) {
-      direccion.nombre = dto.nombre;
-    }
-
-    if (dto.estado !== undefined) {
-      direccion.estado = dto.estado;
-    }
-
-    if (dto.expedido !== undefined) {
-      direccion.expedido = dto.expedido;
-    }
-
-    if (dto.profesion !== undefined) {
-      direccion.profesion = dto.profesion;
-    }
-
-    if (dto.direccion !== undefined) {
-      direccion.direccion = dto.direccion;
-    }
-
-    if (dto.celular !== undefined) {
-      direccion.celular = dto.celular;
-    }
-
-    if (dto.telefono !== undefined) {
-      direccion.telefono = dto.telefono;
-    }
-
-    if (dto.email !== undefined) {
-      direccion.email = dto.email;
-    }
-
-    if (dto.fecnac !== undefined) {
-      direccion.fecnac = dto.fecnac;
-    }
-
-    if (dto.estciv !== undefined) {
-      direccion.estciv = dto.estciv;
-    }
-
-    if (dto.sexo !== undefined) {
-      direccion.sexo = dto.sexo;
-    }
-
-    direccion.actualizado_por = usuario;
-
-
-    return this.direccionRepo.save(direccion);
+    return this.findOne(id);
   }
-  async cambiarEstado(id: number, userId: number): Promise<{ nuevoEstado: string; message: string }> {
-    const personal = await this.direccionRepo.findOne({ where: { id } });
 
-    if (!personal) throw new NotFoundException('Personal no encontrado');
+  async remove(id: number): Promise<void> {
+    const personal = await this.direccionRepo.findOneBy({ id });
+    if (!personal) {
+      throw new NotFoundException(`Personal con ID ${id} no encontrado`);
+    }
+
+    await this.direccionRepo.softDelete(id);
+  }
+
+  async obtenerUsuariosDisponibles(idPersonal?: number): Promise<Usuario[]> {
+    // Subconsulta para obtener IDs de usuarios ya asignados
+    const subQuery = this.direccionRepo
+      .createQueryBuilder('personal')
+      .select('personal.usuarioId', 'usuarioId');
+
+    if (idPersonal) {
+      subQuery.where('personal.id != :idPersonal', { idPersonal });
+    }
+
+    const idsOcupados = (await subQuery.getRawMany()).map((r) => r.usuarioId).filter(Boolean);
+
+    // Ahora usar QueryBuilder para obtener solo los usuarios no asignados
+    const query = this.usuarioRepo.createQueryBuilder('usuario');
+
+    if (idsOcupados.length > 0) {
+      query.where('usuario.id NOT IN (:...ids)', { ids: idsOcupados });
+    }
+
+    return query.getMany();
+  }
+
+
+  async cambiarEstado(id: number, userId: number): Promise<Personal> {
+    const personal = await this.direccionRepo.findOneBy({ id });
+
+    if (!personal) {
+      throw new NotFoundException(`Personal con ID ${id} no encontrado`);
+    }
+
+    const nuevoEstado = personal.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
 
     const usuario = await this.usuarioRepo.findOneBy({ id: userId });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
 
-    personal.estado = personal.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    personal.actualizado_por = usuario;
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
+    }
 
-    await this.direccionRepo.save(personal);
+    await this.direccionRepo.update(id, {
+      estado: nuevoEstado,
+      actualizado_por: usuario,
+    });
 
-    return {
-      nuevoEstado: personal.estado,
-      message: `Personal actualizado a estado ${personal.estado}`,
-    };
+    return this.findOne(id);
   }
 
 }

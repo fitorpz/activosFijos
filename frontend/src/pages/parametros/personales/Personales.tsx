@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
-import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ Importar sistema de permisos
+import { obtenerPermisosUsuario } from '../../../utils/permisos';
 
 export interface Usuario {
     id: number;
@@ -29,22 +29,24 @@ interface Personal {
     actualizado_por?: { nombre: string };
     created_at: string;
     updated_at?: string;
+    usuario?: Usuario | null;
 }
 
 const Personales = () => {
     const [personales, setPersonales] = useState<Personal[]>([]);
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
-    const [permisos, setPermisos] = useState<string[]>([]); // ✅ Permisos del usuario
+    const [permisos, setPermisos] = useState<string[]>([]);
     const navigate = useNavigate();
+    const [filtroCI, setFiltroCI] = useState('');
+    const [filtroNombre, setFiltroNombre] = useState('');
+    const [personalesFiltrados, setPersonalesFiltrados] = useState<Personal[]>([]);
 
-    // ✅ Cargar permisos del usuario
     useEffect(() => {
         const permisosUsuario = obtenerPermisosUsuario();
         setPermisos(permisosUsuario);
     }, []);
 
-    // ✅ Cargar datos solo si tiene permiso
     useEffect(() => {
         if (permisos.includes('personales:listar')) {
             obtenerPersonales();
@@ -52,6 +54,15 @@ const Personales = () => {
             setCargando(false);
         }
     }, [estadoFiltro, permisos]);
+
+    useEffect(() => {
+        const filtrados = personales.filter((p) => {
+            const coincideCI = p.ci.toLowerCase().includes(filtroCI.toLowerCase());
+            const coincideNombre = p.nombre.toLowerCase().includes(filtroNombre.toLowerCase());
+            return coincideCI && coincideNombre;
+        });
+        setPersonalesFiltrados(filtrados);
+    }, [filtroCI, filtroNombre, personales]);
 
     const obtenerPersonales = async () => {
         const token = localStorage.getItem('token');
@@ -93,6 +104,12 @@ const Personales = () => {
         }
     };
 
+    const formatearFecha = (fecha?: string) => {
+        if (!fecha) return '—';
+        const d = new Date(fecha);
+        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-BO');
+    };
+
     const cambiarEstado = async (id: number) => {
         if (!window.confirm('¿Estás seguro de cambiar el estado de este personal?')) return;
         try {
@@ -122,7 +139,6 @@ const Personales = () => {
         }
     };
 
-    // 🔒 Si no tiene permiso para listar
     if (!permisos.includes('personales:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -182,6 +198,7 @@ const Personales = () => {
                     <thead className="table-light">
                         <tr>
                             <th>Nro.</th>
+                            <th>Usuario</th>
                             <th>Nro. Documento</th>
                             <th>Expedido</th>
                             <th>CI</th>
@@ -196,38 +213,64 @@ const Personales = () => {
                             <th>Sexo</th>
                             <th>Estado</th>
                             <th>Creado por</th>
-                            <th>Fecha de Registro</th>
+                            <th>F. Registro</th>
                             <th>Actualizado por</th>
-                            <th>Fecha de Actualización</th>
+                            <th>F. Actualización</th>
                             <th>Acciones</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar CI"
+                                    value={filtroCI}
+                                    onChange={(e) => setFiltroCI(e.target.value)}
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar nombre"
+                                    value={filtroNombre}
+                                    onChange={(e) => setFiltroNombre(e.target.value)}
+                                />
+                            </th>
+                            <th colSpan={14}></th>
                         </tr>
                     </thead>
                     <tbody>
                         {cargando ? (
                             <tr>
-                                <td colSpan={19} className="text-center">Cargando...</td>
+                                <td colSpan={20} className="text-center">Cargando datos...</td>
                             </tr>
-                        ) : personales.length > 0 ? (
-                            personales.map((p, index) => (
+                        ) : personalesFiltrados.length > 0 ? (
+                            personalesFiltrados.map((p, index) => (
                                 <tr key={p.id}>
                                     <td>{index + 1}</td>
-                                    <td>{p.documento}</td>
-                                    <td>{p.expedido}</td>
-                                    <td>{p.ci}</td>
-                                    <td>{p.nombre}</td>
+                                    <td>{p.usuario ? `${p.usuario.nombre} (${p.usuario.correo})` : 'Sin usuario'}</td>
+                                    <td>{p.documento ?? '—'}</td>
+                                    <td>{p.expedido ?? '—'}</td>
+                                    <td>{p.ci ?? '—'}</td>
+                                    <td>{p.nombre ?? '—'}</td>
                                     <td>{p.profesion ?? '—'}</td>
                                     <td>{p.direccion ?? '—'}</td>
                                     <td>{p.celular ?? '—'}</td>
                                     <td>{p.telefono ?? '—'}</td>
                                     <td>{p.email ?? '—'}</td>
-                                    <td>{p.fecnac ?? '—'}</td>
+                                    <td>{formatearFecha(p.fecnac)}</td>
                                     <td>{obtenerTextoEstadoCivil(p.estciv)}</td>
                                     <td>{obtenerTextoSexo(p.sexo)}</td>
                                     <td>{p.estado}</td>
                                     <td>{p.creado_por?.nombre ?? '—'}</td>
-                                    <td>{new Date(p.created_at).toLocaleDateString('es-BO')}</td>
+                                    <td>{formatearFecha(p.created_at)}</td>
                                     <td>{p.actualizado_por?.nombre ?? '—'}</td>
-                                    <td>{p.updated_at ? new Date(p.updated_at).toLocaleDateString('es-BO') : '—'}</td>
+                                    <td>{formatearFecha(p.updated_at)}</td>
                                     <td>
                                         {permisos.includes('personales:editar') && (
                                             <button
@@ -237,7 +280,6 @@ const Personales = () => {
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
                                         )}
-
                                         {(permisos.includes('personales:cambiar-estado') ||
                                             permisos.includes('personales:eliminar')) && (
                                                 <button
@@ -253,7 +295,7 @@ const Personales = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={19} className="text-center">No hay registros.</td>
+                                <td colSpan={20} className="text-center">No hay registros.</td>
                             </tr>
                         )}
                     </tbody>

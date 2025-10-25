@@ -94,8 +94,7 @@ async function bootstrap() {
 
     // ✅ Crear usuario administrador inicial (solo si no existe)
     const correo = 'admin@ejemplo.com';
-    const contrasenaPlano = 'password123';
-    const contrasena = await bcrypt.hash(contrasenaPlano, 10);
+    const contrasena = 'password123'; // SIN hashear aquí
     const nombre = 'Administrador Inicial';
 
     const existe = await usuarioService.buscarPorCorreo(correo);
@@ -108,7 +107,7 @@ async function bootstrap() {
     await usuarioService.create(
         { correo, contrasena, nombre, rol_id: 1 }, // Asigna rol SUPERADMIN
         undefined, // creadorId
-        true // contraseña ya hasheada
+        false // ⚡ se hashea dentro del service
     );
 
     console.log('✅ Usuario administrador inicial creado exitosamente.');

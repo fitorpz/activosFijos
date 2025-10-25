@@ -2,234 +2,105 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   ManyToOne,
-  JoinColumn,
+  JoinColumn
 } from 'typeorm';
+import { Personal } from 'src/parametros/personal/entities/personales.entity';
+import { UnidadOrganizacional } from 'src/parametros/unidades-organizacionales/entities/unidad-organizacional.entity';
+import { Cargo } from 'src/parametros/cargos/entities/cargos.entity';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
-
-export enum EstadoActivo {
-  EXCELENTE_NUEVO = 'EXCELENTE_NUEVO',
-  BUENO = 'BUENO',
-  REGULAR = 'REGULAR',
-  MALO = 'MALO',
-  PESIMO_DAR_DE_BAJA = 'PESIMO_DAR_DE_BAJA',
-  NO_ENCONTRADO = 'NO_ENCONTRADO',
-}
 
 @Entity('edificios')
 export class Edificio {
   @PrimaryGeneratedColumn()
-  id_311: number;
+  id: number;
+
+  @Column({ unique: true })
+  nro_da: string;
+
+  @ManyToOne(() => Personal)
+  @JoinColumn({ name: 'responsable_id' })
+  responsable: Personal;
+
+  @ManyToOne(() => Cargo)
+  @JoinColumn({ name: 'cargo_id' })
+  cargo: Cargo;
+
+  @ManyToOne(() => UnidadOrganizacional)
+  @JoinColumn({ name: 'unidad_organizacional_id' })
+  unidad_organizacional: UnidadOrganizacional;
+
+  @Column()
+  ubicacion: string;
+
+  @Column()
+  ingreso: string;
+
+  @Column('text')
+  descripcion_ingreso: string;
+
+  @Column({ type: 'date' })
+  fecha_factura_donacion: string;
 
   @Column({ nullable: true })
-  descripcion_edificio: string;
+  nro_factura: string;
 
   @Column({ nullable: true })
-  area_id: number;
+  proveedor_donante: string;
 
-  @Column({ nullable: true })
-  nombre_area: string;
+  @Column()
+  nombre_bien: string;
 
-  @Column({ nullable: true })
-  codigo_area: string;
+  @Column()
+  respaldo_legal: string;
 
-  @Column({ nullable: true })
-  unidad_organizacional_id: number;
+  @Column('text')
+  descripcion_respaldo_legal: string;
 
-  @Column({ nullable: true })
-  unidad_organizacional_nombre: string;
+  @Column()
+  clasificacion: string;
 
-  @Column({ nullable: true })
-  ambiente_id: number;
+  @Column()
+  uso: string;
 
-  @Column({ nullable: true })
-  ambiente_nombre: string;
+  @Column('decimal')
+  superficie: number;
 
-  @Column({ nullable: true })
-  cargo_id: number;
+  @Column('simple-array')
+  servicios: string[];
 
-  @Column({ nullable: true })
-  nombre_cargo: string;
+  @Column({ type: 'text', nullable: true })
+  observaciones: string;
 
-  @Column({ nullable: true })
-  auxiliar_id: number;
+  @Column()
+  estado_conservacion: string;
 
-  @Column({ nullable: true })
-  nombre_auxiliar: string;
+  @Column('decimal')
+  valor_bs: number;
 
-  @Column({ nullable: true })
-  nucleo_id: number;
+  @Column('int')
+  vida_util_anios: number;
 
-  @Column({ nullable: true })
-  nombre_nucleo: string;
+  @Column('simple-array')
+  fotos_edificio: string[];
 
-  @Column({ nullable: true })
-  distrito_id: number;
+  @Column()
+  archivo_respaldo_pdf: string;
 
-  @Column({ nullable: true })
-  nombre_distrito: string;
-
-  @Column({ nullable: true })
-  direccion_administrativa_id: number;
-
-  @Column({ nullable: true })
-  nombre_direccion_administrativa: string;
-
-  @Column({ nullable: true })
-  ciudad_id: number;
-
-  @Column({ nullable: true })
-  nombre_ciudad: string;
-
-  @Column({ default: 'ACTIVO', nullable: true })
-  estado: string;
-
-  @Column({ nullable: true })
-  codigo_311: string;
-
-  @Column({ nullable: true })
-  ingreso_311: string;
-
-  // 📌 DATOS TÉCNICOS
-  @Column({ nullable: true })
-  nombre_bien_311: string;
-
-  @Column({ nullable: true })
-  clasificacion_311: string;
-
-  @Column({ nullable: true })
-  uso_tecnico_311: string;
-
-  @Column('decimal', { nullable: true, precision: 10, scale: 2 })
-  superficie_tecnica_311: number;
-
-  // Servicios técnicos (checkbox)
-  @Column({ default: false })
-  tiene_energia: boolean;
-
-  @Column({ default: false })
-  tiene_gas: boolean;
-
-  @Column({ default: false })
-  tiene_alcantarillado: boolean;
-
-  @Column({ default: false })
-  tiene_agua: boolean;
-
-  @Column({ default: false })
-  tiene_telefono: boolean;
-
-  @Column({ default: false })
-  tiene_celular: boolean;
-
-  @Column({ default: false })
-  tiene_internet: boolean;
-
-  // Observaciones
-  @Column({ nullable: true, type: 'text' })
-  observaciones_tecnicas: string;
-
-  @Column({ nullable: true })
-  ingreso_des_311: string;
-
-  @Column({ type: 'date', nullable: true })
-  fecha_alta_311: Date;
-
-  @Column({ nullable: true })
-  proveedor_311: string;
-
-  @Column({ type: 'date', nullable: true })
-  fecha_factura_311: Date;
-
-  @Column({ nullable: true })
-  num_factura_311: string;
-
-  @Column({ nullable: true })
-  observaciones_311: string;
-
-  @Column({ nullable: true })
-  estado_conservacion_311: string;
-
-  @Column('decimal', { nullable: true })
-  valor_311: number;
-
-  @Column('int', { nullable: true })
-  vida_util_311: number;
-
-  @Column({ type: 'date', nullable: true })
-  fecha_estado_311: Date;
-
-  @Column({ nullable: true })
-  descripcion_estado_311: string;
-
-  @Column({ nullable: true })
-  estado_311: string;
-
-  @Column({ type: 'date', nullable: true })
-  estado_faltante_311: Date;
-
-  @Column({ nullable: true })
-  id_func_311: number;
-
-  @Column({ nullable: true })
-  id_clasi_311: number;
-
-  @Column({ nullable: true })
-  id_ufv_311: number;
-
-  @Column({ nullable: true })
-  id_311_1: number;
-
-  @Column({ nullable: true })
-  d_legal_311_1: string;
-
-  @Column({ nullable: true })
-  clasificacion_311_1: string;
-
-  @Column({ nullable: true })
-  uso_311_1: string;
-
-  @Column({ nullable: true })
-  superficie_311_1: string;
-
-  @Column({ nullable: true })
-  servicio_311_1: string;
-
-  @Column({ nullable: true })
-  observaciones_ubi: string;
-
-  @Column({
-    type: 'enum',
-    enum: EstadoActivo,
-    nullable: true,
-  })
-  estado_activo: EstadoActivo;
-
-  @CreateDateColumn()
-  fecha_creacion: Date;
-
-  @UpdateDateColumn()
-  fecha_actualizacion: Date;
-
-  @Column({ name: 'creado_por', nullable: true })
-  creado_por: number;
+  @ManyToOne(() => Usuario)
+  @JoinColumn({ name: 'creado_por_id' })
+  creado_por: Usuario;
 
   @ManyToOne(() => Usuario, { nullable: true })
-  @JoinColumn({ name: 'creado_por' })
-  creadoPor: Usuario;
+  @JoinColumn({ name: 'actualizado_por_id' })
+  actualizado_por: Usuario;
 
-  @Column({ name: 'actualizado_por', nullable: true })
-  actualizado_por: number;
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
-  @ManyToOne(() => Usuario, { nullable: true })
-  @JoinColumn({ name: 'actualizado_por' })
-  actualizadoPor: Usuario;
+  @Column({ type: 'timestamp', nullable: true })
+  updated_at: Date;
 
-  @Column({ nullable: true })
-  codigo_grupo: string; // Ej: 311.00
-
-  @Column({ nullable: true })
-  codigo_auxiliar: string; // Ej: 311.00.0001
+  @Column({ type: 'enum', enum: ['ACTIVO', 'INACTIVO'], default: 'ACTIVO' })
+  estado: 'ACTIVO' | 'INACTIVO';
 }

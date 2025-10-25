@@ -7,7 +7,6 @@ import logo from '../assets/img/escudo.png';
 import { jwtDecode } from 'jwt-decode';
 import axios from '../utils/axiosConfig';
 
-// === Tipado del token decodificado ===
 interface DecodedToken {
     id: number;
     correo: string;
@@ -22,27 +21,11 @@ const Layout = () => {
     const [expanded, setExpanded] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    // Estados nuevos
     const [usuario, setUsuario] = useState<DecodedToken | null>(null);
     const [ufv, setUfv] = useState<number | null>(null);
 
-    // === Obtener usuario desde token + UFV actual ===
     useEffect(() => {
         const token = localStorage.getItem('token');
-
-        // Decodificar token si existe
-        if (token) {
-            try {
-                const decoded: DecodedToken = jwtDecode(token);
-                setUsuario(decoded);
-                console.log("Usuario autenticado:", decoded);
-            } catch (error) {
-                console.error("Error al decodificar token:", error);
-            }
-        }
-
-        // Obtener UFV desde backend
-        // Obtener UFV desde backend
         const fetchUFV = async () => {
             try {
                 interface UfvResponse {
@@ -57,7 +40,6 @@ const Layout = () => {
                     },
                 });
 
-                // Convertir a número si viene como string
                 const valorNumerico = parseFloat(res.data.valor as string);
                 if (!isNaN(valorNumerico)) {
                     setUfv(valorNumerico);
@@ -81,7 +63,6 @@ const Layout = () => {
 
     return (
         <div className="vscode-layout">
-            {/* === Sidebar === */}
             <aside
                 className={`vscode-sidebar ${expanded ? 'expanded' : ''} ${mobileOpen ? 'mobile-open' : ''}`}
                 onMouseEnter={() => window.innerWidth > 768 && setExpanded(true)}
@@ -160,10 +141,8 @@ const Layout = () => {
                 </div>
             </aside>
 
-            {/* === Overlay en móvil === */}
             {mobileOpen && <div className="overlay" onClick={() => setMobileOpen(false)}></div>}
 
-            {/* === Contenido === */}
             <main className="vscode-content">
                 <header className="vscode-topbar d-flex justify-content-between align-items-center px-3 py-2">
                     <div className="d-flex align-items-center">
@@ -176,7 +155,6 @@ const Layout = () => {
                         <h5 className="mb-0 text-dark">Sistema de Activos Fijos</h5>
                     </div>
 
-                    {/* === Usuario + UFV === */}
                     <div className="d-flex align-items-center text-dark">
                         {ufv !== null && (
                             <span className="me-4">

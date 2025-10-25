@@ -26,7 +26,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
 
         if (!usuario) {
-            console.error('❌ Usuario no encontrado para el payload:', payload);
             throw new UnauthorizedException('Token inválido o usuario inexistente');
         }
 
@@ -34,7 +33,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         const permisos = usuario.rol?.permisos?.map((p) => p.nombre) || [];
         usuario['permisos'] = permisos;
 
-        console.log('✅ [JwtStrategy] Usuario validado con permisos:', permisos);
         return usuario;
     }
 }
