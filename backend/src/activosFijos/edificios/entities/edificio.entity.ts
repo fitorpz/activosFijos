@@ -3,12 +3,17 @@ import {
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Personal } from 'src/parametros/personal/entities/personales.entity';
 import { UnidadOrganizacional } from 'src/parametros/unidades-organizacionales/entities/unidad-organizacional.entity';
 import { Cargo } from 'src/parametros/cargos/entities/cargos.entity';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { EdificioAmpliacion } from './edificio-ampliacion.entity';
+import { EdificioRemodelacion } from './edificio-remodelacion.entity';
+import { EdificioBaja } from './edificio-baja.entity';
+
 
 @Entity('edificios')
 export class Edificio {
@@ -103,4 +108,14 @@ export class Edificio {
 
   @Column({ type: 'enum', enum: ['ACTIVO', 'INACTIVO'], default: 'ACTIVO' })
   estado: 'ACTIVO' | 'INACTIVO';
+
+  @OneToMany(() => EdificioAmpliacion, (ampliacion) => ampliacion.edificio)
+  ampliaciones: EdificioAmpliacion[];
+
+  @OneToMany(() => EdificioRemodelacion, (remodelacion) => remodelacion.edificio)
+  remodelaciones: EdificioRemodelacion[];
+
+  @OneToMany(() => EdificioBaja, (baja) => baja.edificio)
+  bajas: EdificioBaja[];
+
 }
