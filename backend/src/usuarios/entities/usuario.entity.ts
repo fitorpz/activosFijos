@@ -59,7 +59,9 @@ export class Usuario extends FechaAuditada {
     deletedAt: Date | null;
 
     @OneToOne(() => Personal, (personal) => personal.usuario, { nullable: true })
-    personal: Personal;
+    personal?: Personal | null;
 
+    @Column({ type: 'varchar', length: 20, default: 'ACTIVO' })
+    estado: string;
 
 }

@@ -34,6 +34,7 @@ export class EdificiosService {
         private readonly historialService: HistorialEdificioService,
     ) { }
 
+    // 🔹 Crear un nuevo edificio
     async create(dto: CreateEdificioDto): Promise<Edificio> {
         const responsable = await this.personalRepo.findOneBy({ id: dto.responsable_id });
         const cargo = await this.cargoRepo.findOneBy({ id: dto.cargo_id });
@@ -60,10 +61,19 @@ export class EdificiosService {
 
         const nuevo = this.edificioRepo.create(payload);
         const edificioCreado = await this.edificioRepo.save(nuevo);
-        await this.historialService.registrarAccion(edificioCreado, creadoPor, 'Creó un nuevo edificio');
-        return this.edificioRepo.save(nuevo);
+
+        // ✅ Registro en historial (nuevo formato)
+        await this.historialService.registrarAccion({
+            edificioId: edificioCreado.id,
+            usuarioId: creadoPor.id,
+            accion: 'CREAR_EDIFICIO',
+            descripcion: `Se creó un nuevo edificio (${edificioCreado.nombre_bien}).`,
+        });
+
+        return edificioCreado;
     }
 
+    // 🔹 Listar todos los edificios
     async findAll(): Promise<Edificio[]> {
         return this.edificioRepo.find({
             relations: [
@@ -76,6 +86,7 @@ export class EdificiosService {
         });
     }
 
+    // 🔹 Buscar edificio por ID
     async findOne(id: number): Promise<Edificio> {
         const edificio = await this.edificioRepo.findOne({
             where: { id },
@@ -95,6 +106,7 @@ export class EdificiosService {
         return edificio;
     }
 
+    // 🔹 Actualizar edificio
     async update(id: number, dto: UpdateEdificioDto): Promise<Edificio> {
         const edificio = await this.edificioRepo.findOne({
             where: { id },
@@ -135,22 +147,20 @@ export class EdificiosService {
 
         const edificioActualizado = await this.edificioRepo.save(edificio);
 
-        // 👇 Solo registrar si existe el usuario que actualiza
+        // ✅ Registrar en historial (nuevo formato)
         if (dto.actualizado_por_id) {
-            const usuario = await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id });
-            if (usuario) {
-                await this.historialService.registrarAccion(
-                    edificioActualizado,
-                    usuario,
-                    `Actualizó datos del edificio (ID: ${id})`,
-                );
-            }
+            await this.historialService.registrarAccion({
+                edificioId: edificioActualizado.id,
+                usuarioId: dto.actualizado_por_id,
+                accion: 'EDITAR_EDIFICIO',
+                descripcion: `Actualizó datos del edificio (ID: ${id}).`,
+            });
         }
 
-
-        return this.edificioRepo.save(edificio);
+        return edificioActualizado;
     }
 
+    // 🔹 Eliminar edificio (borrado lógico)
     async remove(id: number): Promise<void> {
         const edificio = await this.edificioRepo.findOneBy({ id });
         if (!edificio) {
@@ -159,6 +169,7 @@ export class EdificiosService {
         await this.edificioRepo.softDelete(id);
     }
 
+    // 🔹 Cambiar estado (ACTIVO / INACTIVO)
     async cambiarEstado(id: number, userId: number): Promise<Edificio> {
         const edificio = await this.edificioRepo.findOneBy({ id });
         if (!edificio) {
@@ -175,24 +186,29 @@ export class EdificiosService {
 
         const edificioGuardado = await this.edificioRepo.save(edificio);
 
-        // 👇 Registrar en historial
-        await this.historialService.registrarAccion(
-            edificioGuardado,
-            usuario,
-            `Cambió el estado del edificio a ${edificioGuardado.estado}`,
-        );
+        // ✅ Registrar en historial (nuevo formato)
+        await this.historialService.registrarAccion({
+            edificioId: edificioGuardado.id,
+            usuarioId: userId,
+            accion: 'CAMBIAR_ESTADO',
+            descripcion: `Cambió el estado del edificio a ${edificioGuardado.estado}.`,
+        });
 
-        return this.edificioRepo.save(edificio);
+        return edificioGuardado;
     }
 
+    // 🔹 Exportar PDF
     async exportarPdf(estado: string): Promise<Buffer> {
         const registros = await this.findAll();
 
-        const filtrados = estado && estado !== 'todos'
-            ? registros.filter(e => e.estado === estado)
-            : registros;
+        const filtrados =
+            estado && estado !== 'todos'
+                ? registros.filter((e) => e.estado === estado)
+                : registros;
 
-        const filasHTML = filtrados.map((edificio, i) => `
+        const filasHTML = filtrados
+            .map(
+                (edificio, i) => `
       <tr>
         <td>${i + 1}</td>
         <td>${edificio.nro_da}</td>
@@ -201,15 +217,21 @@ export class EdificiosService {
         <td>${edificio.unidad_organizacional?.descripcion || ''}</td>
         <td>${edificio.ubicacion}</td>
         <td>${edificio.estado}</td>
-      </tr>`
-        ).join('');
+      </tr>`,
+            )
+            .join('');
 
-        const rutaTemplate = join(__dirname, '../../../templates/pdf/activosFijos/edificios-pdf.html');
+        const rutaTemplate = join(
+            __dirname,
+            '../../../templates/pdf/activosFijos/edificios-pdf.html',
+        );
         const template = readFileSync(rutaTemplate, 'utf8');
         const htmlFinal = template.replace('<!-- FILAS_EDIFICIOS -->', filasHTML);
 
         return generarPDFDesdeHTML(htmlFinal);
     }
+
+    // 🔹 Actualizar archivo PDF
     async actualizarArchivoPdf(id: number, ruta: string): Promise<Edificio> {
         const edificio = await this.edificioRepo.findOneBy({ id });
         if (!edificio) throw new NotFoundException('Edificio no encontrado');
@@ -217,11 +239,11 @@ export class EdificiosService {
         return this.edificioRepo.save(edificio);
     }
 
+    // 🔹 Agregar fotos al edificio
     async actualizarFotos(id: number, rutas: string[]): Promise<Edificio> {
         const edificio = await this.edificioRepo.findOneBy({ id });
         if (!edificio) throw new NotFoundException('Edificio no encontrado');
         edificio.fotos_edificio = [...(edificio.fotos_edificio || []), ...rutas];
         return this.edificioRepo.save(edificio);
     }
-
 }

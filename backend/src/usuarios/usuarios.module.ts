@@ -18,9 +18,10 @@ import { UserLogModule } from '../user-log/user-log.module';
 import { AuditoriaRolesPermisosModule } from 'src/auditoria/auditoria-roles-permisos.module';
 
 import { PermisosModule } from './permisos.module';
+import { Personal } from 'src/parametros/personal/entities/personales.entity';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Usuario, Rol, Permiso]),
+    TypeOrmModule.forFeature([Usuario, Rol, Permiso, Personal]),
     UserLogModule,
     AuditoriaRolesPermisosModule,
     PermisosModule,

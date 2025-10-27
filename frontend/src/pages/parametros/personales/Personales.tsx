@@ -206,12 +206,11 @@ const Personales = () => {
                 <table className="table table-bordered table-hover table-striped align-middle">
                     <thead className="table-light">
                         <tr>
-                            <th>#</th>
-                            <th>Usuario</th>
+                            <th>Nro.</th>
+                            <th>Nombre</th>
                             <th>Documento</th>
                             <th>Expedido</th>
-                            <th>CI</th>
-                            <th>Nombre</th>
+                            <th>CI</th>                           
                             <th>Profesión</th>
                             <th>Dirección</th>
                             <th>Celular</th>
@@ -262,11 +261,10 @@ const Personales = () => {
                             personalesFiltrados.map((p, index) => (
                                 <tr key={p.id}>
                                     <td>{index + 1}</td>
-                                    <td>{p.usuario ? `${p.usuario.nombre} (${p.usuario.correo})` : '—'}</td>
+                                    <td>{p.nombre ?? '—'}</td>
                                     <td>{p.documento ?? '—'}</td>
                                     <td>{p.expedido ?? '—'}</td>
                                     <td>{p.ci ?? '—'}</td>
-                                    <td>{p.nombre ?? '—'}</td>
                                     <td>{p.profesion ?? '—'}</td>
                                     <td>{p.direccion ?? '—'}</td>
                                     <td>{p.celular ?? '—'}</td>

@@ -57,6 +57,11 @@ export class UsuariosController {
         return this.usuariosService.findAll();
     }
 
+    @Get('disponibles')
+    async findDisponibles() {
+        return this.usuariosService.findUsuariosDisponibles();
+    }
+
     // 🔹 Obtener un usuario por ID
     @Get(':id')
     @TienePermiso('usuarios:listar')
@@ -64,12 +69,6 @@ export class UsuariosController {
         const usuario = await this.usuariosService.findOne(id);
         if (!usuario) throw new NotFoundException('Usuario no encontrado');
         return usuario;
-    }
-
-    // 🔹 Obtener usuarios disponibles (no asignados a un personal)
-    @Get('disponibles')
-    async findDisponibles() {
-        return this.usuariosService.findUsuariosDisponibles();
     }
 
     // 🔹 Obtener usuarios disponibles incluyendo el usuario asignado a un personal específico

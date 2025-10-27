@@ -10,13 +10,17 @@ axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('token');
         if (token) {
-            config.headers = config.headers ?? new Headers();
-            (config.headers as any).Authorization = `Bearer ${token}`;
+            if (!config.headers) {
+                config.headers = {} as any;
+            }
+            (config.headers as any)['Authorization'] = `Bearer ${token}`;
         }
         return config;
     },
     (error) => Promise.reject(error)
 );
+
+
 
 // 🔴 Manejar respuestas (sin cerrar sesión automáticamente)
 axiosInstance.interceptors.response.use(

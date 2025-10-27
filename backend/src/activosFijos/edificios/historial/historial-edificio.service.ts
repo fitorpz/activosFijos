@@ -12,17 +12,23 @@ export class HistorialEdificioService {
         private readonly historialRepo: Repository<HistorialEdificio>,
     ) { }
 
-    async registrarAccion(
-        edificio: Edificio,
-        usuario: Usuario,
-        accion: string,
-    ): Promise<HistorialEdificio> {
+    async registrarAccion(data: {
+        edificioId: number;
+        usuarioId: number;
+        accion: string;
+        descripcion?: string;
+    }): Promise<HistorialEdificio> {
+        const { edificioId, usuarioId, accion, descripcion } = data;
+
         const historial = this.historialRepo.create({
-            edificio,
-            usuario,
+            edificio: { id: edificioId } as any,
+            usuario: { id: usuarioId } as any,
             accion,
+            descripcion,
+            fecha_accion: new Date(),
         });
 
-        return this.historialRepo.save(historial);
+        return await this.historialRepo.save(historial);
     }
+
 }
