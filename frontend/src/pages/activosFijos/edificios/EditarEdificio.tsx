@@ -77,7 +77,7 @@ interface Historial {
    Componente principal
 =========================== */
 const EditarEdificio = () => {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     const [edificio, setEdificio] = useState<Partial<Edificio>>({});
@@ -98,10 +98,10 @@ const EditarEdificio = () => {
     const fetchCatalogos = async () => {
         try {
             const [usuariosRes, personalesRes, cargosRes, unidadesRes] = await Promise.all([
-                axiosInstance.get("/activos-fijos/usuarios"),
-                axiosInstance.get("/activos-fijos/personales"),
-                axiosInstance.get("/activos-fijos/cargos"),
-                axiosInstance.get("/activos-fijos/unidades-organizacionales"),
+                axiosInstance.get("/usuarios"),
+                axiosInstance.get("/parametros/personal"),
+                axiosInstance.get("/parametros/cargos"),
+                axiosInstance.get("/parametros/unidades-organizacionales"),
             ]);
             setUsuarios(usuariosRes.data);
             setPersonales(personalesRes.data);
@@ -112,6 +112,7 @@ const EditarEdificio = () => {
         }
     };
 
+    // 🔹 Función normal (sin hooks dentro)
     const fetchEdificio = async () => {
         try {
             const res = await axiosInstance.get(`/activos-fijos/edificios/${id}`);
@@ -121,6 +122,14 @@ const EditarEdificio = () => {
         }
     };
 
+    // ✅ Hook fuera de la función, donde debe estar
+    useEffect(() => {
+        if (id) {
+            fetchCatalogos();
+            fetchEdificio();
+        }
+    }, [id]);
+
     const handleChange = (e: React.ChangeEvent<any>) => {
         const { name, value } = e.target;
         setEdificio((prev) => ({ ...prev, [name]: value }));
@@ -129,8 +138,25 @@ const EditarEdificio = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+
         try {
-            await axiosInstance.put(`/activos-fijos/edificios/${id}`, edificio);
+            const payload = {
+                nro_da: edificio?.nro_da ?? "",
+                nombre_bien: edificio?.nombre_bien ?? "",
+                descripcion_ingreso: edificio?.descripcion_ingreso ?? "",
+                ubicacion: edificio?.ubicacion ?? "",
+                clasificacion: edificio?.clasificacion ?? "",
+                uso: edificio?.uso ?? "",
+                estado_conservacion: edificio?.estado_conservacion ?? "",
+                valor_bs: edificio?.valor_bs ?? 0,
+                vida_util_anios: edificio?.vida_util_anios ?? 0,
+                unidad_organizacional_id: edificio?.unidad_organizacional_id ?? null,
+                responsable_id: edificio?.responsable_id ?? null,
+                cargo_id: edificio?.cargo_id ?? null,
+            };
+
+            await axiosInstance.put(`/activos-fijos/edificios/${id}`, payload);
+
             setMsg({ type: "success", text: "Cambios guardados correctamente." });
         } catch (error) {
             console.error("Error al guardar", error);
@@ -139,6 +165,8 @@ const EditarEdificio = () => {
             setLoading(false);
         }
     };
+
+
 
     return (
         <div className="container mt-4">
@@ -310,7 +338,7 @@ const DatosGeneralesTab = ({
                         <option value="">Seleccione...</option>
                         {cargos.map((c: any) => (
                             <option key={c.id} value={c.id}>
-                                {c.nombre}
+                                {c.cargo || c.nombre || c.descripcion || `Cargo #${c.id}`}
                             </option>
                         ))}
                     </Form.Select>
@@ -336,16 +364,17 @@ const AmpliacionesTab = ({ edificioId }: { edificioId: number }) => {
     const [loading, setLoading] = useState(false);
 
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/edificios/ampliaciones?edificioId=${edificioId}`);
+        const res = await axiosInstance.get(`/activos-fijos/ampliaciones?edificioId=${edificioId}`);
         setData(res.data);
     };
+
 
     useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await axiosInstance.post(`/activos-fijos/edificios/ampliaciones`, { ...form, edificioId });
+        await axiosInstance.post(`/activos-fijos/ampliaciones`, { ...form, edificioId });
         setShow(false);
         fetchData();
         setLoading(false);
@@ -434,20 +463,22 @@ const RemodelacionesTab = ({ edificioId }: { edificioId: number }) => {
     const [loading, setLoading] = useState(false);
 
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/edificios/remodelaciones?edificioId=${edificioId}`);
+        const res = await axiosInstance.get(`/activos-fijos/remodelaciones?edificioId=${edificioId}`);
         setData(res.data);
     };
+
 
     useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await axiosInstance.post(`/activos-fijos/edificios/remodelaciones`, { ...form, edificioId });
+        await axiosInstance.post(`/activos-fijos/remodelaciones`, { ...form, edificioId });
         setShow(false);
         fetchData();
         setLoading(false);
     };
+
 
     return (
         <>
@@ -532,16 +563,17 @@ const BajasTab = ({ edificioId }: { edificioId: number }) => {
     const [loading, setLoading] = useState(false);
 
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/edificios/bajas?edificioId=${edificioId}`);
+        const res = await axiosInstance.get(`/activos-fijos/bajas?edificioId=${edificioId}`);
         setData(res.data);
     };
+
 
     useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await axiosInstance.post(`/activos-fijos/edificios/bajas`, { ...form, edificioId });
+        await axiosInstance.post(`/activos-fijos/bajas`, { ...form, edificioId });
         setShow(false);
         fetchData();
         setLoading(false);
@@ -625,9 +657,10 @@ const BajasTab = ({ edificioId }: { edificioId: number }) => {
 const HistorialTab = ({ edificioId }: { edificioId: number }) => {
     const [data, setData] = useState<Historial[]>([]);
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/edificios/historial/${edificioId}`);
+        const res = await axiosInstance.get(`/activos-fijos/historial-edificios/${edificioId}`);
         setData(res.data);
     };
+
     useEffect(() => { fetchData(); }, []);
 
     return (

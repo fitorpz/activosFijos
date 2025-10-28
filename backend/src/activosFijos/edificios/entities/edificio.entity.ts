@@ -89,8 +89,9 @@ export class Edificio {
   @Column('simple-array')
   fotos_edificio: string[];
 
-  @Column()
-  archivo_respaldo_pdf: string;
+  @Column({ name: 'archivo_respaldo_pdf', type: 'varchar', nullable: true })
+  archivo_respaldo_pdf?: string | null;
+
 
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'creado_por_id' })

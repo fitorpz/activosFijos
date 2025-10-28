@@ -4,9 +4,26 @@ import axiosInstance from '../../../utils/axiosConfig';
 import axios, { AxiosResponse } from 'axios';
 import { Form, Button, Spinner, Card, Row, Col, Alert } from 'react-bootstrap';
 
+interface DireccionAdministrativa {
+    id: number;
+    codigo: string;
+    descripcion: string;
+}
+
 interface Usuario { id: number; nombre: string; }
-interface Personal { id: number; nombre: string; }
-interface Cargo { id: number; nombre: string; }
+interface Personal {
+    id: number;
+    nombre: string;
+    ci: string;
+}
+
+interface Cargo {
+  id: number;
+  cargo?: string;        
+  nombre?: string;       
+  descripcion?: string;   
+}
+
 interface UnidadOrganizacional { id: number; descripcion: string; }
 
 const RegistroEdificio = () => {
@@ -33,32 +50,49 @@ const RegistroEdificio = () => {
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
 
+    const [direcciones, setDirecciones] = useState<DireccionAdministrativa[]>([]);
+
+
     useEffect(() => {
-        fetchDatos();
+        fetchCatalogos();
     }, []);
 
-    const fetchDatos = async () => {
+    const fetchCatalogos = async () => {
         try {
-            const [usuariosRes, personalesRes, cargosRes, unidadesRes]: [
-                AxiosResponse<Usuario[]>,
-                AxiosResponse<Personal[]>,
-                AxiosResponse<Cargo[]>,
-                AxiosResponse<UnidadOrganizacional[]>
-            ] = await Promise.all([
-                axiosInstance.get('/activos-fijos/usuarios'),
-                axiosInstance.get('/activos-fijos/personales'),
-                axiosInstance.get('/activos-fijos/cargos'),
-                axiosInstance.get('/activos-fijos/unidades-organizacionales'),
-            ]);
+            const [
+                direccionesRes,
+                usuariosRes,
+                personalesRes,
+                cargosRes,
+                unidadesRes,
+            ]: [
+                    AxiosResponse<DireccionAdministrativa[]>,
+                    AxiosResponse<Usuario[]>,
+                    AxiosResponse<Personal[]>,
+                    AxiosResponse<Cargo[]>,
+                    AxiosResponse<UnidadOrganizacional[]>
+                ] = await Promise.all([
+                    axiosInstance.get("/parametros/direcciones-administrativas"),
+                    axiosInstance.get("/usuarios"),
+                    axiosInstance.get("/parametros/personal"),
+                    axiosInstance.get("/parametros/cargos"),
+                    axiosInstance.get("/parametros/unidades-organizacionales"),
+                ]);
 
+            setDirecciones(direccionesRes.data);
             setUsuarios(usuariosRes.data);
             setPersonales(personalesRes.data);
             setCargos(cargosRes.data);
             setUnidades(unidadesRes.data);
-        } catch (error) {
-            console.error('Error al cargar catálogos:', error);
+        } catch (error: any) {
+            console.error("❌ Error al cargar catálogos:", error);
+            setErrorMsg(
+                "Error al cargar los catálogos. Verifique conexión o rutas del backend."
+            );
         }
     };
+
+
 
     const handleChange = (e: React.ChangeEvent<any>) => {
         const { name, value } = e.target;
@@ -96,37 +130,50 @@ const RegistroEdificio = () => {
             const res = await axiosInstance.post('/activos-fijos/edificios', formData);
             const edificioId = res.data.id;
 
-            // 2️⃣ Subir PDF
+            // 2️⃣ Subir PDF (si existe)
             if (pdf) {
                 const pdfData = new FormData();
                 pdfData.append('file', pdf);
-                await axios.post(
-                    `${axiosInstance.defaults.baseURL}/activos-fijos/edificios/${edificioId}/upload/pdf`,
+
+                await axiosInstance.post(
+                    `/activos-fijos/edificios/${edificioId}/upload/pdf`,
                     pdfData,
-                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                    {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    }
                 );
             }
 
-            // 3️⃣ Subir fotos
+            // 3️⃣ Subir fotos (si existen)
             if (fotos.length > 0) {
                 const fotosData = new FormData();
                 fotos.forEach((f) => fotosData.append('fotos', f));
-                await axios.post(
-                    `${axiosInstance.defaults.baseURL}/activos-fijos/edificios/${edificioId}/upload/fotos`,
+
+                await axiosInstance.post(
+                    `/activos-fijos/edificios/${edificioId}/upload/fotos`,
                     fotosData,
-                    { headers: { 'Content-Type': 'multipart/form-data' } }
+                    {
+                        headers: { 'Content-Type': 'multipart/form-data' },
+                    }
                 );
             }
 
+            // ✅ Éxito
             setSuccessMsg('✅ Edificio registrado correctamente.');
             setTimeout(() => navigate('/edificios'), 1500);
-        } catch (error) {
-            console.error('Error al registrar edificio:', error);
-            setErrorMsg('❌ Ocurrió un error al registrar el edificio.');
+        } catch (error: any) {
+            console.error('❌ Error al registrar edificio:', error);
+
+            if (error.response?.status === 401) {
+                setErrorMsg('🚫 Sesión no autorizada. Inicie sesión nuevamente.');
+            } else {
+                setErrorMsg('❌ Ocurrió un error al registrar el edificio.');
+            }
         } finally {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="d-flex justify-content-center mt-4">
@@ -146,13 +193,20 @@ const RegistroEdificio = () => {
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Código DA</Form.Label>
-                                    <Form.Control name="nro_da" onChange={handleChange} required />
-                                </Form.Group>
-
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Nombre del Bien</Form.Label>
-                                    <Form.Control name="nombre_bien" onChange={handleChange} required />
+                                    <Form.Label>Dirección Administrativa (Código DA)</Form.Label>
+                                    <Form.Select
+                                        name="nro_da"
+                                        value={formData.nro_da || ""}
+                                        onChange={handleChange}
+                                        required
+                                    >
+                                        <option value="">Seleccione...</option>
+                                        {direcciones.map((d) => (
+                                            <option key={d.id} value={d.id}>
+                                                {d.codigo} — {d.descripcion}
+                                            </option>
+                                        ))}
+                                    </Form.Select>
                                 </Form.Group>
 
                                 <Form.Group className="mb-3">
@@ -167,17 +221,23 @@ const RegistroEdificio = () => {
                                     </Form.Select>
                                 </Form.Group>
 
+
                                 <Form.Group className="mb-3">
                                     <Form.Label>Cargo</Form.Label>
                                     <Form.Select name="cargo_id" onChange={handleChange} required>
                                         <option value="">Seleccione</option>
-                                        {cargos.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.nombre}
-                                            </option>
-                                        ))}
+                                        {cargos.length === 0 ? (
+                                            <option disabled>No hay cargos disponibles</option>
+                                        ) : (
+                                            cargos.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.cargo || c.nombre || c.descripcion || `Cargo #${c.id}`}
+                                                </option>
+                                            ))
+                                        )}
                                     </Form.Select>
                                 </Form.Group>
+
 
                                 <Form.Group className="mb-3">
                                     <Form.Label>Unidad Organizacional</Form.Label>
@@ -189,6 +249,11 @@ const RegistroEdificio = () => {
                                             </option>
                                         ))}
                                     </Form.Select>
+                                </Form.Group>
+
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Nombre del Bien</Form.Label>
+                                    <Form.Control name="nombre_bien" onChange={handleChange} required />
                                 </Form.Group>
 
                                 <Form.Group className="mb-3">

@@ -142,7 +142,7 @@ function App() {
             {/* Otros */}
             <Route path="/edificios" element={<ListaEdificios />} />
             <Route path="/edificios/registrar" element={<RegistroEdificio />} />
-            <Route path="/activosFijos/edificios/editar/:id" element={<EditarEdificio />} />
+            <Route path="/edificios/editar/:id" element={<EditarEdificio />} />
 
 
             <Route path="/ufvs" element={<Ufvs />} />
