@@ -6,6 +6,7 @@ interface Area {
     id: number;
     descripcion: string;
 }
+
 interface UnidadOrganizacional {
     id: number;
     codigo: string;
@@ -15,7 +16,6 @@ interface UnidadOrganizacional {
         descripcion: string;
     };
 }
-
 
 const EditarUnidadesOrganizacionales = () => {
     const { id } = useParams();
@@ -31,8 +31,21 @@ const EditarUnidadesOrganizacionales = () => {
     const [cargando, setCargando] = useState(true);
 
     useEffect(() => {
-        obtenerUnidad();
-        obtenerAreas();
+        const cargarDatos = async () => {
+            try {
+                setCargando(true);
+                await Promise.all([
+                    obtenerUnidad(),
+                    obtenerAreas()
+                ]);
+            } catch (e) {
+                console.error('❌ Error al cargar los datos:', e);
+            } finally {
+                setCargando(false);
+            }
+        };
+
+        cargarDatos();
     }, []);
 
     const obtenerUnidad = async () => {
@@ -47,8 +60,7 @@ const EditarUnidadesOrganizacionales = () => {
             console.error('❌ Error al cargar la unidad organizacional:', error);
             alert('Error al cargar la unidad. Intente nuevamente.');
             navigate('/parametros/unidades-organizacionales');
-        } finally {
-            setCargando(false);
+            throw error; // muy importante: relanzar para que Promise.all detecte el error
         }
     };
 
@@ -56,13 +68,15 @@ const EditarUnidadesOrganizacionales = () => {
         try {
             const res = await axios.get<Area[]>('/parametros/areas');
             setAreas(res.data);
-
         } catch (error) {
             console.error('❌ Error al obtener áreas:', error);
+            throw error;
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    ) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -94,6 +108,26 @@ const EditarUnidadesOrganizacionales = () => {
                 ) : (
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
+                            <label htmlFor="area_id" className="form-label">Área</label>
+                            <select
+                                id="area_id"
+                                name="area_id"
+                                className="form-select"
+                                value={formData.area_id}
+                                onChange={handleChange}
+                                required
+                                disabled // 👈 esto lo hace solo lectura
+                            >
+                                <option value="">Seleccione un área</option>
+                                {areas.map((area) => (
+                                    <option key={area.id} value={area.id}>
+                                        {area.descripcion}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div className="mb-3">
                             <label htmlFor="codigo" className="form-label">Código</label>
                             <input
                                 type="text"
@@ -102,7 +136,7 @@ const EditarUnidadesOrganizacionales = () => {
                                 className="form-control"
                                 value={formData.codigo}
                                 onChange={handleChange}
-                                required
+                                readOnly
                             />
                         </div>
 
@@ -116,25 +150,6 @@ const EditarUnidadesOrganizacionales = () => {
                                 onChange={handleChange}
                                 required
                             />
-                        </div>
-
-                        <div className="mb-3">
-                            <label htmlFor="area_id" className="form-label">Área</label>
-                            <select
-                                id="area_id"
-                                name="area_id"
-                                className="form-select"
-                                value={formData.area_id}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">Seleccione un área</option>
-                                {areas.map((area) => (
-                                    <option key={area.id} value={area.id}>
-                                        {area.descripcion}
-                                    </option>
-                                ))}
-                            </select>
                         </div>
 
                         <button type="submit" className="btn btn-primary">Guardar Cambios</button>

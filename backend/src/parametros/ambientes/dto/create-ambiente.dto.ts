@@ -8,4 +8,9 @@ export class CreateAmbienteDto {
     @IsNotEmpty()
     @IsNumber()
     unidad_organizacional_id: number;
+
+    @IsNotEmpty()
+    @IsNumber()
+    creado_por_id: number;
+
 }

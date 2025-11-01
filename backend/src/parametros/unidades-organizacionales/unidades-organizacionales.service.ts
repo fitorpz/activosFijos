@@ -29,18 +29,26 @@ export class UnidadesOrganizacionalesService {
       ...dto,
       estado: dto.estado ?? 'ACTIVO',
       creado_por: usuario,
+      creado_por_id: usuario.id,
     });
 
     return this.unidadRepo.save(nueva);
   }
 
+
   async findAll(estado?: string, area_id?: number): Promise<UnidadOrganizacional[]> {
     const query = this.unidadRepo.createQueryBuilder('unidad')
       .leftJoinAndSelect('unidad.area', 'area')
-      .leftJoinAndSelect('unidad.creado_por', 'creado_por')
-      .leftJoinAndSelect('unidad.actualizado_por', 'actualizado_por')
+      .leftJoin('unidad.creado_por', 'creado_por')
+      .leftJoin('unidad.actualizado_por', 'actualizado_por')
+      .addSelect([
+        'creado_por.id',
+        'creado_por.nombre',
+        'actualizado_por.id',
+        'actualizado_por.nombre',
+      ])
       .where('unidad.deleted_at IS NULL')
-      .orderBy('unidad.id', 'ASC');
+      .orderBy('unidad.codigo', 'ASC');
 
     if (estado && estado !== 'todos') {
       query.andWhere('unidad.estado = :estado', { estado: estado.toUpperCase() });
@@ -55,15 +63,23 @@ export class UnidadesOrganizacionalesService {
 
 
   async findOne(id: number): Promise<UnidadOrganizacional> {
-    const unidad = await this.unidadRepo.findOne({
-      where: { id },
-      relations: ['area', 'creado_por', 'actualizado_por'],
-    });
+    const unidad = await this.unidadRepo
+      .createQueryBuilder('unidad')
+      .leftJoinAndSelect('unidad.area', 'area')
+      .leftJoin('unidad.creado_por', 'creado_por')
+      .leftJoin('unidad.actualizado_por', 'actualizado_por')
+      .addSelect([
+        'creado_por.id',
+        'creado_por.nombre',
+        'actualizado_por.id',
+        'actualizado_por.nombre',
+      ])
+      .where('unidad.id = :id', { id })
+      .getOne();
 
     if (!unidad) throw new NotFoundException('Unidad organizacional no encontrada');
     return unidad;
   }
-
   async update(id: number, dto: UpdateUnidadOrganizacionalDto): Promise<UnidadOrganizacional> {
     const unidad = await this.findOne(id);
 
@@ -71,6 +87,7 @@ export class UnidadesOrganizacionalesService {
       const usuario = await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id });
       if (!usuario) throw new NotFoundException(`Usuario con ID ${dto.actualizado_por_id} no encontrado`);
       unidad.actualizado_por = usuario;
+      unidad.actualizado_por_id = usuario.id;
     }
 
     if (dto.codigo !== undefined) unidad.codigo = dto.codigo;
@@ -80,7 +97,6 @@ export class UnidadesOrganizacionalesService {
 
     return this.unidadRepo.save(unidad);
   }
-
   async remove(id: number): Promise<{ message: string }> {
     const unidad = await this.findOne(id);
     unidad.estado = 'INACTIVO';
@@ -116,17 +132,19 @@ export class UnidadesOrganizacionalesService {
   }
 
   async contarPorAreaId(areaId: number): Promise<number> {
-    return this.unidadRepo.count({
-      where: { area: { id: areaId } },
-    });
+    return this.unidadRepo
+      .createQueryBuilder('unidad')
+      .where('unidad.area_id = :areaId', { areaId })
+      .getCount();
   }
+
   async contarPorCodigoArea(codigoArea: string): Promise<number> {
-    return this.unidadRepo.count({
-      where: {
-        codigo: Like(`${codigoArea}.%`),
-      },
-    });
+    return this.unidadRepo
+      .createQueryBuilder('unidad')
+      .where('unidad.codigo LIKE :pattern', { pattern: `${codigoArea}.%` })
+      .getCount();
   }
+
 
   async buscar(params: { q?: string; estado?: string; area_id?: number }) {
     const { q, estado, area_id } = params;

@@ -114,7 +114,7 @@ const EditarGrupoContable = () => {
                                 className={`form-control ${codigoError ? 'is-invalid' : ''}`}
                                 value={formData.codigo}
                                 onChange={handleChange}
-                                required
+                                readOnly
                             />
                             {codigoError && <div className="invalid-feedback d-block">{codigoError}</div>}
                         </div>

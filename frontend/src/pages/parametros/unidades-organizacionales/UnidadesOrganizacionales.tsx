@@ -52,10 +52,9 @@ const UnidadesOrganizacionales = () => {
     useEffect(() => {
         if (permisos.includes('unidades-organizacionales:listar')) {
             obtenerUnidades();
-        } else {
-            setCargando(false);
         }
     }, [estadoFiltro, permisos]);
+
 
     const manejarCambioFiltro = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;

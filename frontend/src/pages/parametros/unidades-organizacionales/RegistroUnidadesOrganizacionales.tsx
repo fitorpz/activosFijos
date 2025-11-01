@@ -21,48 +21,35 @@ const RegistroUnidadesOrganizacionales = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        obtenerAreas();
+        const fetchAreas = async () => {
+            try {
+                const res = await axios.get<Area[]>('/parametros/areas');
+                setAreas(res.data);
+            } catch {
+                setError('Error al obtener las áreas.');
+            }
+        };
+        fetchAreas();
     }, []);
 
-    const obtenerAreas = async () => {
-        try {
-            const res = await axios.get<Area[]>('/parametros/areas');
-            setAreas(res.data);
-        } catch (err) {
-            console.error('❌ Error al obtener áreas:', err);
-        }
-    };
-
     const generarCodigoUnidad = async (codigoArea: string) => {
+        if (!codigoArea) return;
+
         try {
-            if (!codigoArea || typeof codigoArea !== 'string' || codigoArea.trim() === '') {
-                console.warn('❗ Código de área inválido:', codigoArea);
-                alert('El código del área es inválido.');
-                return;
-            }
-
-            console.log('📤 Generando código con códigoArea:', codigoArea);
-
             const res = await axios.get<{ total: number }>(
                 `/parametros/unidades-organizacionales/contar?codigo_area=${codigoArea}`
             );
-
             const correlativo = res.data.total + 1;
-            const correlativoFormateado = correlativo.toString().padStart(3, '0');
-            const codigoGenerado = `${codigoArea}.${correlativoFormateado}`;
-
-            console.log('✅ Código generado automáticamente:', codigoGenerado);
+            const codigoGenerado = `${codigoArea}.${correlativo.toString().padStart(3, '0')}`;
 
             setFormData((prev) => ({
                 ...prev,
                 codigo: codigoGenerado,
             }));
-        } catch (error) {
-            console.error('❌ Error al generar código automático:', error);
-            alert('No se pudo generar el código.');
+        } catch {
+            setError('No se pudo generar el código automáticamente.');
         }
     };
-
 
     const handleChange = async (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -74,27 +61,17 @@ const RegistroUnidadesOrganizacionales = () => {
             [name]: value,
         }));
 
-        // Si se selecciona un área, buscar su código y generar código automático
         if (name === 'area_id') {
-            const areaSeleccionada = areas.find((area) => area.id.toString() === value);
-
-            console.log('🧩 Área seleccionada:', areaSeleccionada);
-
-            if (areaSeleccionada && areaSeleccionada.codigo) {
-                setCodigoAreaSeleccionada(areaSeleccionada.codigo);
-                await generarCodigoUnidad(areaSeleccionada.codigo);
+            const area = areas.find((a) => a.id.toString() === value);
+            if (area?.codigo) {
+                setCodigoAreaSeleccionada(area.codigo);
+                await generarCodigoUnidad(area.codigo);
             } else {
-                console.warn('⚠️ No se encontró el código de área o está vacío');
-
                 setCodigoAreaSeleccionada('');
-                setFormData((prev) => ({
-                    ...prev,
-                    codigo: '',
-                }));
+                setFormData((prev) => ({ ...prev, codigo: '' }));
             }
         }
     };
-
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -115,8 +92,7 @@ const RegistroUnidadesOrganizacionales = () => {
             });
 
             navigate('/parametros/unidades-organizacionales');
-        } catch (err: any) {
-            console.error('❌ Error al registrar unidad organizacional:', err);
+        } catch {
             setError('Error al registrar. Intenta nuevamente.');
         }
     };
@@ -128,11 +104,8 @@ const RegistroUnidadesOrganizacionales = () => {
             {error && <div className="alert alert-danger">{error}</div>}
 
             <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-                {/* Área */}
                 <div className="mb-3">
-                    <label htmlFor="area_id" className="form-label">
-                        Área
-                    </label>
+                    <label htmlFor="area_id" className="form-label">Área</label>
                     <select
                         id="area_id"
                         name="area_id"
@@ -155,11 +128,8 @@ const RegistroUnidadesOrganizacionales = () => {
                     )}
                 </div>
 
-                {/* Código */}
                 <div className="mb-3">
-                    <label htmlFor="codigo" className="form-label">
-                        Código
-                    </label>
+                    <label htmlFor="codigo" className="form-label">Código</label>
                     <input
                         type="text"
                         className="form-control"
@@ -172,11 +142,8 @@ const RegistroUnidadesOrganizacionales = () => {
                     />
                 </div>
 
-                {/* Descripción */}
                 <div className="mb-3">
-                    <label htmlFor="descripcion" className="form-label">
-                        Descripción
-                    </label>
+                    <label htmlFor="descripcion" className="form-label">Descripción</label>
                     <textarea
                         id="descripcion"
                         name="descripcion"
@@ -187,7 +154,6 @@ const RegistroUnidadesOrganizacionales = () => {
                     />
                 </div>
 
-                {/* Botón guardar */}
                 <div className="d-flex justify-content-end">
                     <button type="submit" className="btn btn-primary">
                         <i className="bi bi-save me-2"></i>Guardar

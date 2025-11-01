@@ -12,12 +12,15 @@ import {
 } from 'typeorm';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 import { Area } from 'src/parametros/areas/entities/areas.entity';
+import { Index } from 'typeorm';
+
 
 @Entity('unidades_organizacionales')
 export class UnidadOrganizacional {
     @PrimaryGeneratedColumn()
     id: number;
 
+    @Index('idx_codigo')
     @Column()
     codigo: string;
 

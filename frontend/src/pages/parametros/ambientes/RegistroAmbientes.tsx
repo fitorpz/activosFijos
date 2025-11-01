@@ -41,17 +41,12 @@ const RegistroAmbientes = () => {
     useEffect(() => {
         if (formData.area_id) {
             cargarUnidadesPorArea(parseInt(formData.area_id, 10));
-        } else {
-            setUnidades([]);
-            setFormData(prev => ({ ...prev, unidad_organizacional_id: '', codigo: '' }));
         }
     }, [formData.area_id]);
 
     useEffect(() => {
         if (formData.unidad_organizacional_id) {
             generarCodigo(parseInt(formData.unidad_organizacional_id, 10));
-        } else {
-            setFormData(prev => ({ ...prev, codigo: '' }));
         }
     }, [formData.unidad_organizacional_id]);
 

@@ -83,7 +83,7 @@ const EditarAreas = () => {
                                 className="form-control"
                                 value={formData.codigo}
                                 onChange={handleChange}
-                                required
+                                readOnly
                             />
                         </div>
 

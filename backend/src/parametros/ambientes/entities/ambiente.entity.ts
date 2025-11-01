@@ -1,5 +1,3 @@
-// src/parametros/ambientes/entities/ambiente.entity.ts
-
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -8,6 +6,7 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    Index,
 } from 'typeorm';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 import { UnidadOrganizacional } from 'src/parametros/unidades-organizacionales/entities/unidad-organizacional.entity';
@@ -18,32 +17,39 @@ export class Ambiente {
     id: number;
 
     @Column()
+    @Index()
     codigo: string;
 
     @Column()
     descripcion: string;
 
-    @Column({ type: 'enum', enum: ['ACTIVO', 'INACTIVO'], default: 'ACTIVO' })
+    @Column({
+        type: 'enum',
+        enum: ['ACTIVO', 'INACTIVO'],
+        default: 'ACTIVO',
+    })
+    @Index()
     estado: 'ACTIVO' | 'INACTIVO';
 
-    // Relación con Unidad Organizacional
-    @ManyToOne(() => UnidadOrganizacional, { eager: true })
+    @ManyToOne(() => UnidadOrganizacional, { eager: false })
     @JoinColumn({ name: 'unidad_organizacional_id' })
     unidad_organizacional: UnidadOrganizacional;
 
     @Column()
+    @Index()
     unidad_organizacional_id: number;
 
-    // Relación con usuario que crea
-    @ManyToOne(() => Usuario, { eager: true })
+    @ManyToOne(() => Usuario, { eager: false })
     @JoinColumn({ name: 'creado_por_id' })
     creado_por: Usuario;
 
     @Column()
     creado_por_id: number;
 
-    // Relación con usuario que actualiza
-    @ManyToOne(() => Usuario, { eager: true, nullable: true })
+    @ManyToOne(() => Usuario, {
+        eager: false,
+        nullable: true,
+    })
     @JoinColumn({ name: 'actualizado_por_id' })
     actualizado_por?: Usuario;
 

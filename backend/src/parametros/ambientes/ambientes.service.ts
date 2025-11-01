@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-
 import { Ambiente } from './entities/ambiente.entity';
 import { CreateAmbienteDto } from './dto/create-ambiente.dto';
 import { UpdateAmbienteDto } from './dto/update-ambiente.dto';
@@ -21,131 +20,173 @@ export class AmbientesService {
     private readonly usuarioRepo: Repository<Usuario>,
   ) { }
 
-  async create(dto: CreateAmbienteDto, userId: number): Promise<Ambiente> {
-    const unidad = await this.unidadRepo.findOneBy({ id: dto.unidad_organizacional_id });
-    const usuario = await this.usuarioRepo.findOneBy({ id: userId });
+  async create(dto: CreateAmbienteDto): Promise<Ambiente> {
+    const usuario = await this.usuarioRepo.findOneBy({ id: dto.creado_por_id });
+    if (!usuario) throw new NotFoundException(`Usuario con ID ${dto.creado_por_id} no encontrado`);
 
-    if (!unidad) throw new NotFoundException('Unidad organizacional no encontrada');
-    if (!usuario) throw new NotFoundException('Usuario no válido');
-
-    // Generar código correlativo
-    const count = await this.ambienteRepo.count({
-      where: { unidad_organizacional_id: unidad.id },
+    const unidad = await this.unidadRepo.findOne({
+      select: ['id', 'codigo'],
+      where: { id: dto.unidad_organizacional_id },
     });
+    if (!unidad) throw new NotFoundException('Unidad organizacional no encontrada');
 
-    const numeroStr = (count + 1).toString().padStart(2, '0');
-    const codigoFinal = `${unidad.codigo}.${numeroStr}`;
+    if (!unidad.codigo?.trim()) {
+      throw new Error('La unidad organizacional no tiene un código válido');
+    }
+
+    const total = await this.contarPorUnidad(unidad.id);
+    const correlativo = String(total + 1).padStart(2, '0');
+    const codigo = `${unidad.codigo}.${correlativo}`;
 
     const nuevo = this.ambienteRepo.create({
-      codigo: codigoFinal,
       descripcion: dto.descripcion,
-      estado: 'ACTIVO',
-      unidad_organizacional: unidad,
       unidad_organizacional_id: unidad.id,
-      creado_por: usuario,
+      codigo,
+      estado: 'ACTIVO',
       creado_por_id: usuario.id,
+      creado_por: usuario,
     });
 
     return this.ambienteRepo.save(nuevo);
   }
 
-  async findAll(estado?: string): Promise<Ambiente[]> {
-  const query = this.ambienteRepo.createQueryBuilder('ambiente')
-    .leftJoinAndSelect('ambiente.unidad_organizacional', 'unidad')
-    .leftJoinAndSelect('unidad.area', 'area')
-    .leftJoinAndSelect('ambiente.creado_por', 'creado_por')
-    .leftJoinAndSelect('ambiente.actualizado_por', 'actualizado_por')
-    .orderBy('unidad.area', 'ASC')
-    .addOrderBy('ambiente.unidad_organizacional', 'ASC')
-    .addOrderBy('ambiente.codigo', 'ASC'); // Asegúrate de que 'codigo' exista
 
-  if (estado && estado !== 'todos') {
-    query.where('ambiente.estado = :estado', { estado: estado.toUpperCase() });
+  async findAll(estado?: string): Promise<Ambiente[]> {
+    const query = this.ambienteRepo
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.unidad_organizacional', 'u')
+      .leftJoinAndSelect('u.area', 'area')
+      .leftJoin('a.creado_por', 'creado')
+      .leftJoin('a.actualizado_por', 'actualizado')
+      .addSelect(['creado.id', 'creado.nombre', 'actualizado.id', 'actualizado.nombre'])
+      .orderBy('area.codigo', 'ASC')
+      .addOrderBy('u.codigo', 'ASC')
+      .addOrderBy('a.codigo', 'ASC');
+
+    if (estado && estado !== 'todos') {
+      query.andWhere('a.estado = :estado', { estado: estado.toUpperCase() });
+    }
+
+    query.take(2000);
+    return query.getMany();
   }
 
-  return query.getMany();
-}
-
-
   async findOne(id: number): Promise<Ambiente> {
-    const ambiente = await this.ambienteRepo.findOne({
-      where: { id },
-      relations: ['unidad_organizacional', 'unidad_organizacional.area', 'creado_por', 'actualizado_por'],
-    });
+    const ambiente = await this.ambienteRepo
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.unidad_organizacional', 'u')
+      .leftJoinAndSelect('u.area', 'area')
+      .leftJoin('a.creado_por', 'creado')
+      .leftJoin('a.actualizado_por', 'actualizado')
+      .addSelect(['creado.id', 'creado.nombre', 'actualizado.id', 'actualizado.nombre'])
+      .where('a.id = :id', { id })
+      .getOne();
 
     if (!ambiente) throw new NotFoundException('Ambiente no encontrado');
     return ambiente;
   }
 
-  async update(id: number, updateDto: UpdateAmbienteDto): Promise<Ambiente> {
+  async findOneLite(id: number): Promise<Ambiente> {
     const ambiente = await this.ambienteRepo.findOne({
       where: { id },
-      relations: ['unidad_organizacional'],
+      select: [
+        'id',
+        'codigo',
+        'descripcion',
+        'estado',
+        'unidad_organizacional_id',
+        'creado_por_id',
+        'actualizado_por_id',
+        'created_at',
+        'updated_at',
+      ],
     });
+    if (!ambiente) throw new NotFoundException('Ambiente no encontrado');
+    return ambiente;
+  }
 
+  async update(id: number, dto: UpdateAmbienteDto, userId?: number): Promise<Ambiente> {
+    const ambiente = await this.ambienteRepo.findOneBy({ id });
     if (!ambiente) throw new NotFoundException('Ambiente no encontrado');
 
-    // Actualizar campos solo si fueron enviados
-    if (updateDto.descripcion !== undefined) {
-      ambiente.descripcion = updateDto.descripcion;
-    }
+    const updates: Partial<Ambiente> = {};
 
-    if (updateDto.codigo !== undefined) {
-      ambiente.codigo = updateDto.codigo;
-    }
+    if (dto.descripcion !== undefined) updates.descripcion = dto.descripcion;
+    if (dto.codigo && dto.codigo.trim() !== '') updates.codigo = dto.codigo.trim();
 
-    if (updateDto.unidad_organizacional_id !== undefined) {
+    if (
+      dto.unidad_organizacional_id &&
+      dto.unidad_organizacional_id !== ambiente.unidad_organizacional_id
+    ) {
       const unidad = await this.unidadRepo.findOne({
-        where: { id: updateDto.unidad_organizacional_id },
-        relations: ['area'],
+        select: ['id'],
+        where: { id: dto.unidad_organizacional_id },
       });
-
-      if (!unidad) throw new NotFoundException('Unidad Organizacional no encontrada');
-
-      ambiente.unidad_organizacional = unidad;
-      ambiente.unidad_organizacional_id = unidad.id;
+      if (!unidad) throw new NotFoundException('Unidad organizacional no encontrada');
+      updates.unidad_organizacional_id = unidad.id;
     }
 
-    return this.ambienteRepo.save(ambiente);
+    if (userId) {
+      const usuario = await this.usuarioRepo.findOne({
+        select: ['id'],
+        where: { id: userId },
+      });
+      if (usuario) {
+        updates.actualizado_por_id = usuario.id;
+        updates.updated_at = new Date();
+      }
+    }
+
+    await this.ambienteRepo.update(id, updates);
+    return this.findOneLite(id);
   }
 
   async remove(id: number): Promise<{ message: string }> {
-    const ambiente = await this.findOne(id);
-    ambiente.estado = 'INACTIVO';
-    await this.ambienteRepo.save(ambiente);
+    const ambiente = await this.ambienteRepo.findOneBy({ id });
+    if (!ambiente) throw new NotFoundException('Ambiente no encontrado');
+
+    await this.ambienteRepo.update(id, { estado: 'INACTIVO' });
     return { message: 'Ambiente marcado como INACTIVO' };
   }
 
   async cambiarEstado(id: number, userId: number): Promise<Ambiente> {
-    const ambiente = await this.findOne(id);
-    const usuario = await this.usuarioRepo.findOneBy({ id: userId });
+    const ambiente = await this.ambienteRepo.findOneBy({ id });
+    if (!ambiente) throw new NotFoundException('Ambiente no encontrado');
 
+    const usuario = await this.usuarioRepo.findOne({
+      select: ['id'],
+      where: { id: userId },
+    });
     if (!usuario) throw new NotFoundException('Usuario no válido');
 
-    ambiente.estado = ambiente.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
-    ambiente.actualizado_por = usuario;
-    ambiente.actualizado_por_id = userId;
-    ambiente.updated_at = new Date();
+    const nuevoEstado = ambiente.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
 
-    return this.ambienteRepo.save(ambiente);
+    await this.ambienteRepo.update(id, {
+      estado: nuevoEstado,
+      actualizado_por_id: usuario.id,
+      updated_at: new Date(),
+    });
+
+    return this.findOneLite(id);
   }
 
   async contarPorUnidad(unidadId: number): Promise<number> {
-    return this.ambienteRepo.count({
-      where: { unidad_organizacional_id: unidadId },
-    });
+    return this.ambienteRepo
+      .createQueryBuilder('a')
+      .where('a.unidad_organizacional_id = :unidadId', { unidadId })
+      .getCount();
   }
 
   async buscarPorUnidadYTexto(unidadId: number, texto: string): Promise<Ambiente[]> {
-    return this.ambienteRepo.createQueryBuilder('ambiente')
-      .where('ambiente.unidad_organizacional_id = :unidadId', { unidadId })
-      .andWhere('ambiente.estado = :estado', { estado: 'ACTIVO' })
-      .andWhere('(LOWER(ambiente.descripcion) LIKE :texto OR LOWER(ambiente.codigo) LIKE :texto)', {
-        texto: `%${texto.toLowerCase()}%`,
+    return this.ambienteRepo
+      .createQueryBuilder('a')
+      .where('a.unidad_organizacional_id = :unidadId', { unidadId })
+      .andWhere('a.estado = :estado', { estado: 'ACTIVO' })
+      .andWhere('(LOWER(a.descripcion) LIKE :t OR LOWER(a.codigo) LIKE :t)', {
+        t: `%${texto.toLowerCase()}%`,
       })
-      .orderBy('ambiente.codigo', 'ASC')
+      .orderBy('a.codigo', 'ASC')
       .take(10)
       .getMany();
   }
-
 }

@@ -32,7 +32,7 @@ export class AmbientesController {
     @Body() dto: CreateAmbienteDto,
     @Req() req: RequestWithUser,
   ) {
-    return this.ambientesService.create(dto, req.user.id);
+    return this.ambientesService.create({ ...dto, creado_por_id: req.user.id });
   }
 
   @Get()
@@ -40,7 +40,6 @@ export class AmbientesController {
     return this.ambientesService.findAll(estado);
   }
 
-  // ✅ Este método DEBE ir antes de @Get(':id') para evitar conflicto
   @Get('contar')
   async contarPorUnidad(
     @Query('unidad_id', ParseIntPipe) unidadId: number
@@ -71,9 +70,14 @@ export class AmbientesController {
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateDto: UpdateAmbienteDto) {
-    return this.ambientesService.update(id, updateDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateDto: UpdateAmbienteDto,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.ambientesService.update(id, updateDto, req.user.id);
   }
+
 
 
   @Put(':id/cambiar-estado')
@@ -102,16 +106,16 @@ export class AmbientesController {
         </tr>
       `).join('');
 
-       const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
-      
-              let logoDataURL = '';
-              try {
-                const logoBuffer = fs.readFileSync(logoPath);
-                const logoBase64 = logoBuffer.toString('base64');
-                logoDataURL = `data:image/png;base64,${logoBase64}`;
-              } catch (e) {
-                console.error('❌ No se pudo cargar el logo:', logoPath);
-              }
+      const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
+
+      let logoDataURL = '';
+      try {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoBase64 = logoBuffer.toString('base64');
+        logoDataURL = `data:image/png;base64,${logoBase64}`;
+      } catch (e) {
+        console.error('❌ No se pudo cargar el logo:', logoPath);
+      }
 
       const templatePath = path.join(
         process.cwd(),
