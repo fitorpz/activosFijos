@@ -31,9 +31,10 @@ export class Ambiente {
     @Index()
     estado: 'ACTIVO' | 'INACTIVO';
 
-    @ManyToOne(() => UnidadOrganizacional, { eager: false })
+    @ManyToOne(() => UnidadOrganizacional, (unidad) => unidad.ambientes, { eager: false })
     @JoinColumn({ name: 'unidad_organizacional_id' })
     unidad_organizacional: UnidadOrganizacional;
+
 
     @Column()
     @Index()

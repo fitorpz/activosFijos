@@ -29,16 +29,16 @@ export class AuthController {
         @Req() request: Request,
     ) {
         try {
-            // 🔹 Validar credenciales y obtener usuario
+            //  Validar credenciales y obtener usuario
             const usuario = await this.authService.validarUsuario(
                 body.correo,
                 body.contrasena,
             );
 
-            // 🔹 Generar token
+            //  Generar token
             const tokenResult = await this.authService.login(usuario);
 
-            // 🔹 Registrar log de inicio de sesión
+            //  Registrar log de inicio de sesión
             await this.userLogService.registrarLog(
                 usuario.id,
                 'Inicio de sesión exitoso',
@@ -47,7 +47,7 @@ export class AuthController {
                 request.headers['user-agent'],
             );
 
-            // 🔹 Respuesta al frontend
+            //  Respuesta al frontend
             return {
                 message: 'Login exitoso',
                 access_token: tokenResult.access_token,
@@ -60,9 +60,9 @@ export class AuthController {
             };
 
         } catch (error: any) {
-            console.error('❌ Error en login:', error.message);
+            console.error(' Error en login:', error.message);
 
-            // ⚠️ Responder según el tipo de error recibido del AuthService
+            //  Responder según el tipo de error recibido del AuthService
             if (error instanceof ForbiddenException) {
                 // Usuario expirado o no habilitado
                 throw new ForbiddenException(error.message);
@@ -78,7 +78,7 @@ export class AuthController {
         }
     }
 
-    // 🔹 Endpoint protegido: obtener permisos del usuario autenticado
+    //  Endpoint protegido: obtener permisos del usuario autenticado
     @UseGuards(JwtAuthGuard)
     @Get('mis-permisos')
     getMisPermisos(@Req() req: RequestWithUser) {

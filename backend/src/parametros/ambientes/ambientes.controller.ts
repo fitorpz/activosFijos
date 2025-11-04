@@ -51,16 +51,11 @@ export class AmbientesController {
     const total = await this.ambientesService.contarPorUnidad(unidadId);
     return { total };
   }
-
   @Get('buscar')
   async buscarAmbientes(
     @Query('unidad_organizacional_id', ParseIntPipe) unidadId: number,
     @Query('search') search: string,
   ) {
-    if (!unidadId || !search) {
-      throw new BadRequestException('unidad_organizacional_id y search son requeridos');
-    }
-
     return this.ambientesService.buscarPorUnidadYTexto(unidadId, search);
   }
 

@@ -5,9 +5,15 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { UnidadOrganizacional } from 'src/parametros/unidades-organizacionales/entities/unidad-organizacional.entity';
+
+import { Exclude } from 'class-transformer';
+
+
 
 @Entity('areas')
 export class Area {
@@ -42,6 +48,11 @@ export class Area {
 
   @Column({ name: 'actualizado_por_id', nullable: true })
   actualizado_por_id?: number;
+
+
+  @OneToMany(() => UnidadOrganizacional, (unidad) => unidad.area, { eager: false })
+  @Exclude()
+  unidades_organizacionales: UnidadOrganizacional[];
 
   //@Column({ type: 'timestamp', nullable: true })
   //deleted_at: Date;

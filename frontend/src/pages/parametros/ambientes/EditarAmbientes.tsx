@@ -186,9 +186,9 @@ const EditarAmbientes = () => {
                                 name="area_id"
                                 className="form-select"
                                 value={formData.area_id}
-                                onChange={handleChange}
-                                required
+                                disabled
                             >
+
                                 <option value="">Seleccione un área</option>
                                 {areas.map(area => (
                                     <option key={area.id} value={area.id}>
@@ -204,10 +204,9 @@ const EditarAmbientes = () => {
                                 cacheOptions
                                 loadOptions={buscarUnidadesAsync}
                                 defaultOptions
-                                isDisabled={!formData.area_id}
-                                placeholder="Buscar unidad organizacional..."
+                                isDisabled={true}  // 🔒 deshabilitado en modo edición
+                                placeholder="Unidad organizacional (no editable)"
                                 value={unidadSeleccionada}
-                                onChange={handleUnidadChange}
                             />
                         </div>
 

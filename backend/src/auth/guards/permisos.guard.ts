@@ -36,7 +36,6 @@ export class PermisosGuard implements CanActivate {
             [];
 
         if (!Array.isArray(permisosUsuario) || permisosUsuario.length === 0) {
-            console.log('❌ [PermisosGuard] Usuario sin permisos asignados');
             throw new ForbiddenException('Usuario sin permisos asignados');
         }
 

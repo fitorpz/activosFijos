@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike } from 'typeorm';
 import { Ambiente } from './entities/ambiente.entity';
 import { CreateAmbienteDto } from './dto/create-ambiente.dto';
 import { UpdateAmbienteDto } from './dto/update-ambiente.dto';
@@ -188,5 +188,16 @@ export class AmbientesService {
       .orderBy('a.codigo', 'ASC')
       .take(10)
       .getMany();
+  }
+
+  async buscar(unidadId: number, search: string) {
+    return this.ambienteRepo.find({
+      where: [
+        { unidad_organizacional_id: unidadId, estado: 'ACTIVO', descripcion: ILike(`%${search}%`) },
+        { unidad_organizacional_id: unidadId, estado: 'ACTIVO', codigo: ILike(`%${search}%`) },
+      ],
+      take: 10,
+      order: { codigo: 'ASC' },
+    });
   }
 }

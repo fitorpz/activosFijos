@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { ClassSerializerInterceptor } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -15,6 +17,7 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads/',
   });
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
 
   await app.listen(3001);

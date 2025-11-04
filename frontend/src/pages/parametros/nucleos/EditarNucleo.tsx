@@ -116,7 +116,7 @@ const EditarNucleo = () => {
                         value={formData.codigo}
                         onChange={handleChange}
                         onBlur={() => verificarCodigoDisponible(formData.codigo)}
-                        required
+                        readOnly
                     />
                     {mensajeCodigo && (
                         <div className="invalid-feedback">{mensajeCodigo}</div>

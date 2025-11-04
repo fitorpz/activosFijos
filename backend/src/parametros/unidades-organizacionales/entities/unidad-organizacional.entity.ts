@@ -8,11 +8,17 @@ import {
     UpdateDateColumn,
     DeleteDateColumn,
     ManyToOne,
+    OneToMany,
     JoinColumn,
 } from 'typeorm';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 import { Area } from 'src/parametros/areas/entities/areas.entity';
+import { Ambiente } from 'src/parametros/ambientes/entities/ambiente.entity';
 import { Index } from 'typeorm';
+import { Exclude } from 'class-transformer';
+
+
+
 
 
 @Entity('unidades_organizacionales')
@@ -30,7 +36,7 @@ export class UnidadOrganizacional {
     @Column({ type: 'enum', enum: ['ACTIVO', 'INACTIVO'], default: 'ACTIVO' })
     estado: 'ACTIVO' | 'INACTIVO';
 
-    @ManyToOne(() => Area, { eager: true })
+    @ManyToOne(() => Area, (area) => area.unidades_organizacionales, { eager: false })
     @JoinColumn({ name: 'area_id' })
     area: Area;
 
@@ -61,4 +67,8 @@ export class UnidadOrganizacional {
 
     @Column({ name: 'actualizado_por_id', nullable: true })
     actualizado_por_id?: number;
+
+    @OneToMany(() => Ambiente, (ambiente) => ambiente.unidad_organizacional, { eager: false })
+    @Exclude()
+    ambientes: Ambiente[];
 }
