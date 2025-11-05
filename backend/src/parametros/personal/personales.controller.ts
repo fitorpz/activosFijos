@@ -50,6 +50,14 @@ export class PersonalesController {
     return this.personalesService.findAll();
   }
 
+  // Obtener usuarios disponibles, excluyendo opcionalmente uno
+  @Get('usuarios-disponibles')
+  async obtenerUsuariosDisponibles() {
+    return this.personalesService.obtenerUsuariosDisponibles();
+  }
+
+
+
   // Obtener personal por ID
   @Get(':id')
   async findOne(@Param('id', ParseIntPipe) id: number) {
@@ -67,18 +75,15 @@ export class PersonalesController {
     return this.personalesService.update(id, dto, userId);
   }
 
+
+
   // Eliminar personal (borrado lógico recomendado)
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number) {
     return this.personalesService.remove(id);
   }
 
-  // Obtener usuarios disponibles, excluyendo opcionalmente uno
-  @Get('usuarios-disponibles')
-  async obtenerUsuariosDisponibles(@Query('idPersonal') idPersonal?: string) {
-    const id = idPersonal ? parseInt(idPersonal, 10) : undefined;
-    return this.personalesService.obtenerUsuariosDisponibles(id);
-  }
+
 
   // Exportar en PDF
   @Get('exportar/pdf')
@@ -100,7 +105,6 @@ export class PersonalesController {
         .map((p, i) => `
           <tr>
             <td>${i + 1}</td>
-            <td>${p.documento ?? ''}</td>
             <td>${p.expedido ?? ''}</td>
             <td>${p.ci ?? ''}</td>
             <td>${p.nombre ?? ''}</td>

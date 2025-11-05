@@ -250,13 +250,16 @@ const Cargos = () => {
                                         {(permisos.includes('cargos:cambiar-estado') ||
                                             permisos.includes('cargos:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${cargo.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    type="button"
+                                                    className={`btn btn-sm ${cargo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     title={cargo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                     onClick={() => cambiarEstado(cargo.id)}
+                                                    aria-label={cargo.estado === 'ACTIVO' ? 'Inactivar cargo' : 'Activar cargo'}
                                                 >
-                                                    <i className="bi bi-arrow-repeat"></i>
+                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
                                             )}
+
                                     </td>
                                 </tr>
                             ))

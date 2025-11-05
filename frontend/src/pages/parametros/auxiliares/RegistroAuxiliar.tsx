@@ -41,10 +41,10 @@ const RegistroAuxiliar = () => {
                     }
                 );
 
-                const codigoGenerado = `${formData.codigo_grupo}.${response.data.correlativo}`;
+                const codigoGenerado = `${response.data.correlativo}`;
                 setFormData((prev) => ({ ...prev, codigo: codigoGenerado }));
             } catch (error) {
-                console.error("❌ Error al generar código auxiliar:", error);
+                console.error('❌ Error al generar código auxiliar:', error);
             }
         };
 
@@ -74,11 +74,7 @@ const RegistroAuxiliar = () => {
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
-
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -112,18 +108,32 @@ const RegistroAuxiliar = () => {
 
     return (
         <div className="container mt-4">
-            <div className="form-container">
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '600px', backgroundColor: '#fff' }}
+            >
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/auxiliares')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Volver
+                </button>
+
                 <h4 className="mb-4">Nuevo Auxiliar</h4>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">
-                        <label htmlFor="codigo_grupo" className="form-label">Grupo Contable</label>
+                        <label htmlFor="codigo_grupo" className="form-label">
+                            Grupo Contable
+                        </label>
                         <Select
                             id="codigo_grupo"
                             name="codigo_grupo"
                             options={opcionesGrupo}
-                            value={opcionesGrupo.find(option => option.value === formData.codigo_grupo)}
+                            value={opcionesGrupo.find((option) => option.value === formData.codigo_grupo)}
                             onChange={(selected) =>
-                                setFormData(prev => ({ ...prev, codigo_grupo: selected?.value || '' }))
+                                setFormData((prev) => ({ ...prev, codigo_grupo: selected?.value || '' }))
                             }
                             placeholder="Buscar grupo contable..."
                             isClearable
@@ -131,7 +141,9 @@ const RegistroAuxiliar = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="codigo" className="form-label">Código</label>
+                        <label htmlFor="codigo" className="form-label">
+                            Código
+                        </label>
                         <input
                             type="text"
                             id="codigo"
@@ -143,7 +155,9 @@ const RegistroAuxiliar = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="descripcion" className="form-label">Descripción</label>
+                        <label htmlFor="descripcion" className="form-label">
+                            Descripción
+                        </label>
                         <textarea
                             id="descripcion"
                             name="descripcion"
@@ -155,7 +169,9 @@ const RegistroAuxiliar = () => {
                     </div>
 
                     <div className="mb-3">
-                        <label htmlFor="estado" className="form-label">Estado</label>
+                        <label htmlFor="estado" className="form-label">
+                            Estado
+                        </label>
                         <select
                             id="estado"
                             name="estado"

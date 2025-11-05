@@ -220,7 +220,7 @@ const GruposContables = () => {
             </div>
 
             <div className="table-responsive">
-                <table className="table table-bordered table-hover align-middle">
+                <table className="table table-bordered table-hover align-middle text-nowrap sticky-table">
                     <thead className="table-light">
                         <tr>
                             <th>Nro.</th>
@@ -340,17 +340,15 @@ const GruposContables = () => {
                                                 )}
                                                 {puedeCambiarEstado && (
                                                     <button
-                                                        className={`btn btn-sm ${grupo.estado === 'ACTIVO'
-                                                                ? 'btn-secondary'
-                                                                : 'btn-success'
-                                                            }`}
-                                                        title={
-                                                            grupo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'
-                                                        }
+                                                        type="button"
+                                                        className={`btn btn-sm ${grupo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={grupo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                         onClick={() => cambiarEstado(grupo.id)}
                                                     >
-                                                        <i className="bi bi-arrow-repeat"></i>
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                     </button>
+
+
                                                 )}
                                             </div>
                                         </td>

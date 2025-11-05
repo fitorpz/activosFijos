@@ -14,15 +14,14 @@ const RegistroDistrito = () => {
     const navigate = useNavigate();
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const verificarCodigoDisponible = async (codigo: string) => {
         const codigoNormalizado = codigo.trim().toUpperCase();
-
         if (!codigoNormalizado) {
             setMensajeCodigo(null);
             return;
@@ -33,11 +32,9 @@ const RegistroDistrito = () => {
                 `/parametros/ciudades/verificar-codigo/${codigoNormalizado}`
             );
 
-            if (res.data.disponible) {
-                setMensajeCodigo('✅ Código disponible');
-            } else {
-                setMensajeCodigo('❌ El código ya está registrado');
-            }
+            setMensajeCodigo(
+                res.data.disponible ? '✅ Código disponible' : '❌ El código ya está registrado'
+            );
         } catch (error) {
             console.error('❌ Error al verificar código:', error);
             setMensajeCodigo('❌ Error al verificar el código');
@@ -62,11 +59,11 @@ const RegistroDistrito = () => {
 
         try {
             await axios.post('/parametros/distritos', payload);
-            alert('✅ distrito registrado con éxito.');
+            alert('✅ Distrito registrado con éxito.');
             navigate('/parametros/distritos');
         } catch (error: any) {
             console.error('❌ Error al registrar distrito:', error);
-            alert(error?.response?.data?.message || 'Error al registrar el distrito.');
+            alert(error?.response?.data?.message || '❌ Error al registrar el distrito.');
         } finally {
             setCargando(false);
         }
@@ -75,8 +72,9 @@ const RegistroDistrito = () => {
     return (
         <div className="container mt-4">
             <div className="form-container">
-                <h4 className="mb-4">Registrar Nuevo Distrito</h4>
+                <h4 className="mb-4">Nuevo Distrito</h4>
                 <form onSubmit={handleSubmit}>
+                    {/* Código */}
                     <div className="mb-3">
                         <label htmlFor="codigo" className="form-label">Código</label>
                         <input
@@ -92,12 +90,18 @@ const RegistroDistrito = () => {
                             required
                         />
                         {mensajeCodigo && (
-                            <div className="form-text" style={{ color: mensajeCodigo.includes('✅') ? 'green' : 'red' }}>
+                            <div
+                                className="form-text"
+                                style={{
+                                    color: mensajeCodigo.includes('✅') ? 'green' : 'red',
+                                }}
+                            >
                                 {mensajeCodigo}
                             </div>
                         )}
                     </div>
 
+                    {/* Descripción */}
                     <div className="mb-3">
                         <label htmlFor="descripcion" className="form-label">Descripción</label>
                         <textarea
@@ -110,9 +114,12 @@ const RegistroDistrito = () => {
                         />
                     </div>
 
-
-
-                    <button type="submit" className="btn btn-primary" disabled={cargando}>
+                    {/* Botones */}
+                    <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={cargando}
+                    >
                         {cargando ? 'Guardando...' : 'Registrar'}
                     </button>
                     <button

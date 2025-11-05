@@ -8,9 +8,9 @@ import {
 } from 'class-validator';
 
 export class CreatePersonalesDto {
-    @IsNumber()
+    @IsString()
     @IsNotEmpty()
-    documento: number;
+    usuario_id: number;
 
     @IsString()
     @IsNotEmpty()

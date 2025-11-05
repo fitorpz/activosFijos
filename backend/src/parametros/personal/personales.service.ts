@@ -17,14 +17,18 @@ export class PersonalesService {
   ) { }
 
   async create(dto: CreatePersonalesDto, userId: number): Promise<Personal> {
-    const usuario = await this.usuarioRepo.findOneBy({ id: userId });
-
-    if (!usuario) {
+    const usuarioSistema = await this.usuarioRepo.findOneBy({ id: userId });
+    if (!usuarioSistema) {
       throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
     }
 
+    // 🔍 Buscar el usuario asignado al nuevo personal
+    const usuarioAsignado = await this.usuarioRepo.findOneBy({ id: dto.usuario_id });
+    if (!usuarioAsignado) {
+      throw new NotFoundException(`Usuario con ID ${dto.usuario_id} no encontrado para asignar a personal`);
+    }
+
     const nuevoPersonal = this.direccionRepo.create({
-      documento: dto.documento,
       expedido: dto.expedido,
       ci: dto.ci,
       nombre: dto.nombre,
@@ -37,11 +41,14 @@ export class PersonalesService {
       estciv: dto.estciv,
       sexo: dto.sexo,
       estado: 'ACTIVO',
-      creado_por: usuario,
+      creado_por: usuarioSistema,
+      usuario: usuarioAsignado,
+      usuario_id: dto.usuario_id,
     });
 
     return await this.direccionRepo.save(nuevoPersonal);
   }
+
 
   async findAll(): Promise<Personal[]> {
     return this.direccionRepo.find({
@@ -74,7 +81,6 @@ export class PersonalesService {
     }
 
     await this.direccionRepo.update(id, {
-      documento: dto.documento,
       expedido: dto.expedido,
       ci: dto.ci,
       nombre: dto.nombre,
@@ -101,19 +107,15 @@ export class PersonalesService {
     await this.direccionRepo.softDelete(id);
   }
 
-  async obtenerUsuariosDisponibles(idPersonal?: number): Promise<Usuario[]> {
-    // Subconsulta para obtener IDs de usuarios ya asignados
-    const subQuery = this.direccionRepo
+  async obtenerUsuariosDisponibles(): Promise<Usuario[]> {
+    const usuariosConPersonal = await this.direccionRepo
       .createQueryBuilder('personal')
-      .select('personal.usuarioId', 'usuarioId');
+      .select('personal.usuario_id', 'id')
+      .where('personal.usuario_id IS NOT NULL')
+      .getRawMany();
 
-    if (idPersonal) {
-      subQuery.where('personal.id != :idPersonal', { idPersonal });
-    }
+    const idsOcupados = usuariosConPersonal.map((row) => row.id);
 
-    const idsOcupados = (await subQuery.getRawMany()).map((r) => r.usuarioId).filter(Boolean);
-
-    // Ahora usar QueryBuilder para obtener solo los usuarios no asignados
     const query = this.usuarioRepo.createQueryBuilder('usuario');
 
     if (idsOcupados.length > 0) {

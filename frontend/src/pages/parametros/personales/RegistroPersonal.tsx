@@ -61,7 +61,7 @@ const RegistroPersonal = () => {
 
     const obtenerUsuariosDisponibles = async () => {
         try {
-            const res = await axiosInstance.get<Usuario[]>('/usuarios/disponibles');
+            const res = await axiosInstance.get<Usuario[]>('/parametros/personal/usuarios-disponibles');
             setUsuarios(res.data);
         } catch (error) {
             console.error('❌ Error al obtener usuarios disponibles:', error);
@@ -71,6 +71,7 @@ const RegistroPersonal = () => {
             });
         }
     };
+
 
     // 🧩 Manejar cambios de campos generales
     const handleChange = (e: any) => {
@@ -164,19 +165,6 @@ const RegistroPersonal = () => {
                                             <option value="">No hay usuarios disponibles</option>
                                         )}
                                     </Form.Select>
-                                </Form.Group>
-                            </Col>
-
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>N° Documento</Form.Label>
-                                    <Form.Control
-                                        type="number"
-                                        name="documento"
-                                        value={formData.documento}
-                                        onChange={handleChange}
-                                        required
-                                    />
                                 </Form.Group>
                             </Col>
                         </Row>
@@ -322,16 +310,6 @@ const RegistroPersonal = () => {
                                         <option value="">Seleccionar</option>
                                         <option value="1">Masculino</option>
                                         <option value="2">Femenino</option>
-                                    </Form.Select>
-                                </Form.Group>
-                            </Col>
-
-                            <Col md={6}>
-                                <Form.Group className="mb-3">
-                                    <Form.Label>Estado</Form.Label>
-                                    <Form.Select name="estado" value={formData.estado} onChange={handleChange} required>
-                                        <option value="ACTIVO">ACTIVO</option>
-                                        <option value="INACTIVO">INACTIVO</option>
                                     </Form.Select>
                                 </Form.Group>
                             </Col>

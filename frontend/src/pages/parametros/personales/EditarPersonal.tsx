@@ -11,7 +11,6 @@ interface Usuario {
 
 interface Personal {
     id: number;
-    documento: number;
     ci: string;
     nombre: string;
     estado: string;
@@ -71,7 +70,6 @@ const EditarPersonal = () => {
             setFormData({
                 usuario: p.usuario || null,
                 usuario_id: p.usuario?.id?.toString() || '',
-                documento: p.documento?.toString() || '',
                 ci: p.ci || '',
                 nombre: p.nombre || '',
                 estado: p.estado || 'ACTIVO',
@@ -193,21 +191,6 @@ const EditarPersonal = () => {
 
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
-                                        <Form.Label>N° Documento</Form.Label>
-                                        <Form.Control
-                                            type="number"
-                                            name="documento"
-                                            value={formData.documento}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-
-                            <Row>
-                                <Col md={6}>
-                                    <Form.Group className="mb-3">
                                         <Form.Label>CI</Form.Label>
                                         <Form.Control
                                             type="text"
@@ -218,7 +201,9 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
+                            </Row>
 
+                            <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Expedido</Form.Label>
@@ -230,9 +215,6 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
-                            </Row>
-
-                            <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Nombre Completo</Form.Label>
@@ -245,7 +227,9 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
+                            </Row>
 
+                            <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Profesión</Form.Label>
@@ -257,9 +241,6 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
-                            </Row>
-
-                            <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Dirección</Form.Label>
@@ -271,7 +252,9 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
+                            </Row>
 
+                            <Row>
                                 <Col md={3}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Celular</Form.Label>
@@ -295,9 +278,6 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
-                            </Row>
-
-                            <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Correo electrónico</Form.Label>
@@ -310,7 +290,9 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
+                            </Row>
 
+                            <Row>
                                 <Col md={6}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Fecha de Nacimiento</Form.Label>
@@ -322,9 +304,6 @@ const EditarPersonal = () => {
                                         />
                                     </Form.Group>
                                 </Col>
-                            </Row>
-
-                            <Row>
                                 <Col md={3}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Estado Civil</Form.Label>
@@ -343,7 +322,6 @@ const EditarPersonal = () => {
                                         </Form.Select>
                                     </Form.Group>
                                 </Col>
-
                                 <Col md={3}>
                                     <Form.Group className="mb-3">
                                         <Form.Label>Sexo</Form.Label>
@@ -356,21 +334,6 @@ const EditarPersonal = () => {
                                             <option value="">Seleccionar</option>
                                             <option value="1">Masculino</option>
                                             <option value="2">Femenino</option>
-                                        </Form.Select>
-                                    </Form.Group>
-                                </Col>
-
-                                <Col md={6}>
-                                    <Form.Group className="mb-3">
-                                        <Form.Label>Estado</Form.Label>
-                                        <Form.Select
-                                            name="estado"
-                                            value={formData.estado}
-                                            onChange={handleChange}
-                                            required
-                                        >
-                                            <option value="ACTIVO">ACTIVO</option>
-                                            <option value="INACTIVO">INACTIVO</option>
                                         </Form.Select>
                                     </Form.Group>
                                 </Col>

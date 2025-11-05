@@ -275,12 +275,13 @@ const Auxiliares = () => {
                                         {(permisos.includes('auxiliares:cambiar-estado') ||
                                             permisos.includes('auxiliares:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${aux.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    className={`btn btn-sm ${aux.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     title={aux.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                     onClick={() => cambiarEstado(aux.id)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat"></i>
+                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
+
                                             )}
                                     </td>
                                 </tr>

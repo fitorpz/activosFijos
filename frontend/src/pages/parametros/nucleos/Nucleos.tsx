@@ -266,7 +266,7 @@ const Nucleos = () => {
                                         {(permisos.includes('nucleos:cambiar-estado') ||
                                             permisos.includes('nucleos:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${nucleo.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    className={`btn btn-sm ${nucleo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     onClick={() => cambiarEstado(nucleo.id)}
                                                     title={nucleo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                 >

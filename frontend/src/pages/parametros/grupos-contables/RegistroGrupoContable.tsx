@@ -36,7 +36,7 @@ const RegistroGrupoContable = () => {
             }
 
             const response = await axios.get<{ sugerido: string }>(
-                `http://localhost:3001/parametros/grupos-contables/sugerir-codigo`,
+                `/parametros/grupos-contables/sugerir-codigo`,
                 {
                     params: { codigo },
                     headers: {
@@ -107,8 +107,19 @@ const RegistroGrupoContable = () => {
 
     return (
         <div className="container mt-4">
-            <div className="form-container">
+            <div className="mx-auto p-4 border rounded shadow" style={{ maxWidth: '600px', backgroundColor: '#fff' }}>
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/grupos-contables')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Volver
+                </button>
+
+
                 <h4 className="mb-4">Nuevo Grupo Contable</h4>
+
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">
                         <label htmlFor="codigo" className="form-label">Código</label>
@@ -172,6 +183,8 @@ const RegistroGrupoContable = () => {
                         />
                     </div>
 
+                    {/* Si deseas habilitar el estado manualmente en el futuro, puedes descomentar este bloque */}
+                    {/* 
                     <div className="mb-3">
                         <label htmlFor="estado" className="form-label">Estado</label>
                         <select
@@ -187,6 +200,7 @@ const RegistroGrupoContable = () => {
                             <option value="INACTIVO">INACTIVO</option>
                         </select>
                     </div>
+                    */}
 
                     <button type="submit" className="btn btn-primary" disabled={cargando || codigoDisponible === false}>
                         {cargando ? 'Guardando...' : 'Registrar'}

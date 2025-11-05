@@ -30,7 +30,6 @@ const EditarAuxiliar = () => {
     const [gruposContables, setGruposContables] = useState<GrupoContable[]>([]);
     const [cargando, setCargando] = useState(true);
 
-    // 🔹 Cargar auxiliar y grupos contables al iniciar
     useEffect(() => {
         obtenerAuxiliar();
         obtenerGruposContables();
@@ -102,24 +101,32 @@ const EditarAuxiliar = () => {
     };
 
     return (
-        <div className="container mt-4">
-            <div className="form-container">
+        <div className="container d-flex justify-content-center mt-4">
+            <div
+                className="w-100"
+                style={{ maxWidth: '600px', border: '1px solid #ddd', padding: '2rem', borderRadius: '0.5rem', boxShadow: '0 0 10px rgba(0,0,0,0.05)', background: 'white' }}
+            >
+                <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary mb-3"
+                    onClick={() => navigate('/parametros/auxiliares')}
+                >
+                    <i className="bi bi-arrow-left"></i> Volver
+                </button>
+
                 <h4 className="mb-4">Editar Auxiliar</h4>
                 {cargando ? (
                     <p>Cargando datos...</p>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        {/* 🔹 Grupo contable */}
                         <div className="mb-3">
-                            <label htmlFor="codigo_grupo" className="form-label">
-                                Grupo Contable
-                            </label>
+                            <label htmlFor="codigo_grupo" className="form-label">Grupo Contable</label>
                             <select
                                 id="codigo_grupo"
                                 name="codigo_grupo"
                                 className="form-select"
                                 value={formData.codigo_grupo}
-                                disabled // 👈 No se puede cambiar en edición
+                                disabled
                             >
                                 <option value="">-- Selecciona un grupo contable --</option>
                                 {gruposContables.map((grupo) => (
@@ -130,7 +137,6 @@ const EditarAuxiliar = () => {
                             </select>
                         </div>
 
-                        {/* 🔹 Código */}
                         <div className="mb-3">
                             <label htmlFor="codigo" className="form-label">Código</label>
                             <input
@@ -143,7 +149,6 @@ const EditarAuxiliar = () => {
                             />
                         </div>
 
-                        {/* 🔹 Descripción */}
                         <div className="mb-3">
                             <label htmlFor="descripcion" className="form-label">Descripción</label>
                             <textarea
@@ -156,7 +161,6 @@ const EditarAuxiliar = () => {
                             />
                         </div>
 
-                        {/* 🔹 Estado */}
                         <div className="mb-3">
                             <label htmlFor="estado" className="form-label">Estado</label>
                             <select
@@ -172,7 +176,6 @@ const EditarAuxiliar = () => {
                             </select>
                         </div>
 
-                        {/* 🔹 Botones */}
                         <button type="submit" className="btn btn-primary">Guardar Cambios</button>
                         <button
                             type="button"

@@ -232,12 +232,15 @@ const Distritos = () => {
                                         {(permisos.includes('distritos:cambiar-estado') ||
                                             permisos.includes('distritos:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${distrito.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    type="button"
+                                                    className={`btn btn-sm ${distrito.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     onClick={() => cambiarEstado(distrito.id)}
                                                     title={distrito.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                    aria-label={distrito.estado === 'ACTIVO' ? 'Inactivar distrito' : 'Activar distrito'}
                                                 >
-                                                    <i className="bi bi-arrow-repeat"></i>
+                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
+
                                             )}
                                     </td>
                                 </tr>

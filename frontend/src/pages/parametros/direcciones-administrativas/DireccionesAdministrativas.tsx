@@ -247,12 +247,13 @@ const DireccionesAdministrativas = () => {
                                         {(permisos.includes('direcciones-administrativas:cambiar-estado') ||
                                             permisos.includes('direcciones-administrativas:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                     onClick={() => cambiarEstado(item.id)}
                                                 >
                                                     <i className="bi bi-arrow-repeat"></i>
                                                 </button>
+
                                             )}
                                     </td>
                                 </tr>

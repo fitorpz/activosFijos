@@ -16,9 +16,6 @@ export class Personal {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'bigint', nullable: true })
-  documento?: number;
-
   @Column({ type: 'varchar', length: 50, nullable: true })
   ci?: string;
 

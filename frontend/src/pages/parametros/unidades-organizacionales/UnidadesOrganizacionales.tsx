@@ -237,11 +237,19 @@ const UnidadesOrganizacionales = () => {
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
                                         )}
-                                        {(permisos.includes('unidades-organizacionales:cambiar-estado') || permisos.includes('unidades-organizacionales:eliminar')) && (
-                                            <button className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`} title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'} onClick={() => cambiarEstado(item.id)}>
-                                                <i className="bi bi-arrow-repeat"></i>
-                                            </button>
-                                        )}
+                                        {(permisos.includes('unidades-organizacionales:cambiar-estado') ||
+                                            permisos.includes('unidades-organizacionales:eliminar')) && (
+                                                <button
+                                                    type="button"
+                                                    className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                    title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                    onClick={() => cambiarEstado(item.id)}
+                                                    aria-label={item.estado === 'ACTIVO' ? 'Inactivar unidad' : 'Activar unidad'}
+                                                >
+                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                </button>
+                                            )}
+
                                     </td>
                                 </tr>
                             ))

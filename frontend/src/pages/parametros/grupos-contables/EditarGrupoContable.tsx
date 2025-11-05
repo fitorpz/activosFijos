@@ -49,31 +49,11 @@ const EditarGrupoContable = () => {
         }
     };
 
-    const validarCodigo = async (codigo: string) => {
-        try {
-            const response = await axios.get<{ exists: boolean; sugerido?: string }>(
-                `/parametros/grupos-contables/verificar-codigo?codigo=${codigo}`
-            );
-
-            if (response.data.exists) {
-                setCodigoError(`⚠️ El código ya existe. Se generará como subgrupo: ${response.data.sugerido}`);
-            } else {
-                setCodigoError('');
-            }
-        } catch (error) {
-            console.error('Error al verificar el código:', error);
-        }
-    };
-
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-
-        if (name === 'codigo') {
-            validarCodigo(value.trim());
-        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -99,8 +79,18 @@ const EditarGrupoContable = () => {
 
     return (
         <div className="container mt-4">
-            <div className="form-container">
+            <div className="mx-auto p-4 border rounded shadow" style={{ maxWidth: '600px', backgroundColor: '#fff' }}>
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/grupos-contables')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Volver
+                </button>
+
                 <h4 className="mb-4">Editar Grupo Contable</h4>
+
                 {cargando ? (
                     <p>Cargando datos...</p>
                 ) : (
@@ -111,12 +101,10 @@ const EditarGrupoContable = () => {
                                 type="text"
                                 id="codigo"
                                 name="codigo"
-                                className={`form-control ${codigoError ? 'is-invalid' : ''}`}
+                                className="form-control"
                                 value={formData.codigo}
-                                onChange={handleChange}
                                 readOnly
                             />
-                            {codigoError && <div className="invalid-feedback d-block">{codigoError}</div>}
                         </div>
 
                         <div className="mb-3">
@@ -176,7 +164,7 @@ const EditarGrupoContable = () => {
                             </select>
                         </div>
 
-                        <button type="submit" className="btn btn-primary" disabled={!!codigoError}>Guardar Cambios</button>
+                        <button type="submit" className="btn btn-primary">Guardar Cambios</button>
                         <button
                             type="button"
                             className="btn btn-secondary ms-2"

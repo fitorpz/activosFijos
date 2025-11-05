@@ -208,9 +208,8 @@ const Personales = () => {
                         <tr>
                             <th>Nro.</th>
                             <th>Nombre</th>
-                            <th>Documento</th>
+                            <th>CI</th>
                             <th>Expedido</th>
-                            <th>CI</th>                           
                             <th>Profesión</th>
                             <th>Dirección</th>
                             <th>Celular</th>
@@ -262,9 +261,8 @@ const Personales = () => {
                                 <tr key={p.id}>
                                     <td>{index + 1}</td>
                                     <td>{p.nombre ?? '—'}</td>
-                                    <td>{p.documento ?? '—'}</td>
-                                    <td>{p.expedido ?? '—'}</td>
                                     <td>{p.ci ?? '—'}</td>
+                                    <td>{p.expedido ?? '—'}</td>
                                     <td>{p.profesion ?? '—'}</td>
                                     <td>{p.direccion ?? '—'}</td>
                                     <td>{p.celular ?? '—'}</td>

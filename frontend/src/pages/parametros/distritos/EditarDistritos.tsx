@@ -42,7 +42,8 @@ const EditarDistrito = () => {
             setCodigoOriginal(res.data.codigo);
         } catch (error) {
             console.error('❌ Error al cargar distrito:', error);
-            alert('Error al cargar los datos');
+            alert('❌ Error al cargar los datos');
+            navigate('/parametros/distritos');
         } finally {
             setCargando(false);
         }
@@ -55,36 +56,9 @@ const EditarDistrito = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const verificarCodigoDisponible = async (codigo: string) => {
-        const codigoNormalizado = codigo.trim().toUpperCase();
-        if (codigoNormalizado === codigoOriginal.toUpperCase()) {
-            setMensajeCodigo(null); // No hay cambios en el código
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('token');
-            const res = await axios.get<{ disponible: boolean }>(
-                `/parametros/distritos/verificar-codigo/${codigoNormalizado}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-
-            if (!res.data.disponible) {
-                setMensajeCodigo('⚠️ Código ya está en uso');
-            } else {
-                setMensajeCodigo(null);
-            }
-        } catch (error) {
-            console.error('Error al verificar código:', error);
-        }
-    };
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (mensajeCodigo) return; // No enviar si hay código duplicado
+        if (mensajeCodigo) return;
 
         try {
             const token = localStorage.getItem('token');
@@ -92,61 +66,78 @@ const EditarDistrito = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
+            alert('✅ Distrito actualizado correctamente.');
             navigate('/parametros/distritos');
         } catch (error) {
             console.error('❌ Error al actualizar distrito:', error);
-            alert('Error al actualizar distrito');
+            alert('❌ Error al actualizar distrito.');
         }
     };
 
-    if (cargando) return <p>Cargando...</p>;
+    if (cargando) return <p className="container mt-4">Cargando datos...</p>;
 
     return (
         <div className="container mt-4">
-            <h3>Editar Distrito</h3>
-            <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                    <label htmlFor="codigo" className="form-label">Código</label>
-                    <input
-                        type="text"
-                        id="codigo"
-                        name="codigo"
-                        className={`form-control ${mensajeCodigo ? 'is-invalid' : ''}`}
-                        value={formData.codigo}
-                        onChange={handleChange}
-                        onBlur={() => verificarCodigoDisponible(formData.codigo)}
-                        readOnly
-                    />
-                    {mensajeCodigo && (
-                        <div className="invalid-feedback">{mensajeCodigo}</div>
-                    )}
-                </div>
+            <div className="form-container">
+                <h4 className="mb-4">Editar Distrito</h4>
+                <form onSubmit={handleSubmit}>
+                    {/* Código */}
+                    <div className="mb-3">
+                        <label htmlFor="codigo" className="form-label">Código</label>
+                        <input
+                            type="text"
+                            id="codigo"
+                            name="codigo"
+                            className="form-control"
+                            value={formData.codigo}
+                            readOnly
+                        />
+                    </div>
 
-                <div className="mb-3">
-                    <label htmlFor="descripcion" className="form-label">Descripción</label>
-                    <textarea
-                        id="descripcion"
-                        name="descripcion"
-                        className="form-control"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    {/* Descripción */}
+                    <div className="mb-3">
+                        <label htmlFor="descripcion" className="form-label">Descripción</label>
+                        <textarea
+                            id="descripcion"
+                            name="descripcion"
+                            className="form-control"
+                            value={formData.descripcion}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
 
-                
+                    {/* Estado (opcional si decides mantener editable) */}
+                    {/* 
+                    <div className="mb-3">
+                        <label htmlFor="estado" className="form-label">Estado</label>
+                        <select
+                            id="estado"
+                            name="estado"
+                            className="form-select"
+                            value={formData.estado}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="ACTIVO">ACTIVO</option>
+                            <option value="INACTIVO">INACTIVO</option>
+                        </select>
+                    </div>
+                    */}
 
-                <button type="submit" className="btn btn-primary">
-                    Guardar Cambios
-                </button>
-                <button
-                    type="button"
-                    className="btn btn-secondary ms-2"
-                    onClick={() => navigate('/parametros/distritos')}
-                >
-                    Cancelar
-                </button>
-            </form>
+                    {/* Botones */}
+                    <button type="submit" className="btn btn-primary">
+                        Guardar Cambios
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-secondary ms-2"
+                        onClick={() => navigate('/parametros/distritos')}
+                    >
+                        Cancelar
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

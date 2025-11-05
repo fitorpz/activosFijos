@@ -190,13 +190,16 @@ const Ciudades = () => {
                                         {(permisos.includes('ciudades:cambiar-estado') ||
                                             permisos.includes('ciudades:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${ciudad.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'}`}
+                                                    type="button"
+                                                    className={`btn btn-sm ${ciudad.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     onClick={() => cambiarEstado(ciudad.id)}
                                                     title={ciudad.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                    aria-label={ciudad.estado === 'ACTIVO' ? 'Inactivar ciudad' : 'Activar ciudad'}
                                                 >
-                                                    <i className="bi bi-arrow-repeat"></i>
+                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
                                             )}
+
                                     </td>
                                 </tr>
                             ))

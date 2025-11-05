@@ -312,7 +312,7 @@ const RegistroCargos = () => {
                             />
                         </div>
 
-                        {/* Estado */}
+                        {/* 
                         <div className="mb-3">
                             <label className="form-label">Estado</label>
                             <select
@@ -326,7 +326,7 @@ const RegistroCargos = () => {
                                 <option value="INACTIVO">INACTIVO</option>
                             </select>
                         </div>
-
+ */}
                         <div className="d-flex justify-content-end">
                             <button type="submit" className="btn btn-primary">
                                 <i className="bi bi-save me-2"></i> Guardar
