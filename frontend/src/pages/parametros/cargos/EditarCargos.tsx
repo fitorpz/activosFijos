@@ -210,19 +210,6 @@ const EditarCargos = () => {
                                 required
                             />
                         </div>
-                        <div className="mb-3">
-                            <label className="form-label">Estado</label>
-                            <select
-                                className="form-select"
-                                name="estado"
-                                value={formData.estado}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="ACTIVO">ACTIVO</option>
-                                <option value="INACTIVO">INACTIVO</option>
-                            </select>
-                        </div>
                         <div className="d-flex justify-content-end">
                             <button type="submit" className="btn btn-primary" disabled={guardando}>
                                 {guardando ? 'Guardando...' : 'Guardar'}

@@ -161,21 +161,6 @@ const EditarAuxiliar = () => {
                             />
                         </div>
 
-                        <div className="mb-3">
-                            <label htmlFor="estado" className="form-label">Estado</label>
-                            <select
-                                id="estado"
-                                name="estado"
-                                className="form-select"
-                                value={formData.estado}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="ACTIVO">ACTIVO</option>
-                                <option value="INACTIVO">INACTIVO</option>
-                            </select>
-                        </div>
-
                         <button type="submit" className="btn btn-primary">Guardar Cambios</button>
                         <button
                             type="button"

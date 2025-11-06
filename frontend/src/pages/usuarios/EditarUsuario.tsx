@@ -220,12 +220,21 @@ export const EditarUsuario = () => {
                         </>
                     )}
 
-                    {/* Guardar */}
-                    <div className="d-grid mt-4">
+                    {/* Guardar y Cancelar */}
+                    <div className="d-flex justify-content-between mt-4">
                         <button type="submit" className="btn btn-primary">
                             <i className="bi bi-save me-2"></i> Guardar Cambios
                         </button>
+
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => navigate('/usuarios')}
+                        >
+                            <i className="bi bi-x-circle me-2"></i> Cancelar
+                        </button>
                     </div>
+
                 </form>
             </div>
         </div>

@@ -120,18 +120,53 @@ export class AuxiliaresController {
     @Query('codigo_grupo') codigo_grupo?: string,
   ) {
     try {
+      // Obtener todos los auxiliares filtrando por estado y código de grupo si aplica
       const auxiliares = await this.auxiliaresService.findAll(estado, codigo_grupo);
 
-      const filasHTML = auxiliares.map((aux, index) => `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${aux.codigo}</td>
-          <td>${aux.descripcion}</td>
-          <td>${aux.codigo_grupo ?? '—'}</td>
-          <td>${aux.estado}</td>
-        </tr>
-      `).join('');
+      // Agrupar auxiliares por codigo_grupo
+      const grupos = auxiliares.reduce((acc, aux) => {
+        const grupo = aux.codigo_grupo ?? 'Sin grupo';
+        if (!acc[grupo]) acc[grupo] = [];
+        acc[grupo].push(aux);
+        return acc;
+      }, {} as Record<string, typeof auxiliares>);
 
+      // Generar filas HTML agrupadas
+      let filasHTML = '';
+      Object.keys(grupos).forEach((grupo) => {
+        filasHTML += `
+        <tr>
+          <td colspan="5" style="font-weight:bold; background-color:#f0f0f0;">
+            Grupo: ${grupo}
+          </td>
+        </tr>
+      `;
+
+        grupos[grupo].forEach((aux, index) => {
+          filasHTML += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${aux.codigo_grupo ?? '—'}</td>
+            <td>${aux.codigo}</td>
+            <td>${aux.descripcion}</td>
+            <td>${aux.estado}</td>
+          </tr>
+        `;
+        });
+      });
+
+      // Cargar logo en base64
+      const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
+      let logoDataURL = '';
+      try {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoBase64 = logoBuffer.toString('base64');
+        logoDataURL = `data:image/png;base64,${logoBase64}`;
+      } catch (e) {
+        console.error('❌ No se pudo cargar el logo:', logoPath);
+      }
+
+      // Cargar plantilla HTML
       const templatePath = path.join(
         process.cwd(),
         'templates',
@@ -148,13 +183,18 @@ export class AuxiliaresController {
         throw new Error('Plantilla HTML no encontrada');
       }
 
+      // Reemplazar placeholders
       html = html.replace('<!-- FILAS_AUXILIARES -->', filasHTML);
+      html = html.replace('__LOGO__', logoDataURL);
 
+      // Generar PDF
       const buffer = await generarPDFDesdeHTML(html);
 
+      // Enviar respuesta
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline; filename=auxiliares.pdf');
       res.end(buffer);
+
     } catch (error) {
       console.error('❌ Error al generar el PDF:', error);
       return res.status(500).json({ message: 'Error al exportar PDF' });
