@@ -30,7 +30,7 @@ import { DatabaseModule } from './database/database.module';
       password: 'password123',
       database: 'activos_fijos',
       synchronize: true,     
-      dropSchema: false,   
+      dropSchema: false,
       autoLoadEntities: true, 
     }),
 

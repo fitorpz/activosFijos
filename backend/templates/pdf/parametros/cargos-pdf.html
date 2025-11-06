@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Cargos</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 14px;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 40px;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 12px 15px;
+      text-align: left;
+    }
+
+    thead {
+      background-color: #2980b9;
+      color: white;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f4f8fb;
+    }
+
+    tbody tr:hover {
+      background-color: #eaf2f8;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div style="position: relative; height: 80px; margin-bottom: 20px;">
+    <img src="__LOGO__" alt="Logo"
+      style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 50px; height: auto;" />
+
+    <h2 style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        color: #2c3e50;
+      ">
+      Listado de Cargos
+    </h2>
+  </div>
+
+  <p style="text-align:center; margin-bottom:20px; color:#555;">
+    __FILTRO_ESTADO__
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Área</th>
+        <th>Unidad Org.</th>
+        <th>Ambiente</th>
+        <th>Código</th>
+        <th>Cargo</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- FILAS_CARGOS -->
+    </tbody>
+  </table>
+</body>
+
+</html>

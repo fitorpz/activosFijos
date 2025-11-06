@@ -2,116 +2,173 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8" />
-    <title>Listado de Personal</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 14px;
-            background-color: #f9f9f9;
-            margin: 0;
-            padding: 40px;
-            color: #333;
-        }
+  <meta charset="UTF-8" />
+  <title>Listado de Personal</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 20mm;
+    }
 
-        /* Contenedor para logo y título */
-        .header-container {
-            position: relative;
-            height: 80px;
-            margin-bottom: 30px;
-        }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 40px;
+      color: #333;
+    }
 
-        .header-container img {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: auto;
-        }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
 
-        .header-container h2 {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            margin: 0;
-            color: #2c3e50;
-            font-weight: 700;
-        }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      table-layout: fixed;
+    }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            border-radius: 8px;
-            overflow: hidden;
-            font-size: 12px;
-        }
+    th,
+    td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      vertical-align: middle;
+      word-wrap: break-word;
+      white-space: normal;
+    }
 
-        th,
-        td {
-            padding: 10px 12px;
-            text-align: left;
-            vertical-align: top;
-        }
+    thead {
+      background-color: #2980b9;
+      color: white;
+    }
 
-        thead {
-            background-color: #2980b9;
-            color: white;
-        }
+    tbody tr:nth-child(even) {
+      background-color: #f4f8fb;
+    }
 
-        tbody tr {
-            border-bottom: 1px solid #eaeaea;
-        }
+    tbody tr:hover {
+      background-color: #eaf2f8;
+    }
 
-        tbody tr:nth-child(even) {
-            background-color: #f4f8fb;
-        }
+    th:nth-child(1),
+    td:nth-child(1) {
+      width: 30px;
+    }
 
-        tbody tr:hover {
-            background-color: #eaf2f8;
-        }
+    th:nth-child(2),
+    td:nth-child(2) {
+      width: 70px;
+    }
 
-        th:first-child,
-        td:first-child {
-            text-align: center;
-            width: 40px;
-        }
-    </style>
+    th:nth-child(3),
+    td:nth-child(3) {
+      width: 70px;
+    }
+
+    th:nth-child(4),
+    td:nth-child(4) {
+      width: 70px;
+    }
+
+    th:nth-child(5),
+    td:nth-child(5) {
+      width: 140px;
+    }
+
+    th:nth-child(6),
+    td:nth-child(6) {
+      width: 120px;
+    }
+
+    th:nth-child(7),
+    td:nth-child(7) {
+      width: 160px;
+    }
+
+    th:nth-child(8),
+    td:nth-child(8) {
+      width: 80px;
+    }
+
+    th:nth-child(9),
+    td:nth-child(9) {
+      width: 80px;
+    }
+
+    th:nth-child(10),
+    td:nth-child(10) {
+      width: 140px;
+    }
+
+    th:nth-child(11),
+    td:nth-child(11) {
+      width: 90px;
+    }
+
+    th:nth-child(12),
+    td:nth-child(12) {
+      width: 90px;
+    }
+
+    th:nth-child(13),
+    td:nth-child(13) {
+      width: 80px;
+    }
+
+    th:nth-child(14),
+    td:nth-child(14) {
+      width: 70px;
+    }
+  </style>
 </head>
 
 <body>
-    <div class="header-container">
-        <img src="__LOGO__" alt="Logo" />
-        <h2>Listado de Personal</h2>
-    </div>
+  <div style="position: relative; height: 80px; margin-bottom: 20px;">
+    <img src="__LOGO__" alt="Logo"
+      style="position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 60px; height: auto;" />
+    <h2 style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        color: #2c3e50;
+      ">
+      Listado de Personal
+    </h2>
+  </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>N°</th>
-                <th>Documento</th>
-                <th>Expedido</th>
-                <th>CI</th>
-                <th>Nombre</th>
-                <th>Profesión</th>
-                <th>Dirección</th>
-                <th>Celular</th>
-                <th>Teléfono</th>
-                <th>Email</th>
-                <th>Fec. Nac.</th>
-                <th>Estado Civil</th>
-                <th>Sexo</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- FILAS_PERSONALES -->
-        </tbody>
-    </table>
+  <p style="text-align:center; margin-bottom:20px; color:#555;">
+    __FILTRO_ESTADO__
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>N°</th>
+        <th>Expedido</th>
+        <th>CI</th>
+        <th>Nombre</th>
+        <th>Profesión</th>
+        <th>Dirección</th>
+        <th>Celular</th>
+        <th>Teléfono</th>
+        <th>Email</th>
+        <th>Fec. Nac.</th>
+        <th>Estado Civil</th>
+        <th>Sexo</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- FILAS_PERSONALES -->
+    </tbody>
+  </table>
 </body>
 
 </html>
-

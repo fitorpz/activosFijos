@@ -85,55 +85,98 @@ export class PersonalesController {
 
 
 
-  // Exportar en PDF
   @Get('exportar/pdf')
-  async exportarPDF(@Res() res: Response, @Query('estado') estado: string) {
+  async exportarPDF(
+    @Res() res: Response,
+    @Query('estado') estadoQuery?: string,
+  ) {
     try {
+      const estado =
+        estadoQuery?.toUpperCase() === 'ACTIVO'
+          ? 'ACTIVO'
+          : estadoQuery?.toUpperCase() === 'INACTIVO'
+            ? 'INACTIVO'
+            : undefined;
+
       const personales = await this.personalesService.findAll();
-      const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
+      const filtrados = estado
+        ? personales.filter(p => p.estado === estado)
+        : personales;
+
+      const filasHTML = filtrados
+        .map(
+          (p, i) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${p.expedido ?? ''}</td>
+          <td>${p.ci ?? ''}</td>
+          <td>${p.nombre ?? ''}</td>
+          <td>${p.profesion ?? ''}</td>
+          <td>${p.direccion ?? ''}</td>
+          <td>${p.celular ?? ''}</td>
+          <td>${p.telefono ?? ''}</td>
+          <td>${p.email ?? ''}</td>
+          <td>${p.fecnac ?? ''}</td>
+          <td>${this.obtenerEstadoCivil(p.estciv)}</td>
+          <td>${this.obtenerSexo(p.sexo)}</td>
+          <td>${p.estado ?? ''}</td>
+        </tr>
+      `,
+        )
+        .join('');
+
+      const logoPath = path.join(
+        process.cwd(),
+        'templates',
+        'pdf',
+        'parametros',
+        'escudo.png',
+      );
+
       let logoDataURL = '';
       try {
         const logoBuffer = fs.readFileSync(logoPath);
-        const logoBase64 = logoBuffer.toString('base64');
-        logoDataURL = `data:image/png;base64,${logoBase64}`;
+        logoDataURL = `data:image/png;base64,${logoBuffer.toString('base64')}`;
       } catch (e) {
         console.error('❌ No se pudo cargar el logo:', logoPath);
       }
 
-      const filasHTML = personales
-        .filter(p => estado === 'todos' || p.estado === estado.toUpperCase())
-        .map((p, i) => `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${p.expedido ?? ''}</td>
-            <td>${p.ci ?? ''}</td>
-            <td>${p.nombre ?? ''}</td>
-            <td>${p.profesion ?? ''}</td>
-            <td>${p.direccion ?? ''}</td>
-            <td>${p.celular ?? ''}</td>
-            <td>${p.telefono ?? ''}</td>
-            <td>${p.email ?? ''}</td>
-            <td>${p.fecnac ?? ''}</td>
-            <td>${this.obtenerEstadoCivil(p.estciv)}</td>
-            <td>${this.obtenerSexo(p.sexo)}</td>
-          </tr>
-        `).join('');
+      const templatePath = path.join(
+        process.cwd(),
+        'templates',
+        'pdf',
+        'parametros',
+        'personales-pdf.html',
+      );
 
-      const html = `
-        <html>
-          <body>
-            <img src="${logoDataURL}" style="width:100px;">
-            <table>${filasHTML}</table>
-          </body>
-        </html>`;
+      let html = '';
+      try {
+        html = fs.readFileSync(templatePath, 'utf-8');
+      } catch (e) {
+        console.error('❌ Plantilla PDF no encontrada:', templatePath);
+        throw new Error('Plantilla HTML no encontrada');
+      }
 
-      const pdfBuffer = await generarPDFDesdeHTML(html);
-      res.set({ 'Content-Type': 'application/pdf' });
-      res.send(pdfBuffer);
+      html = html.replace('<!-- FILAS_PERSONALES -->', filasHTML);
+      html = html.replace('__LOGO__', logoDataURL);
+      html = html.replace(
+        '__FILTRO_ESTADO__',
+        estado
+          ? `Mostrando personales ${estado.toLowerCase()}`
+          : 'Mostrando todos los personales',
+      );
+
+      const buffer = await generarPDFDesdeHTML(html);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename=personales.pdf');
+      res.end(buffer);
     } catch (error) {
-      throw new HttpException('Error al generar el PDF', HttpStatus.INTERNAL_SERVER_ERROR);
+      console.error('❌ Error al generar PDF:', error);
+      return res.status(500).json({ message: 'Error al exportar PDF' });
     }
   }
+
 
   private obtenerEstadoCivil(estciv?: number): string {
     switch (estciv) {
