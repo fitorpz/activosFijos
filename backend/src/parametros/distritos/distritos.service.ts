@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Distrito } from './entities/distritos.entity';
@@ -24,7 +24,9 @@ export class DistritosService {
 
     const codigoNormalizado = dto.codigo.trim().toUpperCase();
     const existe = await this.distritoRepo.findOneBy({ codigo: codigoNormalizado });
-    if (existe) throw new Error(`Ya existe un distrito con el código ${dto.codigo}`);
+    if (existe) {
+      throw new BadRequestException(`El código ${dto.codigo} ya está registrado.`);
+    }
 
     const nueva = this.distritoRepo.create({
       descripcion: dto.descripcion,
@@ -36,19 +38,19 @@ export class DistritosService {
     return this.distritoRepo.save(nueva);
   }
 
-async findAll(estado?: string): Promise<Distrito[]> {
-  const where = estado && estado !== 'todos'
-    ? { estado: estado.toUpperCase() as 'ACTIVO' | 'INACTIVO' }
-    : {};
+  async findAll(estado?: string): Promise<Distrito[]> {
+    const where = estado && estado !== 'todos'
+      ? { estado: estado.toUpperCase() as 'ACTIVO' | 'INACTIVO' }
+      : {};
 
-  return this.distritoRepo.find({
-    where,
-    relations: ['creado_por', 'actualizado_por'],
-    order: {
-      descripcion: 'ASC',
-    },
-  });
-}
+    return this.distritoRepo.find({
+      where,
+      relations: ['creado_por', 'actualizado_por'],
+      order: {
+        descripcion: 'ASC',
+      },
+    });
+  }
 
 
   async findOne(id: number): Promise<Distrito> {

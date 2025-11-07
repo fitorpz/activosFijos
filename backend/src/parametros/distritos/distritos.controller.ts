@@ -33,11 +33,16 @@ export class DistritosController {
 
   @Get('verificar-codigo/:codigo')
   async verificarCodigo(@Param('codigo') codigo: string) {
-    const existe = await this.ciudadRepository.findOneBy({
-      codigo: codigo.trim().toUpperCase(),
-    });
-    return { disponible: !existe };
+    const codigoNormalizado = codigo.trim().toUpperCase();
+    const existe = await this.ciudadRepository.findOneBy({ codigo: codigoNormalizado });
+
+    if (existe) {
+      return { disponible: false, message: `El código ${codigoNormalizado} ya está registrado.` };
+    }
+
+    return { disponible: true, message: `El código ${codigoNormalizado} está disponible.` };
   }
+
 
   @Get()
   findAll(@Req() req: RequestWithUser) {
@@ -91,15 +96,15 @@ export class DistritosController {
       `).join('');
 
       const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
-      
-              let logoDataURL = '';
-              try {
-                const logoBuffer = fs.readFileSync(logoPath);
-                const logoBase64 = logoBuffer.toString('base64');
-                logoDataURL = `data:image/png;base64,${logoBase64}`;
-              } catch (e) {
-                console.error('❌ No se pudo cargar el logo:', logoPath);
-              }  
+
+      let logoDataURL = '';
+      try {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoBase64 = logoBuffer.toString('base64');
+        logoDataURL = `data:image/png;base64,${logoBase64}`;
+      } catch (e) {
+        console.error('❌ No se pudo cargar el logo:', logoPath);
+      }
 
       const templatePath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'distritos-pdf.html');
       let html = fs.readFileSync(templatePath, 'utf-8');

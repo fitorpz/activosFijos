@@ -121,27 +121,64 @@ export class UnidadesOrganizacionalesController {
     try {
       const unidades = await this.unidadesService.findAll(estado);
 
-      const filasHTML = unidades.map((unidad, index) => `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${unidad.area?.codigo || '—'}</td>
-          <td>${unidad.codigo}</td>
-          <td>${unidad.descripcion}</td>
+      // 1️⃣ Ordenar primero por área y luego por código
+      unidades.sort((a, b) => {
+        const areaA = a.area?.codigo || '';
+        const areaB = b.area?.codigo || '';
+        const codigoA = a.codigo || '';
+        const codigoB = b.codigo || '';
+        if (areaA !== areaB) return areaA.localeCompare(areaB);
+        return codigoA.localeCompare(codigoB);
+      });
+
+      // 2️⃣ Agrupar por área
+      const agrupadoPorArea: Record<string, any[]> = {};
+      for (const unidad of unidades) {
+        const areaCodigo = unidad.area?.codigo || 'SIN ÁREA';
+        if (!agrupadoPorArea[areaCodigo]) agrupadoPorArea[areaCodigo] = [];
+        agrupadoPorArea[areaCodigo].push(unidad);
+      }
+
+      // 3️⃣ Generar HTML agrupado
+      let filasHTML = '';
+      let index = 1;
+
+      for (const [areaCodigo, unidadesArea] of Object.entries(agrupadoPorArea)) {
+        // 🔹 Extraer la descripción del área
+        const descripcionArea = unidadesArea[0]?.area?.descripcion || 'Sin descripción';
+
+        // Cabecera del área (muestra código y descripción)
+        filasHTML += `
+        <tr style="background-color:#d9edf7; font-weight:bold;">
+          <td colspan="4">Área: ${areaCodigo} - ${descripcionArea}</td>
         </tr>
-      `).join('');
+      `;
 
-      const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
-
-        let logoDataURL = '';
-        try {
-          const logoBuffer = fs.readFileSync(logoPath);
-          const logoBase64 = logoBuffer.toString('base64');
-          logoDataURL = `data:image/png;base64,${logoBase64}`;
-        } catch (e) {
-          console.error('❌ No se pudo cargar el logo:', logoPath);
+        // Filas de las unidades de esa área
+        for (const unidad of unidadesArea) {
+          filasHTML += `
+          <tr>
+            <td>${index++}</td>
+            <td>${unidad.area?.codigo || '—'}</td>
+            <td>${unidad.codigo}</td>
+            <td>${unidad.descripcion}</td>
+          </tr>
+        `;
         }
+      }
 
+      // 4️⃣ Cargar logo
+      const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
+      let logoDataURL = '';
+      try {
+        const logoBuffer = fs.readFileSync(logoPath);
+        const logoBase64 = logoBuffer.toString('base64');
+        logoDataURL = `data:image/png;base64,${logoBase64}`;
+      } catch (e) {
+        console.error('❌ No se pudo cargar el logo:', logoPath);
+      }
 
+      // 5️⃣ Cargar plantilla HTML
       const templatePath = path.join(
         process.cwd(),
         'templates',
@@ -158,9 +195,11 @@ export class UnidadesOrganizacionalesController {
         throw new Error('Plantilla HTML no encontrada');
       }
 
+      // 6️⃣ Reemplazar el contenido dinámico
       html = html.replace('<!-- FILAS_UNIDADES -->', filasHTML);
       html = html.replace('__LOGO__', logoDataURL);
 
+      // 7️⃣ Generar PDF
       const buffer = await generarPDFDesdeHTML(html);
 
       res.setHeader('Content-Type', 'application/pdf');

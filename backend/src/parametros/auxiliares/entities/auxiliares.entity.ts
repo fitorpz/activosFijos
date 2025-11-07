@@ -6,15 +6,17 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { Usuario } from 'src/usuarios/entities/usuario.entity';
 
-@Entity('auxiliares') 
+@Entity('auxiliares')
+@Unique(['codigo'])
 export class Auxiliar {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   codigo: string;
 
   @Column()

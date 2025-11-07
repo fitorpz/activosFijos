@@ -168,22 +168,7 @@ const RegistroAuxiliar = () => {
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label htmlFor="estado" className="form-label">
-                            Estado
-                        </label>
-                        <select
-                            id="estado"
-                            name="estado"
-                            className="form-select"
-                            value={formData.estado}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="ACTIVO">ACTIVO</option>
-                            <option value="INACTIVO">INACTIVO</option>
-                        </select>
-                    </div>
+       
 
                     <button type="submit" className="btn btn-primary" disabled={cargando}>
                         {cargando ? 'Guardando...' : 'Registrar'}

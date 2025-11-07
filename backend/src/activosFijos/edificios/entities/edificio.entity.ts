@@ -20,20 +20,51 @@ export class Edificio {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
-  nro_da: string;
+  @Column({ default: 'GAMS' })
+  codigo_gobierno: string; // 1
 
-  @ManyToOne(() => Personal)
-  @JoinColumn({ name: 'responsable_id' })
-  responsable: Personal;
+  @Column({ default: 1101 })
+  codigo_institucional: string; // 2
+
+  @Column({ length: 10 })
+  codigo_direccion_administrativa: string; // 3
+
+  @Column({ length: 10 })
+  codigo_distrito: string; // 4
+
+  @Column({ length: 10 })
+  codigo_sector_area: string; // 5
+
+  @Column({ length: 10 })
+  codigo_unidad_organizacional: string; // 6
+
+  @ManyToOne(() => UnidadOrganizacional)
+  @JoinColumn({ name: 'unidad_organizacional_id' })
+  unidad_organizacional: UnidadOrganizacional;
+
+
+  @Column({ length: 10 })
+  codigo_cargo: string; // 7
 
   @ManyToOne(() => Cargo)
   @JoinColumn({ name: 'cargo_id' })
   cargo: Cargo;
 
-  @ManyToOne(() => UnidadOrganizacional)
-  @JoinColumn({ name: 'unidad_organizacional_id' })
-  unidad_organizacional: UnidadOrganizacional;
+  @Column({ length: 10 })
+  codigo_ambiente: string; // 8
+
+  @Column({ length: 10 })
+  codigo_grupo_contable: string; // 9
+
+  @Column({ length: 20 })
+  codigo_correlativo: string; // 10
+
+  @Column({ unique: true })
+  codigo_completo: string;
+
+  @ManyToOne(() => Personal)
+  @JoinColumn({ name: 'responsable_id' })
+  responsable: Personal;
 
   @Column()
   ubicacion: string;
@@ -91,7 +122,6 @@ export class Edificio {
 
   @Column({ name: 'archivo_respaldo_pdf', type: 'varchar', nullable: true })
   archivo_respaldo_pdf?: string | null;
-
 
   @ManyToOne(() => Usuario)
   @JoinColumn({ name: 'creado_por_id' })

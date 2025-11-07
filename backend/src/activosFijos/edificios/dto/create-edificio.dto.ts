@@ -6,20 +6,66 @@ import {
     IsDateString,
     IsArray,
     IsDecimal,
+    Length,
 } from 'class-validator';
 
 export class CreateEdificioDto {
+    // 🔹 Codificación GAMS Sucre (10 niveles)
+    @IsOptional()
     @IsString()
-    nro_da: string;
+    codigo_gobierno?: string = 'GAMS'; // 1
+
+    @IsOptional()
+    @IsString()
+    codigo_institucional?: string = '1101'; // 2
+
+    @IsString()
+    @Length(1, 10)
+    codigo_direccion_administrativa: string; // 3
+
+    @IsString()
+    @Length(1, 10)
+    codigo_distrito: string; // 4
+
+    @IsString()
+    @Length(1, 10)
+    codigo_sector_area: string; // 5
+
+    @IsString()
+    @Length(1, 10)
+    codigo_unidad_organizacional: string; // 6
 
     @IsNumber()
-    responsable_id: number;
+    unidad_organizacional_id: number;
+
+    @IsString()
+    @Length(1, 10)
+    codigo_cargo: string; // 7
 
     @IsNumber()
     cargo_id: number;
 
+    @IsString()
+    @Length(1, 10)
+    codigo_ambiente: string; // 8
+
+    @IsString()
+    @Length(1, 10)
+    codigo_grupo_contable: string; // 9
+
+    @IsOptional()
+    @IsString()
+    @Length(1, 20)
+    codigo_correlativo?: string; // 10 (puede generarse automático)
+
+    // 🔹 Campo generado (no se recibe del cliente)
+    @IsOptional()
+    @IsString()
+    codigo_completo?: string;
+
+    // 🔹 Campos originales
     @IsNumber()
-    unidad_organizacional_id: number;
+    responsable_id: number;
 
     @IsString()
     ubicacion: string;
@@ -80,8 +126,9 @@ export class CreateEdificioDto {
     @IsString({ each: true })
     fotos_edificio: string[];
 
+    @IsOptional()
     @IsString()
-    archivo_respaldo_pdf: string;
+    archivo_respaldo_pdf?: string;
 
     @IsNumber()
     creado_por_id: number;

@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsIn } from 'class-validator';
+import { IsOptional, IsNotEmpty, IsIn } from 'class-validator';
 
 export class CreateAuxiliaresDto {
-    @IsNotEmpty()
-    codigo: string;
+    @IsOptional()
+    codigo?: string;
 
     @IsNotEmpty()
     descripcion: string;

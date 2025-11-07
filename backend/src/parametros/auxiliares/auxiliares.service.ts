@@ -21,19 +21,34 @@ export class AuxiliaresService {
     const usuario = await this.usuarioRepo.findOneBy({ id: userId });
     if (!usuario) throw new NotFoundException(`Usuario con ID ${userId} no encontrado`);
 
-    // Generar código correlativo
-    const siguienteCodigo = await this.getSiguienteCodigoAuxiliar(dto.codigo_grupo);
+    let nuevoCodigo = dto.codigo?.trim() || null;
+
+    // 🔹 Generar automáticamente si no viene código o si ya existe
+    let intento = 0;
+    const maxIntentos = 10;
+
+    do {
+      if (!nuevoCodigo || await this.auxiliarRepo.findOne({ where: { codigo: nuevoCodigo } })) {
+        nuevoCodigo = await this.getSiguienteCodigoAuxiliar(dto.codigo_grupo);
+      } else {
+        break; // código único encontrado
+      }
+      intento++;
+    } while (intento < maxIntentos);
+
+    if (intento >= maxIntentos) {
+      throw new Error('No se pudo generar un código único de auxiliar después de varios intentos');
+    }
 
     const nuevoAuxiliar = this.auxiliarRepo.create({
       ...dto,
-      codigo: siguienteCodigo,
+      codigo: nuevoCodigo,
       estado: dto.estado ?? 'ACTIVO',
       creado_por: usuario,
     });
 
     return this.auxiliarRepo.save(nuevoAuxiliar);
   }
-
 
   // Obtener todos los auxiliares (con filtro por estado)
   // servicio
@@ -121,32 +136,27 @@ export class AuxiliaresService {
   }
 
   async getSiguienteCodigoAuxiliar(codigo_grupo: string): Promise<string> {
-    const auxiliares = await this.auxiliarRepo.find({
-      where: { codigo_grupo },
-      order: { codigo: 'DESC' },
-    });
+    if (!codigo_grupo) throw new Error('Código de grupo contable obligatorio');
 
-    // Si no hay auxiliares previos, empezamos en 0001
-    if (auxiliares.length === 0) {
-      return `${codigo_grupo}.0001`;
-    }
+    const result = await this.auxiliarRepo
+      .createQueryBuilder('a')
+      .select(`
+      MAX(
+        CASE
+          WHEN SPLIT_PART(a.codigo, '.', 2) ~ '^[0-9]+$'
+          THEN CAST(SPLIT_PART(a.codigo, '.', 2) AS INTEGER)
+          WHEN SPLIT_PART(a.codigo, '.', 3) ~ '^[0-9]+$'
+          THEN CAST(SPLIT_PART(a.codigo, '.', 3) AS INTEGER)
+          ELSE 0
+        END
+      )`, 'maximo')
+      .where('a.codigo_grupo = :grupo', { grupo: codigo_grupo })
+      .getRawOne<{ maximo: number }>();
 
-    // Tomar el último código y dividirlo
-    const ultimoCodigo = auxiliares[0].codigo; // ej: "M001.0005"
-    const partes = ultimoCodigo.split('.');
+    const ultimo = result?.maximo ?? 0;
+    const siguiente = (ultimo + 1).toString().padStart(4, '0');
 
-    // Validar estructura
-    let correlativoActual = '0000';
-    if (partes.length > 1) {
-      correlativoActual = partes[1];
-    }
-
-    const siguienteNumero = (parseInt(correlativoActual, 10) + 1)
-      .toString()
-      .padStart(4, '0');
-
-    // Retornar el nuevo código completo
-    return `${codigo_grupo}.${siguienteNumero}`;
+    return `${codigo_grupo}.${siguiente}`;
   }
 
 
@@ -168,14 +178,10 @@ export class AuxiliaresService {
     return query.orderBy('auxiliar.codigo', 'ASC').limit(10).getMany();
   }
 
-
   async findByGrupo(codigo_grupo: string): Promise<Auxiliar[]> {
     return this.auxiliarRepo.find({
       where: { codigo_grupo, estado: 'ACTIVO' },
       order: { codigo: 'ASC' },
     });
   }
-
-
-
 }

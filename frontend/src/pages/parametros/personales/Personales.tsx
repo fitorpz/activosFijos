@@ -289,14 +289,16 @@ const Personales = () => {
                                         {(permisos.includes('personales:cambiar-estado') ||
                                             permisos.includes('personales:eliminar')) && (
                                                 <button
-                                                    className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-secondary' : 'btn-success'
-                                                        }`}
+                                                    type="button"
+                                                    className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     title={p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                     onClick={() => cambiarEstado(p.id)}
+                                                    aria-label={p.estado === 'ACTIVO' ? 'Inactivar personal' : 'Activar personal'}
                                                 >
-                                                    <i className="bi bi-arrow-repeat"></i>
+                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
                                             )}
+
                                     </td>
                                 </tr>
                             ))

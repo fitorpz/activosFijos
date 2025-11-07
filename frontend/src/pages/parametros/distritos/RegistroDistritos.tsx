@@ -29,8 +29,9 @@ const RegistroDistrito = () => {
 
         try {
             const res = await axios.get<{ disponible: boolean }>(
-                `/parametros/ciudades/verificar-codigo/${codigoNormalizado}`
+                `/parametros/distritos/verificar-codigo/${codigoNormalizado}`
             );
+
 
             setMensajeCodigo(
                 res.data.disponible ? '✅ Código disponible' : '❌ El código ya está registrado'

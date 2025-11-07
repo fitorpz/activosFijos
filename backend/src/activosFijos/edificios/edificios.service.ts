@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Edificio } from './entities/edificio.entity';
@@ -34,40 +38,104 @@ export class EdificiosService {
         private readonly historialService: HistorialEdificioService,
     ) { }
 
+    // 🧩 Generar correlativo incremental de 4 dígitos
+    private async generarNuevoCorrelativo(): Promise<string> {
+        const ultimo = await this.edificioRepo.find({
+            order: { id: 'DESC' },
+            take: 1,
+        });
+
+        if (ultimo.length === 0) return '0001';
+
+        const ultimoCodigo = ultimo[0].codigo_correlativo ?? '0000';
+        const siguiente = (parseInt(ultimoCodigo, 10) + 1).toString().padStart(4, '0');
+        return siguiente;
+    }
+
+    // 🧩 Construir el código completo GAMS
+    private construirCodigoCompleto(dto: CreateEdificioDto): string {
+        const partes = [
+            dto.codigo_gobierno ?? 'GAMS',
+            dto.codigo_institucional ?? '1101',
+            dto.codigo_direccion_administrativa,
+            dto.codigo_distrito,
+            dto.codigo_sector_area,
+            dto.codigo_unidad_organizacional,
+            dto.codigo_cargo,
+            dto.codigo_ambiente,
+            dto.codigo_grupo_contable,
+            dto.codigo_correlativo,
+        ];
+
+        return partes.join('.');
+    }
+
     // 🔹 Crear un nuevo edificio
     async create(dto: CreateEdificioDto): Promise<Edificio> {
-        const responsable = await this.personalRepo.findOneBy({ id: dto.responsable_id });
-        const cargo = await this.cargoRepo.findOneBy({ id: dto.cargo_id });
-        const unidad = await this.unidadOrgRepo.findOneBy({ id: dto.unidad_organizacional_id });
-        const creadoPor = await this.usuarioRepo.findOneBy({ id: dto.creado_por_id });
+        const responsable = await this.personalRepo.findOneBy({
+            id: dto.responsable_id,
+        });
+        const unidad = await this.unidadOrgRepo.findOneBy({
+            id: dto.unidad_organizacional_id,
+        });
+        const creadoPor = await this.usuarioRepo.findOneBy({
+            id: dto.creado_por_id,
+        });
 
-        if (!responsable || !cargo || !unidad || !creadoPor) {
-            throw new NotFoundException('Referencias inválidas en la creación del edificio');
+        if (!responsable || !unidad || !creadoPor) {
+            throw new NotFoundException(
+                'Referencias inválidas en la creación del edificio',
+            );
         }
+
+        const cargo = dto.codigo_cargo
+            ? await this.cargoRepo.findOneBy({ id: dto.cargo_id })
+            : null;
 
         const actualizadoPor = dto.actualizado_por_id
             ? await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id })
             : undefined;
 
-        const payload: Partial<Edificio> = {
+        // 🧮 Generar correlativo si no fue enviado
+        if (!dto.codigo_correlativo) {
+            dto.codigo_correlativo = await this.generarNuevoCorrelativo();
+        }
+
+        // 🧩 Generar código completo concatenado
+        const codigoCompleto = this.construirCodigoCompleto(dto);
+
+        // Validar que no exista
+        const existe = await this.edificioRepo.findOne({
+            where: { codigo_completo: codigoCompleto },
+        });
+        if (existe) {
+            throw new BadRequestException(
+                `El código ${codigoCompleto} ya existe en otro edificio`,
+            );
+        }
+
+        // 🧱 Crear entidad
+        const payload = this.edificioRepo.create({
             ...dto,
-            responsable,
-            cargo,
-            unidad_organizacional: unidad,
-            creado_por: creadoPor,
-        };
+            codigo_completo: codigoCompleto,
+        });
+
+        payload.responsable = responsable;
+        payload.cargo = cargo!;
+        payload.unidad_organizacional = unidad;
+        payload.creado_por = creadoPor;
 
         if (actualizadoPor) payload.actualizado_por = actualizadoPor;
 
         const nuevo = this.edificioRepo.create(payload);
-        const edificioCreado = await this.edificioRepo.save(nuevo);
+        const edificioCreado = await this.edificioRepo.save(payload);
 
-        // ✅ Registro en historial (nuevo formato)
+        // 📜 Registrar en historial
         await this.historialService.registrarAccion({
             edificioId: edificioCreado.id,
             usuarioId: creadoPor.id,
             accion: 'CREAR_EDIFICIO',
-            descripcion: `Se creó un nuevo edificio (${edificioCreado.nombre_bien}).`,
+            descripcion: `Se creó un nuevo edificio (${edificioCreado.nombre_bien}) con código ${edificioCreado.codigo_completo}.`,
         });
 
         return edificioCreado;
@@ -83,6 +151,7 @@ export class EdificiosService {
                 'creado_por',
                 'actualizado_por',
             ],
+            order: { id: 'ASC' },
         });
     }
 
@@ -124,7 +193,9 @@ export class EdificiosService {
         }
 
         if (dto.responsable_id) {
-            const responsable = await this.personalRepo.findOneBy({ id: dto.responsable_id });
+            const responsable = await this.personalRepo.findOneBy({
+                id: dto.responsable_id,
+            });
             if (responsable) edificio.responsable = responsable;
         }
 
@@ -134,20 +205,39 @@ export class EdificiosService {
         }
 
         if (dto.unidad_organizacional_id) {
-            const unidad = await this.unidadOrgRepo.findOneBy({ id: dto.unidad_organizacional_id });
+            const unidad = await this.unidadOrgRepo.findOneBy({
+                id: dto.unidad_organizacional_id,
+            });
             if (unidad) edificio.unidad_organizacional = unidad;
         }
 
         if (dto.actualizado_por_id) {
-            const actualizadoPor = await this.usuarioRepo.findOneBy({ id: dto.actualizado_por_id });
+            const actualizadoPor = await this.usuarioRepo.findOneBy({
+                id: dto.actualizado_por_id,
+            });
             if (actualizadoPor) edificio.actualizado_por = actualizadoPor;
         }
 
         Object.assign(edificio, dto);
 
+        // 🧩 Si cambian los componentes de codificación, reconstruimos el código
+        if (
+            dto.codigo_direccion_administrativa ||
+            dto.codigo_distrito ||
+            dto.codigo_sector_area ||
+            dto.codigo_unidad_organizacional ||
+            dto.codigo_cargo ||
+            dto.codigo_ambiente ||
+            dto.codigo_grupo_contable ||
+            dto.codigo_correlativo
+        ) {
+            edificio.codigo_completo = this.construirCodigoCompleto({
+                ...edificio,
+            } as any);
+        }
+
         const edificioActualizado = await this.edificioRepo.save(edificio);
 
-        // ✅ Registrar en historial (nuevo formato)
         if (dto.actualizado_por_id) {
             await this.historialService.registrarAccion({
                 edificioId: edificioActualizado.id,
@@ -186,7 +276,6 @@ export class EdificiosService {
 
         const edificioGuardado = await this.edificioRepo.save(edificio);
 
-        // ✅ Registrar en historial (nuevo formato)
         await this.historialService.registrarAccion({
             edificioId: edificioGuardado.id,
             usuarioId: userId,
@@ -211,10 +300,10 @@ export class EdificiosService {
                 (edificio, i) => `
       <tr>
         <td>${i + 1}</td>
-        <td>${edificio.nro_da}</td>
+        <td>${edificio.codigo_completo}</td>
         <td>${edificio.nombre_bien}</td>
         <td>${edificio.clasificacion}</td>
-        <td>${edificio.unidad_organizacional?.descripcion || ''}</td>
+        <td>${edificio.unidad_organizacional ? edificio.unidad_organizacional.descripcion : ''}</td>
         <td>${edificio.ubicacion}</td>
         <td>${edificio.estado}</td>
       </tr>`,

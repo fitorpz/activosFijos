@@ -91,18 +91,70 @@ export class AmbientesController {
     try {
       const ambientes = await this.ambientesService.findAll(estado);
 
-      const filasHTML = ambientes.map((ambiente, index) => `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${ambiente.unidad_organizacional?.area?.codigo || '—'}</td>
-          <td>${ambiente.unidad_organizacional?.codigo || '—'}</td>
-          <td>${ambiente.codigo}</td>
-          <td>${ambiente.descripcion}</td>
+      // 1️⃣ Ordenar por área, unidad organizacional y luego por código
+      ambientes.sort((a, b) => {
+        const areaA = a.unidad_organizacional?.area?.codigo || '';
+        const areaB = b.unidad_organizacional?.area?.codigo || '';
+        const unidadA = a.unidad_organizacional?.codigo || '';
+        const unidadB = b.unidad_organizacional?.codigo || '';
+        const codigoA = a.codigo || '';
+        const codigoB = b.codigo || '';
+
+        if (areaA !== areaB) return areaA.localeCompare(areaB);
+        if (unidadA !== unidadB) return unidadA.localeCompare(unidadB);
+        return codigoA.localeCompare(codigoB);
+      });
+
+      // 2️⃣ Agrupar por área y unidad organizacional
+      const agrupadoPorArea: Record<string, Record<string, any[]>> = {};
+
+      for (const ambiente of ambientes) {
+        const area = ambiente.unidad_organizacional?.area?.codigo || 'SIN ÁREA';
+        const unidad = ambiente.unidad_organizacional?.codigo || 'SIN UO';
+        if (!agrupadoPorArea[area]) agrupadoPorArea[area] = {};
+        if (!agrupadoPorArea[area][unidad]) agrupadoPorArea[area][unidad] = [];
+        agrupadoPorArea[area][unidad].push(ambiente);
+      }
+
+      // 3️⃣ Construir el HTML de filas agrupadas
+      let filasHTML = '';
+      let index = 1;
+
+      for (const [areaCodigo, unidades] of Object.entries(agrupadoPorArea)) {
+        // 👉 Tomar la descripción del área (de la primera unidad del grupo)
+        const primeraUnidad = Object.values(unidades)[0]?.[0];
+        const descripcionArea = primeraUnidad?.unidad_organizacional?.area?.descripcion || 'Sin descripción de área';
+
+        filasHTML += `
+        <tr style="background-color:#d9edf7; font-weight:bold;">
+          <td colspan="5">Área: ${areaCodigo} - ${descripcionArea}</td>
         </tr>
-      `).join('');
+      `;
 
+        for (const [unidadCodigo, ambientesUnidad] of Object.entries(unidades)) {
+          // 👉 Tomar la descripción de la unidad organizacional (del primer ambiente)
+          const descripcionUnidad = ambientesUnidad[0]?.unidad_organizacional?.descripcion || 'Sin descripción de UO';
+
+          filasHTML += `
+          <tr style="background-color:#f2f2f2; font-style:italic;">
+            <td colspan="5">Unidad Organizacional: ${unidadCodigo} - ${descripcionUnidad}</td>
+          </tr>
+        `;
+
+          for (const ambiente of ambientesUnidad) {
+            filasHTML += `
+            <tr>
+              <td>${index++}</td>
+              <td>${ambiente.codigo}</td>
+              <td>${ambiente.descripcion}</td>
+            </tr>
+          `;
+          }
+        }
+      }
+
+      // 4️⃣ Cargar logo e insertar HTML en la plantilla
       const logoPath = path.join(process.cwd(), 'templates', 'pdf', 'parametros', 'escudo.png');
-
       let logoDataURL = '';
       try {
         const logoBuffer = fs.readFileSync(logoPath);
@@ -131,6 +183,7 @@ export class AmbientesController {
       html = html.replace('<!-- FILAS_AMBIENTES -->', filasHTML);
       html = html.replace('__LOGO__', logoDataURL);
 
+      // 5️⃣ Generar el PDF
       const buffer = await generarPDFDesdeHTML(html);
 
       res.setHeader('Content-Type', 'application/pdf');
