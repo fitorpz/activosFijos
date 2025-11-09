@@ -243,20 +243,77 @@ const Ambientes = () => {
                             <th>Fecha de Actualización</th>
                             <th>Acciones</th>
                         </tr>
+
+                        {/* 🔍 FILTROS */}
                         <tr>
                             <th></th>
-                            <th><input type="text" name="area" value={filtros.area} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar área" /></th>
-                            <th><input type="text" name="unidad_organizacional" value={filtros.unidad_organizacional} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar unidad" /></th>
-                            <th><input type="text" name="codigo" value={filtros.codigo} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar código" /></th>
-                            <th><input type="text" name="descripcion" value={filtros.descripcion} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar descripción" /></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="area"
+                                    value={filtros.area}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar área"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="unidad_organizacional"
+                                    value={filtros.unidad_organizacional}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar unidad"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="codigo"
+                                    value={filtros.codigo}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar código"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="descripcion"
+                                    value={filtros.descripcion}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar descripción"
+                                />
+                            </th>
                             <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="creado_por"
+                                    value={filtros.creado_por}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar creador"
+                                />
+                            </th>
                             <th></th>
-                            <th></th>
-                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="actualizado_por"
+                                    value={filtros.actualizado_por}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar actualizador"
+                                />
+                            </th>
                             <th></th>
                             <th></th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {cargando ? (
                             <tr>
@@ -297,7 +354,6 @@ const Ambientes = () => {
                                                     <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
                                             )}
-
                                     </td>
                                 </tr>
                             ))

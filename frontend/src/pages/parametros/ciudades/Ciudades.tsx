@@ -26,6 +26,13 @@ const Ciudades = () => {
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
     const [permisos, setPermisos] = useState<string[]>([]);
+    const [filtros, setFiltros] = useState({
+        codigo: '',
+        descripcion: '',
+        creado_por: '',
+        actualizado_por: '',
+    });
+
     const navigate = useNavigate();
 
     // ✅ Cargar permisos del usuario
@@ -81,7 +88,12 @@ const Ciudades = () => {
 
     const exportarPDF = async () => {
         const token = localStorage.getItem('token');
-        const estado = estadoFiltro === 'activos' ? 'ACTIVO' : estadoFiltro === 'inactivos' ? 'INACTIVO' : 'todos';
+        const estado =
+            estadoFiltro === 'activos'
+                ? 'ACTIVO'
+                : estadoFiltro === 'inactivos'
+                    ? 'INACTIVO'
+                    : 'todos';
         try {
             const res = await axios.get<Blob>(`/parametros/ciudades/exportar/pdf?estado=${estado}`, {
                 responseType: 'blob',
@@ -94,6 +106,43 @@ const Ciudades = () => {
             console.error('❌ Error al exportar PDF:', error);
         }
     };
+
+    const manejarCambioFiltro = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFiltros((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+    };
+
+    // 🔎 Aplicar filtros dinámicos
+    const ciudadesFiltradas = ciudades
+        .sort((a, b) => a.codigo.localeCompare(b.codigo))
+        .filter((ciudad) => {
+            const filtroCodigo = ciudad.codigo
+                .toLowerCase()
+                .includes(filtros.codigo.toLowerCase());
+            const filtroDescripcion = ciudad.descripcion
+                .toLowerCase()
+                .includes(filtros.descripcion.toLowerCase());
+            const filtroCreadoPor = filtros.creado_por
+                ? ciudad.creado_por?.nombre
+                      ?.toLowerCase()
+                      .includes(filtros.creado_por.toLowerCase()) ?? false
+                : true;
+            const filtroActualizadoPor = filtros.actualizado_por
+                ? ciudad.actualizado_por?.nombre
+                      ?.toLowerCase()
+                      .includes(filtros.actualizado_por.toLowerCase()) ?? false
+                : true;
+
+            return (
+                filtroCodigo &&
+                filtroDescripcion &&
+                filtroCreadoPor &&
+                filtroActualizadoPor
+            );
+        });
 
     // 🔒 Si no tiene permiso para listar
     if (!permisos.includes('ciudades:listar')) {
@@ -117,7 +166,10 @@ const Ciudades = () => {
 
                 <div className="d-flex flex-wrap align-items-center gap-2">
                     {permisos.includes('ciudades:crear') && (
-                        <button className="btn btn-primary" onClick={() => navigate('/parametros/ciudades/nuevo')}>
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => navigate('/parametros/ciudades/nuevo')}
+                        >
                             <i className="bi bi-plus-lg me-1"></i> Nueva Ciudad
                         </button>
                     )}
@@ -128,7 +180,10 @@ const Ciudades = () => {
                         </button>
                     )}
 
-                    <button className="btn btn-outline-secondary" onClick={() => navigate('/parametros')}>
+                    <button
+                        className="btn btn-outline-secondary"
+                        onClick={() => navigate('/parametros')}
+                    >
                         <i className="bi bi-arrow-left me-1"></i> Volver a Parámetros
                     </button>
 
@@ -160,14 +215,66 @@ const Ciudades = () => {
                             <th>F. Actualización</th>
                             <th>Acciones</th>
                         </tr>
+
+                        {/* 🔍 FILTROS DENTRO DE LA TABLA */}
+                        <tr>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="codigo"
+                                    value={filtros.codigo}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar código"
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="descripcion"
+                                    value={filtros.descripcion}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar descripción"
+                                />
+                            </th>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="creado_por"
+                                    value={filtros.creado_por}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar creador"
+                                />
+                            </th>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    name="actualizado_por"
+                                    value={filtros.actualizado_por}
+                                    onChange={manejarCambioFiltro}
+                                    className="form-control form-control-sm"
+                                    placeholder="Buscar actualizador"
+                                />
+                            </th>
+                            <th></th>
+                            <th></th>
+                        </tr>
                     </thead>
+
                     <tbody>
                         {cargando ? (
                             <tr>
-                                <td colSpan={9} className="text-center">Cargando...</td>
+                                <td colSpan={9} className="text-center">
+                                    Cargando...
+                                </td>
                             </tr>
-                        ) : ciudades.length > 0 ? (
-                            ciudades.map((ciudad, i) => (
+                        ) : ciudadesFiltradas.length > 0 ? (
+                            ciudadesFiltradas.map((ciudad, i) => (
                                 <tr key={ciudad.id}>
                                     <td>{i + 1}</td>
                                     <td>{ciudad.codigo}</td>
@@ -176,12 +283,18 @@ const Ciudades = () => {
                                     <td>{ciudad.creado_por?.nombre || '—'}</td>
                                     <td>{new Date(ciudad.created_at).toLocaleDateString('es-BO')}</td>
                                     <td>{ciudad.actualizado_por?.nombre || '—'}</td>
-                                    <td>{ciudad.updated_at ? new Date(ciudad.updated_at).toLocaleDateString('es-BO') : '—'}</td>
+                                    <td>
+                                        {ciudad.updated_at
+                                            ? new Date(ciudad.updated_at).toLocaleDateString('es-BO')
+                                            : '—'}
+                                    </td>
                                     <td>
                                         {permisos.includes('ciudades:editar') && (
                                             <button
                                                 className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/ciudades/editar/${ciudad.id}`)}
+                                                onClick={() =>
+                                                    navigate(`/parametros/ciudades/editar/${ciudad.id}`)
+                                                }
                                             >
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
@@ -189,23 +302,39 @@ const Ciudades = () => {
 
                                         {(permisos.includes('ciudades:cambiar-estado') ||
                                             permisos.includes('ciudades:eliminar')) && (
-                                                <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${ciudad.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    onClick={() => cambiarEstado(ciudad.id)}
-                                                    title={ciudad.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    aria-label={ciudad.estado === 'ACTIVO' ? 'Inactivar ciudad' : 'Activar ciudad'}
-                                                >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
-                                                </button>
-                                            )}
-
+                                            <button
+                                                type="button"
+                                                className={`btn btn-sm ${
+                                                    ciudad.estado === 'ACTIVO'
+                                                        ? 'btn-success'
+                                                        : 'btn-danger'
+                                                }`}
+                                                onClick={() => cambiarEstado(ciudad.id)}
+                                                title={
+                                                    ciudad.estado === 'ACTIVO'
+                                                        ? 'Inactivar'
+                                                        : 'Activar'
+                                                }
+                                                aria-label={
+                                                    ciudad.estado === 'ACTIVO'
+                                                        ? 'Inactivar ciudad'
+                                                        : 'Activar ciudad'
+                                                }
+                                            >
+                                                <i
+                                                    className="bi bi-arrow-repeat"
+                                                    style={{ color: '#000' }}
+                                                ></i>
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={9} className="text-center">No hay registros.</td>
+                                <td colSpan={9} className="text-center">
+                                    No hay registros.
+                                </td>
                             </tr>
                         )}
                     </tbody>

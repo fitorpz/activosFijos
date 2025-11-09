@@ -46,7 +46,7 @@ export class DireccionesAdministrativasService {
     const query = this.direccionRepo.createQueryBuilder('direccion')
       .leftJoinAndSelect('direccion.creado_por', 'creado_por')
       .leftJoinAndSelect('direccion.actualizado_por', 'actualizado_por')
-      .orderBy('direccion.id', 'DESC');
+      .orderBy('direccion.codigo', 'ASC');
 
     if (estado && estado !== 'todos') {
       query.andWhere('direccion.estado = :estado', { estado: estado.toUpperCase() });

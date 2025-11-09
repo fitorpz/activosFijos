@@ -208,7 +208,7 @@ const Areas = () => {
 
             <div className="table-responsive">
                 <table className="table table-bordered table-hover align-middle">
-                    <thead className="table-light">
+                   <thead className="table-light">
                         <tr>
                             <th>Nro.</th>
                             <th>Código</th>
@@ -221,6 +221,7 @@ const Areas = () => {
                             <th>Acciones</th>
                         </tr>
 
+                        {/* 🔍 Fila de filtros (sin estado) */}
                         <tr>
                             <th></th>
                             <th>
@@ -243,18 +244,7 @@ const Areas = () => {
                                     placeholder="Buscar descripción"
                                 />
                             </th>
-                            <th>
-                                <select
-                                    name="estado"
-                                    className="form-select form-select-sm"
-                                    value={filtros.estado}
-                                    onChange={manejarCambioFiltro}
-                                >
-                                    <option value="">Todos</option>
-                                    <option value="ACTIVO">Activo</option>
-                                    <option value="INACTIVO">Inactivo</option>
-                                </select>
-                            </th>
+                            <th></th> {/* Estado sin filtro */}
                             <th>
                                 <input
                                     type="text"

@@ -17,12 +17,17 @@ const RegistroGrupoContable = () => {
 
     const navigate = useNavigate();
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-    ) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+
+        const newValue = name === 'codigo' ? value.toUpperCase() : value;
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: newValue,
+        }));
     };
+
 
     const verificarCodigoDisponible = async (codigo: string) => {
         try {

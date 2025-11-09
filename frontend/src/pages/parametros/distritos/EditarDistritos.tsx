@@ -19,10 +19,10 @@ const EditarDistrito = () => {
         estado: 'ACTIVO' as 'ACTIVO' | 'INACTIVO',
     });
 
-    const [codigoOriginal, setCodigoOriginal] = useState('');
-    const [mensajeCodigo, setMensajeCodigo] = useState<string | null>(null);
     const [cargando, setCargando] = useState(true);
+    const [guardando, setGuardando] = useState(false);
 
+    // 🔹 Cargar datos al montar
     useEffect(() => {
         obtenerDistrito();
     }, []);
@@ -39,7 +39,6 @@ const EditarDistrito = () => {
                 descripcion: res.data.descripcion,
                 estado: res.data.estado,
             });
-            setCodigoOriginal(res.data.codigo);
         } catch (error) {
             console.error('❌ Error al cargar distrito:', error);
             alert('❌ Error al cargar los datos');
@@ -49,16 +48,24 @@ const EditarDistrito = () => {
         }
     };
 
+    // 🔹 Manejo de cambios (con mayúsculas automáticas)
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
     ) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        let newValue = value;
+
+        if (['codigo', 'sigla', 'abreviatura'].includes(name)) {
+            newValue = newValue.toUpperCase();
+        }
+
+        setFormData((prev) => ({ ...prev, [name]: newValue }));
     };
 
+    // 🔹 Guardar cambios
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (mensajeCodigo) return;
+        setGuardando(true);
 
         try {
             const token = localStorage.getItem('token');
@@ -68,35 +75,59 @@ const EditarDistrito = () => {
 
             alert('✅ Distrito actualizado correctamente.');
             navigate('/parametros/distritos');
-        } catch (error) {
+        } catch (error: any) {
             console.error('❌ Error al actualizar distrito:', error);
-            alert('❌ Error al actualizar distrito.');
+            alert(error?.response?.data?.message || '❌ Error al actualizar distrito.');
+        } finally {
+            setGuardando(false);
         }
     };
 
-    if (cargando) return <p className="container mt-4">Cargando datos...</p>;
+    // 🔹 Mostrar mensaje de carga
+    if (cargando) {
+        return <p className="container mt-4">Cargando datos...</p>;
+    }
 
     return (
         <div className="container mt-4">
-            <div className="form-container">
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '600px', backgroundColor: '#fff' }}
+            >
+                {/* Botón Volver */}
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/distritos')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Volver
+                </button>
+
                 <h4 className="mb-4">Editar Distrito</h4>
+
                 <form onSubmit={handleSubmit}>
                     {/* Código */}
                     <div className="mb-3">
-                        <label htmlFor="codigo" className="form-label">Código</label>
+                        <label htmlFor="codigo" className="form-label">
+                            Código
+                        </label>
                         <input
                             type="text"
                             id="codigo"
                             name="codigo"
                             className="form-control"
                             value={formData.codigo}
+                            style={{ textTransform: 'uppercase' }} // 🔠 Visualmente en mayúsculas
                             readOnly
                         />
                     </div>
 
                     {/* Descripción */}
                     <div className="mb-3">
-                        <label htmlFor="descripcion" className="form-label">Descripción</label>
+                        <label htmlFor="descripcion" className="form-label">
+                            Descripción
+                        </label>
                         <textarea
                             id="descripcion"
                             name="descripcion"
@@ -107,35 +138,19 @@ const EditarDistrito = () => {
                         />
                     </div>
 
-                    {/* Estado (opcional si decides mantener editable) */}
-                    {/* 
-                    <div className="mb-3">
-                        <label htmlFor="estado" className="form-label">Estado</label>
-                        <select
-                            id="estado"
-                            name="estado"
-                            className="form-select"
-                            value={formData.estado}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="ACTIVO">ACTIVO</option>
-                            <option value="INACTIVO">INACTIVO</option>
-                        </select>
-                    </div>
-                    */}
-
                     {/* Botones */}
-                    <button type="submit" className="btn btn-primary">
-                        Guardar Cambios
-                    </button>
-                    <button
-                        type="button"
-                        className="btn btn-secondary ms-2"
-                        onClick={() => navigate('/parametros/distritos')}
-                    >
-                        Cancelar
-                    </button>
+                    <div className="d-flex justify-content-end">
+                        <button type="submit" className="btn btn-primary" disabled={guardando}>
+                            {guardando ? 'Guardando...' : 'Guardar Cambios'}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-secondary ms-2"
+                            onClick={() => navigate('/parametros/distritos')}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

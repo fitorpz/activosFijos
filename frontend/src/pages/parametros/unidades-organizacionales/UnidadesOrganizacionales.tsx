@@ -187,9 +187,9 @@ const UnidadesOrganizacionales = () => {
                     <thead className="table-light">
                         <tr>
                             <th>Nro.</th>
-                            <th>Código</th>
-                            <th>Descripción</th>
                             <th>Área</th>
+                            <th>Código</th>
+                            <th>Descripción</th>                            
                             <th>Estado</th>
                             <th>Creado por</th>
                             <th>Fecha de Registro</th>
@@ -199,16 +199,10 @@ const UnidadesOrganizacionales = () => {
                         </tr>
                         <tr>
                             <th></th>
-                            <th><input name="codigo" value={filtros.codigo} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar código" /></th>
-                            <th><input name="descripcion" value={filtros.descripcion} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar descripción" /></th>
                             <th><input name="area" value={filtros.area} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar área" /></th>
-                            <th>
-                                <select name="estado" value={filtros.estado} onChange={manejarCambioFiltro} className="form-select form-select-sm">
-                                    <option value="">Todos</option>
-                                    <option value="ACTIVO">Activo</option>
-                                    <option value="INACTIVO">Inactivo</option>
-                                </select>
-                            </th>
+                            <th><input name="codigo" value={filtros.codigo} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar código" /></th>
+                            <th><input name="descripcion" value={filtros.descripcion} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar descripción" /></th>                            
+                            <th></th>
                             <th><input name="creado_por" value={filtros.creado_por} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar creador" /></th>
                             <th></th>
                             <th><input name="actualizado_por" value={filtros.actualizado_por} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar actualizador" /></th>

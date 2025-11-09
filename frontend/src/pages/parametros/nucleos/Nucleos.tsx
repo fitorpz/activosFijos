@@ -103,7 +103,12 @@ const Nucleos = () => {
 
     const exportarPDF = async () => {
         const token = localStorage.getItem('token');
-        const estado = estadoFiltro === 'activos' ? 'ACTIVO' : estadoFiltro === 'inactivos' ? 'INACTIVO' : 'todos';
+        const estado =
+            estadoFiltro === 'activos'
+                ? 'ACTIVO'
+                : estadoFiltro === 'inactivos'
+                    ? 'INACTIVO'
+                    : 'todos';
 
         try {
             const res = await axios.get<Blob>(`/parametros/nucleos/exportar/pdf?estado=${estado}`, {
@@ -125,16 +130,28 @@ const Nucleos = () => {
             filtrado = filtrado.filter((nucleo) => nucleo.estado === filtroEstado);
         }
         if (filtroCodigo.trim() !== '') {
-            filtrado = filtrado.filter((n) => n.codigo.toLowerCase().includes(filtroCodigo.toLowerCase()));
+            filtrado = filtrado.filter((n) =>
+                n.codigo.toLowerCase().includes(filtroCodigo.toLowerCase())
+            );
         }
         if (filtroDescripcion.trim() !== '') {
-            filtrado = filtrado.filter((n) => n.descripcion.toLowerCase().includes(filtroDescripcion.toLowerCase()));
+            filtrado = filtrado.filter((n) =>
+                n.descripcion.toLowerCase().includes(filtroDescripcion.toLowerCase())
+            );
         }
         if (filtroCreadoPor.trim() !== '') {
-            filtrado = filtrado.filter((n) => n.creado_por?.nombre.toLowerCase().includes(filtroCreadoPor.toLowerCase()));
+            filtrado = filtrado.filter((n) =>
+                n.creado_por?.nombre
+                    ?.toLowerCase()
+                    .includes(filtroCreadoPor.toLowerCase())
+            );
         }
         if (filtroActualizadoPor.trim() !== '') {
-            filtrado = filtrado.filter((n) => n.actualizado_por?.nombre.toLowerCase().includes(filtroActualizadoPor.toLowerCase()));
+            filtrado = filtrado.filter((n) =>
+                n.actualizado_por?.nombre
+                    ?.toLowerCase()
+                    .includes(filtroActualizadoPor.toLowerCase())
+            );
         }
 
         filtrado.sort((a, b) => a.codigo.localeCompare(b.codigo));
@@ -185,7 +202,9 @@ const Nucleos = () => {
                         <select
                             className="form-select"
                             value={estadoFiltro}
-                            onChange={(e) => setEstadoFiltro(e.target.value as 'todos' | 'activos' | 'inactivos')}
+                            onChange={(e) =>
+                                setEstadoFiltro(e.target.value as 'todos' | 'activos' | 'inactivos')
+                            }
                         >
                             <option value="todos">Todos</option>
                             <option value="activos">Solo Activos</option>
@@ -209,6 +228,7 @@ const Nucleos = () => {
                             <th>F. Actualización</th>
                             <th>Acciones</th>
                         </tr>
+                        {/* 🔍 FILTROS DENTRO DE LA TABLA */}
                         <tr>
                             <th></th>
                             <th>
@@ -230,13 +250,30 @@ const Nucleos = () => {
                                 />
                             </th>
                             <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar creador"
+                                    value={filtroCreadoPor}
+                                    onChange={(e) => setFiltroCreadoPor(e.target.value)}
+                                />
+                            </th>
                             <th></th>
-                            <th></th>
-                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar actualizador"
+                                    value={filtroActualizadoPor}
+                                    onChange={(e) => setFiltroActualizadoPor(e.target.value)}
+                                />
+                            </th>
                             <th></th>
                             <th></th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {cargando ? (
                             <tr>
@@ -265,14 +302,14 @@ const Nucleos = () => {
 
                                         {(permisos.includes('nucleos:cambiar-estado') ||
                                             permisos.includes('nucleos:eliminar')) && (
-                                                <button
-                                                    className={`btn btn-sm ${nucleo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    onClick={() => cambiarEstado(nucleo.id)}
-                                                    title={nucleo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                >
-                                                    <i className="bi bi-arrow-repeat"></i>
-                                                </button>
-                                            )}
+                                            <button
+                                                className={`btn btn-sm ${nucleo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                onClick={() => cambiarEstado(nucleo.id)}
+                                                title={nucleo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                            >
+                                                <i className="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))

@@ -1,167 +1,162 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
 
-interface Area {
-    id: number;
-    codigo: string;
-    descripcion: string;
-}
-
-const RegistroUnidadesOrganizacionales = () => {
+const RegistroBase = () => {
     const [formData, setFormData] = useState({
         codigo: '',
         descripcion: '',
-        area_id: '',
+        estado: 'ACTIVO',
     });
 
-    const [areas, setAreas] = useState<Area[]>([]);
-    const [error, setError] = useState('');
-    const [codigoAreaSeleccionada, setCodigoAreaSeleccionada] = useState('');
+    const [codigoDisponible, setCodigoDisponible] = useState<boolean | null>(null);
+    const [mensajeCodigo, setMensajeCodigo] = useState<string | null>(null);
+    const [cargando, setCargando] = useState(false);
+
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchAreas = async () => {
-            try {
-                const res = await axios.get<Area[]>('/parametros/areas');
-                setAreas(res.data);
-            } catch {
-                setError('Error al obtener las áreas.');
-            }
-        };
-        fetchAreas();
-    }, []);
-
-    const generarCodigoUnidad = async (codigoArea: string) => {
-        if (!codigoArea) return;
-
-        try {
-            const res = await axios.get<{ total: number }>(
-                `/parametros/unidades-organizacionales/contar?codigo_area=${codigoArea}`
-            );
-            const correlativo = res.data.total + 1;
-            const codigoGenerado = `${codigoArea}.${correlativo.toString().padStart(3, '0')}`;
-
-            setFormData((prev) => ({
-                ...prev,
-                codigo: codigoGenerado,
-            }));
-        } catch {
-            setError('No se pudo generar el código automáticamente.');
-        }
-    };
-
-    const handleChange = async (
+    // 🧩 Manejo genérico de cambios
+    const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
+        let newValue = value;
+
+        // Forzar mayúsculas en campos de código o siglas
+        if (['codigo', 'sigla', 'abreviatura'].includes(name)) {
+            newValue = newValue.toUpperCase();
+        }
 
         setFormData((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: newValue,
         }));
+    };
 
-        if (name === 'area_id') {
-            const area = areas.find((a) => a.id.toString() === value);
-            if (area?.codigo) {
-                setCodigoAreaSeleccionada(area.codigo);
-                await generarCodigoUnidad(area.codigo);
+    // 🧩 Verificar disponibilidad del código (si aplica)
+    const verificarCodigoDisponible = async (codigo: string) => {
+        if (!codigo.trim()) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await axios.get<{ disponible: boolean }>(
+                '/parametros/unidades-organizacionales/verificar-codigo',
+                {
+                    params: { codigo },
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
+
+            if (response.data.disponible) {
+                setMensajeCodigo('✅ Código disponible.');
+                setCodigoDisponible(true);
             } else {
-                setCodigoAreaSeleccionada('');
-                setFormData((prev) => ({ ...prev, codigo: '' }));
+                setMensajeCodigo('⚠️ El código ya está en uso.');
+                setCodigoDisponible(false);
             }
+        } catch (error) {
+            console.error('❌ Error al verificar código:', error);
+            setMensajeCodigo('⚠️ No se pudo verificar el código.');
+            setCodigoDisponible(false);
         }
     };
 
+    // 🧩 Enviar formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-
-        const { codigo, descripcion, area_id } = formData;
-
-        if (!codigo || !descripcion || !area_id) {
-            setError('Todos los campos son obligatorios.');
-            return;
-        }
+        setCargando(true);
 
         try {
-            await axios.post('/parametros/unidades-organizacionales', {
-                codigo: codigo.trim(),
-                descripcion: descripcion.trim(),
-                area_id: parseInt(area_id),
+            const token = localStorage.getItem('token');
+            await axios.post('/parametros/unidades-organizacionales', formData, {
+                headers: { Authorization: `Bearer ${token}` },
             });
 
+            alert('✅ Registro exitoso');
             navigate('/parametros/unidades-organizacionales');
-        } catch {
-            setError('Error al registrar. Intenta nuevamente.');
+        } catch (error: any) {
+            console.error('❌ Error al registrar:', error);
+            alert(error?.response?.data?.message || 'Error al registrar');
+        } finally {
+            setCargando(false);
         }
     };
 
     return (
         <div className="container mt-4">
-            <h4 className="mb-3">Registrar Unidad Organizacional</h4>
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '600px', backgroundColor: '#fff' }}
+            >
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate(-1)}
+                >
+                    <i className="bi bi-arrow-left me-1"></i> Volver
+                </button>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+                <h4 className="mb-4">Registrar Unidad Organizacional</h4>
 
-            <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-                <div className="mb-3">
-                    <label htmlFor="area_id" className="form-label">Área</label>
-                    <select
-                        id="area_id"
-                        name="area_id"
-                        className="form-select"
-                        value={formData.area_id}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Seleccione un área</option>
-                        {areas.map((area) => (
-                            <option key={area.id} value={area.id}>
-                                {area.descripcion}
-                            </option>
-                        ))}
-                    </select>
-                    {codigoAreaSeleccionada && (
-                        <div className="mt-2 text-muted">
-                            <strong>Código de Área:</strong> {codigoAreaSeleccionada}
-                        </div>
-                    )}
-                </div>
+                <form onSubmit={handleSubmit}>
+                    {/* Campo Código */}
+                    <div className="mb-3">
+                        <label htmlFor="codigo" className="form-label">
+                            Código
+                        </label>
+                        <input
+                            type="text"
+                            id="codigo"
+                            name="codigo"
+                            className={`form-control ${codigoDisponible === false ? 'is-invalid' : ''}`}
+                            value={formData.codigo}
+                            onChange={handleChange}
+                            onBlur={(e) => verificarCodigoDisponible(e.target.value)}
+                            required
+                            style={{ textTransform: 'uppercase' }} // 🔠 Visualmente en mayúsculas
+                        />
+                        {mensajeCodigo && (
+                            <small className="text-muted d-block mt-1">{mensajeCodigo}</small>
+                        )}
+                    </div>
 
-                <div className="mb-3">
-                    <label htmlFor="codigo" className="form-label">Código</label>
-                    <input
-                        type="text"
-                        className="form-control"
-                        id="codigo"
-                        name="codigo"
-                        value={formData.codigo}
-                        onChange={handleChange}
-                        required
-                        readOnly
-                    />
-                </div>
+                    {/* Campo Descripción */}
+                    <div className="mb-3">
+                        <label htmlFor="descripcion" className="form-label">
+                            Descripción
+                        </label>
+                        <textarea
+                            id="descripcion"
+                            name="descripcion"
+                            className="form-control"
+                            value={formData.descripcion}
+                            onChange={handleChange}
+                            disabled={codigoDisponible === false}
+                            required
+                        />
+                    </div>
 
-                <div className="mb-3">
-                    <label htmlFor="descripcion" className="form-label">Descripción</label>
-                    <textarea
-                        id="descripcion"
-                        name="descripcion"
-                        className="form-control"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
-
-                <div className="d-flex justify-content-end">
-                    <button type="submit" className="btn btn-primary">
-                        <i className="bi bi-save me-2"></i>Guardar
-                    </button>
-                </div>
-            </form>
+                    {/* Botones */}
+                    <div className="d-flex justify-content-end">
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={cargando || codigoDisponible === false}
+                        >
+                            {cargando ? 'Guardando...' : 'Registrar'}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-secondary ms-2"
+                            onClick={() => navigate(-1)}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
 
-export default RegistroUnidadesOrganizacionales;
+export default RegistroBase;

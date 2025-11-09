@@ -6,7 +6,7 @@ interface Area {
     id: number;
     codigo: string;
     descripcion: string;
-    estado: string;
+    estado: 'ACTIVO' | 'INACTIVO';
 }
 
 const EditarAreas = () => {
@@ -16,11 +16,13 @@ const EditarAreas = () => {
     const [formData, setFormData] = useState({
         codigo: '',
         descripcion: '',
-        estado: 'ACTIVO',
+        estado: 'ACTIVO' as 'ACTIVO' | 'INACTIVO',
     });
 
     const [cargando, setCargando] = useState(true);
+    const [guardando, setGuardando] = useState(false);
 
+    // 🔹 Cargar datos al montar
     useEffect(() => {
         obtenerArea();
     }, []);
@@ -35,20 +37,34 @@ const EditarAreas = () => {
             });
         } catch (error) {
             console.error('❌ Error al cargar el área:', error);
-            alert('Error al cargar el área. Intente nuevamente.');
+            alert('❌ Error al cargar el área. Intente nuevamente.');
             navigate('/parametros/areas');
         } finally {
             setCargando(false);
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    // 🔹 Manejo de cambios (con mayúsculas automáticas)
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    ) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        let newValue = value;
+
+        if (['codigo', 'sigla', 'abreviatura'].includes(name)) {
+            newValue = newValue.toUpperCase();
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            [name]: newValue,
+        }));
     };
 
+    // 🔹 Guardar cambios
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setGuardando(true);
 
         try {
             const payload = {
@@ -62,44 +78,71 @@ const EditarAreas = () => {
             navigate('/parametros/areas');
         } catch (error: any) {
             console.error('❌ Error al actualizar el área:', error);
-            alert(error?.response?.data?.message || 'Error al actualizar.');
+            alert(error?.response?.data?.message || '❌ Error al actualizar el área.');
+        } finally {
+            setGuardando(false);
         }
     };
 
+    // 🔹 Pantalla de carga
+    if (cargando) {
+        return <p className="container mt-4">Cargando datos...</p>;
+    }
+
     return (
         <div className="container mt-4">
-            <div className="form-container">
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '600px', backgroundColor: '#fff' }}
+            >
+                {/* Botón Volver */}
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/areas')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Volver
+                </button>
+
                 <h4 className="mb-4">Editar Área</h4>
-                {cargando ? (
-                    <p>Cargando datos...</p>
-                ) : (
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-3">
-                            <label htmlFor="codigo" className="form-label">Código</label>
-                            <input
-                                id="codigo"
-                                name="codigo"
-                                type="text"
-                                className="form-control"
-                                value={formData.codigo}
-                                onChange={handleChange}
-                                readOnly
-                            />
-                        </div>
 
-                        <div className="mb-3">
-                            <label htmlFor="descripcion" className="form-label">Descripción</label>
-                            <textarea
-                                id="descripcion"
-                                name="descripcion"
-                                className="form-control"
-                                value={formData.descripcion}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+                <form onSubmit={handleSubmit}>
+                    {/* Campo Código */}
+                    <div className="mb-3">
+                        <label htmlFor="codigo" className="form-label">
+                            Código
+                        </label>
+                        <input
+                            id="codigo"
+                            name="codigo"
+                            type="text"
+                            className="form-control"
+                            value={formData.codigo}
+                            style={{ textTransform: 'uppercase' }} // visualmente mayúsculas
+                            readOnly
+                        />
+                    </div>
 
-                        <button type="submit" className="btn btn-primary">Guardar Cambios</button>
+                    {/* Campo Descripción */}
+                    <div className="mb-3">
+                        <label htmlFor="descripcion" className="form-label">
+                            Descripción
+                        </label>
+                        <textarea
+                            id="descripcion"
+                            name="descripcion"
+                            className="form-control"
+                            value={formData.descripcion}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+                    {/* Botones */}
+                    <div className="d-flex justify-content-end">
+                        <button type="submit" className="btn btn-primary" disabled={guardando}>
+                            {guardando ? 'Guardando...' : 'Guardar Cambios'}
+                        </button>
                         <button
                             type="button"
                             className="btn btn-secondary ms-2"
@@ -107,8 +150,8 @@ const EditarAreas = () => {
                         >
                             Cancelar
                         </button>
-                    </form>
-                )}
+                    </div>
+                </form>
             </div>
         </div>
     );

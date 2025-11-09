@@ -17,9 +17,9 @@ interface UnidadOrganizacional {
 }
 
 type OptionUnidad = {
-    value: string;          // id como string
-    label: string;          // "codigo - descripcion"
-    area_id: number;        // 👈 extra para validar
+    value: string;
+    label: string;
+    area_id: number;
 };
 
 const RegistroAmbientes = () => {
@@ -36,14 +36,19 @@ const RegistroAmbientes = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => { cargarAreas(); }, []);
+    // 🔹 Cargar áreas activas
+    useEffect(() => {
+        cargarAreas();
+    }, []);
 
+    // 🔹 Cargar unidades por área seleccionada
     useEffect(() => {
         if (formData.area_id) {
             cargarUnidadesPorArea(parseInt(formData.area_id, 10));
         }
     }, [formData.area_id]);
 
+    // 🔹 Generar código automático al seleccionar unidad
     useEffect(() => {
         if (formData.unidad_organizacional_id) {
             generarCodigo(parseInt(formData.unidad_organizacional_id, 10));
@@ -52,7 +57,9 @@ const RegistroAmbientes = () => {
 
     const cargarAreas = async () => {
         try {
-            const res = await axios.get<Area[]>('/parametros/areas', { params: { estado: 'ACTIVO' } });
+            const res = await axios.get<Area[]>('/parametros/areas', {
+                params: { estado: 'ACTIVO' },
+            });
             setAreas(res.data);
         } catch (e) {
             console.error('❌ Error al cargar áreas:', e);
@@ -61,40 +68,41 @@ const RegistroAmbientes = () => {
 
     const cargarUnidadesPorArea = async (areaId: number) => {
         try {
-            const res = await axios.get<UnidadOrganizacional[]>('/parametros/unidades-organizacionales', {
-                params: { estado: 'ACTIVO', area_id: areaId },   // 👈 filtra por área
-            });
+            const res = await axios.get<UnidadOrganizacional[]>(
+                '/parametros/unidades-organizacionales',
+                { params: { estado: 'ACTIVO', area_id: areaId } }
+            );
             setUnidades(res.data);
         } catch (e) {
             console.error('❌ Error al cargar unidades organizacionales:', e);
         }
     };
 
-    // 👉 convierte una unidad en opción de AsyncSelect
+    // 🔹 Convertir a opciones de AsyncSelect
     const toOption = (u: UnidadOrganizacional): OptionUnidad => ({
         value: String(u.id),
         label: `${u.codigo} - ${u.descripcion}`,
         area_id: u.area_id,
     });
 
-    // 🔎 búsqueda remota + filtro por área (server-side)
+    // 🔹 Buscar unidades (filtrado remoto)
     const buscarUnidadesAsync = async (inputValue: string): Promise<OptionUnidad[]> => {
         if (!formData.area_id) return [];
 
         try {
-            const res = await axios.get<UnidadOrganizacional[]>('/parametros/unidades-organizacionales/buscar', {
-                params: {
-                    estado: 'ACTIVO',
-                    area_id: parseInt(formData.area_id, 10),   // 👈 siempre enviar area_id
-                    q: inputValue || '',
-                },
-            });
+            const res = await axios.get<UnidadOrganizacional[]>(
+                '/parametros/unidades-organizacionales/buscar',
+                {
+                    params: {
+                        estado: 'ACTIVO',
+                        area_id: parseInt(formData.area_id, 10),
+                        q: inputValue || '',
+                    },
+                }
+            );
 
-            // ⚠️ defensa extra: si el backend no filtrara, filtramos aquí:
             const areaIdNum = parseInt(formData.area_id, 10);
-            const filtradas = res.data.filter(u => u.area_id === areaIdNum);
-
-            return filtradas.map(toOption);
+            return res.data.filter(u => u.area_id === areaIdNum).map(toOption);
         } catch (e) {
             console.error('❌ Error al buscar unidades organizacionales:', e);
             return [];
@@ -145,7 +153,7 @@ const RegistroAmbientes = () => {
         setCargando(true);
         try {
             const payload = {
-                codigo: codigo.trim(),
+                codigo: codigo.trim().toUpperCase(),
                 descripcion: descripcion.trim(),
                 unidad_organizacional_id: parseInt(unidad_organizacional_id, 10),
             };
@@ -155,7 +163,7 @@ const RegistroAmbientes = () => {
             navigate('/parametros/ambientes');
         } catch (e: any) {
             console.error('❌ Error al registrar ambiente:', e);
-            setError(e?.response?.data?.message || 'Error inesperado al registrar.');
+            setError(e?.response?.data?.message || '❌ Error inesperado al registrar.');
         } finally {
             setCargando(false);
         }
@@ -167,100 +175,142 @@ const RegistroAmbientes = () => {
         return u ? toOption(u) : null;
     })();
 
+    // 🔹 Interfaz
     return (
         <div className="container mt-4">
-            <h4 className="mb-3">Registrar Ambiente</h4>
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '700px', backgroundColor: '#fff' }}
+            >
+                {/* Botón Volver */}
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/ambientes')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i>
+                    Volver
+                </button>
 
-            {error && <div className="alert alert-danger">{error}</div>}
+                <h4 className="mb-4">Registrar Ambiente</h4>
 
-            <form onSubmit={handleSubmit} className="card p-4 shadow-sm">
-                {/* Área */}
-                <div className="mb-3">
-                    <label htmlFor="area_id" className="form-label">Área</label>
-                    <select
-                        id="area_id"
-                        name="area_id"
-                        className="form-select"
-                        value={formData.area_id}
-                        onChange={handleChange}
-                        required
-                    >
-                        <option value="">Seleccione un área</option>
-                        {areas.map(area => (
-                            <option key={area.id} value={area.id}>
-                                {area.codigo} - {area.descripcion}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                {error && <div className="alert alert-danger">{error}</div>}
 
-                {/* Unidad Organizacional */}
-                <div className="mb-3">
-                    <label className="form-label">Unidad Organizacional</label>
-                    <AsyncSelect<OptionUnidad, false>
-                        key={formData.area_id || 'no-area'}         // 👈 resetea caché al cambiar área
-                        cacheOptions={false}                         // 👈 evita resultados viejos
-                        loadOptions={buscarUnidadesAsync}
-                        defaultOptions={unidades.map(toOption)}     // 👈 lista inicial solo de esa área
-                        isDisabled={!formData.area_id}
-                        placeholder={formData.area_id ? 'Escriba para buscar...' : 'Seleccione un área primero'}
-                        value={selectedOption}
-                        onChange={(opcion) => {
-                            if (!opcion) {
-                                setFormData(prev => ({ ...prev, unidad_organizacional_id: '', codigo: '' }));
-                                return;
+                <form onSubmit={handleSubmit}>
+                    {/* Área */}
+                    <div className="mb-3">
+                        <label htmlFor="area_id" className="form-label">
+                            Área
+                        </label>
+                        <select
+                            id="area_id"
+                            name="area_id"
+                            className="form-select"
+                            value={formData.area_id}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Seleccione un área</option>
+                            {areas.map(area => (
+                                <option key={area.id} value={area.id}>
+                                    {area.codigo} - {area.descripcion}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Unidad Organizacional */}
+                    <div className="mb-3">
+                        <label className="form-label">Unidad Organizacional</label>
+                        <AsyncSelect<OptionUnidad, false>
+                            key={formData.area_id || 'no-area'}
+                            cacheOptions={false}
+                            loadOptions={buscarUnidadesAsync}
+                            defaultOptions={unidades.map(toOption)}
+                            isDisabled={!formData.area_id}
+                            placeholder={
+                                formData.area_id
+                                    ? 'Escriba para buscar...'
+                                    : 'Seleccione un área primero'
                             }
-                            // 🚧 defensa extra: evita seleccionar una unidad de otra área
-                            const areaIdNum = parseInt(formData.area_id, 10);
-                            if (opcion.area_id !== areaIdNum) {
-                                alert('La unidad seleccionada no pertenece al área elegida.');
-                                setFormData(prev => ({ ...prev, unidad_organizacional_id: '', codigo: '' }));
-                                return;
+                            value={selectedOption}
+                            onChange={(opcion) => {
+                                if (!opcion) {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        unidad_organizacional_id: '',
+                                        codigo: '',
+                                    }));
+                                    return;
+                                }
+                                const areaIdNum = parseInt(formData.area_id, 10);
+                                if (opcion.area_id !== areaIdNum) {
+                                    alert('⚠️ La unidad seleccionada no pertenece al área elegida.');
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        unidad_organizacional_id: '',
+                                        codigo: '',
+                                    }));
+                                    return;
+                                }
+                                setFormData(prev => ({
+                                    ...prev,
+                                    unidad_organizacional_id: opcion.value,
+                                }));
+                            }}
+                            isClearable
+                            noOptionsMessage={() =>
+                                formData.area_id ? 'Sin resultados' : 'Seleccione un área primero'
                             }
-                            setFormData(prev => ({ ...prev, unidad_organizacional_id: opcion.value }));
-                        }}
-                        isClearable
-                        noOptionsMessage={() =>
-                            formData.area_id ? 'Sin resultados' : 'Seleccione un área primero'
-                        }
-                    />
-                </div>
+                        />
+                    </div>
 
-                {/* Código generado */}
-                <div className="mb-3">
-                    <label htmlFor="codigo" className="form-label">Código (generado automáticamente)</label>
-                    <input
-                        type="text"
-                        id="codigo"
-                        name="codigo"
-                        className="form-control"
-                        value={formData.codigo}
-                        readOnly
-                    />
-                </div>
+                    {/* Código generado */}
+                    <div className="mb-3">
+                        <label htmlFor="codigo" className="form-label">
+                            Código (generado automáticamente)
+                        </label>
+                        <input
+                            type="text"
+                            id="codigo"
+                            name="codigo"
+                            className="form-control"
+                            value={formData.codigo}
+                            readOnly
+                            style={{ textTransform: 'uppercase' }}
+                        />
+                    </div>
 
-                {/* Descripción */}
-                <div className="mb-3">
-                    <label htmlFor="descripcion" className="form-label">Descripción</label>
-                    <textarea
-                        id="descripcion"
-                        name="descripcion"
-                        className="form-control"
-                        value={formData.descripcion}
-                        onChange={handleChange}
-                        required
-                    />
-                </div>
+                    {/* Descripción */}
+                    <div className="mb-3">
+                        <label htmlFor="descripcion" className="form-label">
+                            Descripción
+                        </label>
+                        <textarea
+                            id="descripcion"
+                            name="descripcion"
+                            className="form-control"
+                            value={formData.descripcion}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
 
-                <div className="d-flex justify-content-end">
-                    <button type="submit" className="btn btn-primary" disabled={cargando}>
-                        {cargando ? 'Guardando...' : (<><i className="bi bi-save me-2"></i>Guardar</>)}
-                    </button>
-                    <button type="button" className="btn btn-secondary ms-2" onClick={() => navigate('/parametros/ambientes')}>
-                        Cancelar
-                    </button>
-                </div>
-            </form>
+                    {/* Botones */}
+                    <div className="d-flex justify-content-end">
+                        <button type="submit" className="btn btn-primary" disabled={cargando}>
+                            {cargando ? 'Guardando...' : 'Registrar'}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-secondary ms-2"
+                            onClick={() => navigate('/parametros/ambientes')}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

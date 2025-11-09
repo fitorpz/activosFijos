@@ -203,7 +203,6 @@ const GruposContables = () => {
                     >
                         <i className="bi bi-arrow-left me-1"></i> Volver
                     </button>
-
                     <div style={{ minWidth: '160px' }}>
                         <select
                             id="filtro-estado"
@@ -258,17 +257,6 @@ const GruposContables = () => {
                             <th></th>
                             <th></th>
                             <th>
-                                <select
-                                    className="form-select form-select-sm"
-                                    value={filtroEstado}
-                                    onChange={(e) =>
-                                        setFiltroEstado(e.target.value as 'TODOS' | 'ACTIVO' | 'INACTIVO')
-                                    }
-                                >
-                                    <option value="TODOS">Todos</option>
-                                    <option value="ACTIVO">Activo</option>
-                                    <option value="INACTIVO">Inactivo</option>
-                                </select>
                             </th>
                             <th>
                                 <input

@@ -16,11 +16,23 @@ const RegistroDireccionAdministrativa = () => {
     const navigate = useNavigate();
 
     const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >
     ) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+
+        let newValue = value;
+
+        if (['codigo', 'codigo_edificio', 'sigla', 'abreviatura'].includes(name)) {
+            newValue = newValue.toUpperCase();
+        }
+        setFormData((prev) => ({
+            ...prev,
+            [name]: newValue,
+        }));
     };
+
 
     const verificarCodigoDisponible = async (codigo: string) => {
         if (!codigo.trim()) {

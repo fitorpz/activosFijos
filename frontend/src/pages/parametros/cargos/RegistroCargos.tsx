@@ -34,38 +34,38 @@ const RegistroCargos = () => {
     });
 
     const [areas, setAreas] = useState<Area[]>([]);
-    const [unidades, setUnidades] = useState<UnidadOrganizacional[]>([]);
-    const [unidadInput, setUnidadInput] = useState('');
     const [sugerenciasUnidades, setSugerenciasUnidades] = useState<UnidadOrganizacional[]>([]);
-    const [ambienteInput, setAmbienteInput] = useState('');
     const [sugerenciasAmbientes, setSugerenciasAmbientes] = useState<Ambiente[]>([]);
-    const [mostrarSugerenciasUnidad, setMostrarSugerenciasUnidad] = useState(false);
-    const [mostrarSugerenciasAmbiente, setMostrarSugerenciasAmbiente] = useState(false);
+    const [unidadInput, setUnidadInput] = useState('');
+    const [ambienteInput, setAmbienteInput] = useState('');
     const [mensajeCodigo, setMensajeCodigo] = useState<string | null>(null);
-    let debounceTimeout: any;
+    const [cargando, setCargando] = useState(false);
 
     const navigate = useNavigate();
-
-    useEffect(() => {
-        cargarAreas();
-    }, []);
+    let debounceTimeout: any;
 
     const authHeaders = () => {
         const token = localStorage.getItem('token');
         return { Authorization: `Bearer ${token}` };
     };
 
-    const cargarAreas = async () => {
-        try {
-            const res = await axios.get<Area[]>('/parametros/areas?estado=ACTIVO', {
-                headers: authHeaders(),
-            });
-            setAreas(res.data);
-        } catch (error) {
-            console.error('Error al cargar áreas:', error);
-        }
-    };
+    // 🔹 Cargar áreas activas
+    useEffect(() => {
+        const cargarAreas = async () => {
+            try {
+                const res = await axios.get<Area[]>('/parametros/areas', {
+                    params: { estado: 'ACTIVO' },
+                    headers: authHeaders(),
+                });
+                setAreas(res.data);
+            } catch (error) {
+                console.error('❌ Error al cargar áreas:', error);
+            }
+        };
+        cargarAreas();
+    }, []);
 
+    // 🔹 Buscar unidades organizacionales por texto y área
     const buscarUnidades = async (texto: string) => {
         if (!formData.area_id || texto.trim().length === 0) {
             setSugerenciasUnidades([]);
@@ -74,16 +74,24 @@ const RegistroCargos = () => {
 
         try {
             const res = await axios.get<UnidadOrganizacional[]>(
-                `/parametros/unidades-organizacionales/buscar?q=${texto}&estado=ACTIVO&area_id=${formData.area_id}`,
-                { headers: authHeaders() }
+                `/parametros/unidades-organizacionales/buscar`,
+                {
+                    params: {
+                        q: texto,
+                        estado: 'ACTIVO',
+                        area_id: formData.area_id,
+                    },
+                    headers: authHeaders(),
+                }
             );
             setSugerenciasUnidades(res.data);
         } catch (error) {
-            console.error('Error al buscar unidades:', error);
+            console.error('❌ Error al buscar unidades:', error);
             setSugerenciasUnidades([]);
         }
     };
 
+    // 🔹 Buscar ambientes por texto y unidad organizacional
     const buscarAmbientes = async (texto: string) => {
         if (!formData.unidad_organizacional_id || texto.trim().length === 0) {
             setSugerenciasAmbientes([]);
@@ -92,22 +100,28 @@ const RegistroCargos = () => {
 
         try {
             const res = await axios.get<Ambiente[]>(
-                `/parametros/ambientes/buscar?unidad_organizacional_id=${formData.unidad_organizacional_id}&search=${texto}`,
-                { headers: authHeaders() }
+                `/parametros/ambientes/buscar`,
+                {
+                    params: {
+                        search: texto,
+                        unidad_organizacional_id: formData.unidad_organizacional_id,
+                    },
+                    headers: authHeaders(),
+                }
             );
             setSugerenciasAmbientes(res.data);
         } catch (error) {
-            console.error('Error al buscar ambientes:', error);
+            console.error('❌ Error al buscar ambientes:', error);
             setSugerenciasAmbientes([]);
         }
     };
 
+    // 🔹 Cambiar valores del formulario
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-
         if (name === 'area_id') {
-            const areaSeleccionada = areas.find(area => area.id.toString() === value);
-            setFormData(prev => ({
+            const areaSeleccionada = areas.find((a) => a.id.toString() === value);
+            setFormData((prev) => ({
                 ...prev,
                 area_id: value,
                 area: areaSeleccionada?.codigo || '',
@@ -118,15 +132,32 @@ const RegistroCargos = () => {
                 codigo: '',
             }));
             setUnidadInput('');
-            setSugerenciasUnidades([]);
             setAmbienteInput('');
+            setSugerenciasUnidades([]);
             setSugerenciasAmbientes([]);
             return;
         }
-
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    // 🔹 Generar código automático
+    const generarCodigo = async (ambienteCodigo: string) => {
+        try {
+            const res = await axios.get<{ codigo: string }>(
+                `/parametros/cargos/siguiente-codigo`,
+                {
+                    params: { ambiente_codigo: ambienteCodigo },
+                    headers: authHeaders(),
+                }
+            );
+            setFormData((prev) => ({ ...prev, codigo: res.data.codigo }));
+        } catch (error) {
+            console.error('❌ Error generando código:', error);
+            setMensajeCodigo('⚠️ No se pudo generar el código automáticamente.');
+        }
+    };
+
+    // 🔹 Enviar formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -135,212 +166,191 @@ const RegistroCargos = () => {
             return;
         }
 
+        setCargando(true);
+
         try {
             await axios.post(
                 '/parametros/cargos',
                 {
-                    area: formData.area,
-                    unidad_organizacional: formData.unidad_organizacional,
-                    ambiente: formData.ambiente,
-                    estado: formData.estado,
-                    codigo: formData.codigo,
-                    cargo: formData.cargo,
+                    ...formData,
                     ambiente_id: Number(formData.ambiente_id),
-                    personal1: '',
-                    personal2: '',
-                    personal3: '',
-                }
-                ,
+                    cargo: formData.cargo.trim(),
+                },
                 { headers: authHeaders() }
             );
 
-            alert('✅ Cargo registrado correctamente');
+            alert('✅ Cargo registrado correctamente.');
             navigate('/parametros/cargos');
         } catch (error) {
             console.error('❌ Error al registrar cargo:', error);
-            alert('Ocurrió un error al registrar el cargo.');
+            alert('❌ Ocurrió un error al registrar el cargo.');
+        } finally {
+            setCargando(false);
         }
     };
 
     return (
         <div className="container mt-4">
-            <div className="card">
-                <div className="card-header bg-primary text-white">
-                    <h5 className="mb-0">Registrar Cargo</h5>
-                </div>
-                <div className="card-body">
-                    <form onSubmit={handleSubmit}>
-                        {/* Área */}
-                        <div className="mb-3">
-                            <label className="form-label">Área</label>
-                            <select
-                                className="form-select"
-                                name="area_id"
-                                value={formData.area_id}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="">-- Selecciona un área --</option>
-                                {areas.map(area => (
-                                    <option key={area.id} value={area.id}>
-                                        {area.codigo} - {area.descripcion}
-                                    </option>
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '700px', backgroundColor: '#fff' }}
+            >
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
+                    onClick={() => navigate('/parametros/cargos')}
+                >
+                    <i className="bi bi-arrow-left me-1"></i> Volver
+                </button>
+
+                <h4 className="mb-4">Registrar Cargo</h4>
+
+                <form onSubmit={handleSubmit}>
+                    {/* Área */}
+                    <div className="mb-3">
+                        <label className="form-label">Área</label>
+                        <select
+                            className="form-select"
+                            name="area_id"
+                            value={formData.area_id}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Seleccione un área</option>
+                            {areas.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                    {a.codigo} - {a.descripcion}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Unidad Organizacional */}
+                    <div className="mb-3 position-relative">
+                        <label className="form-label">Unidad Organizacional</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Buscar unidad organizacional..."
+                            value={unidadInput}
+                            disabled={!formData.area_id}
+                            onChange={(e) => {
+                                const texto = e.target.value;
+                                setUnidadInput(texto);
+                                clearTimeout(debounceTimeout);
+                                debounceTimeout = setTimeout(() => buscarUnidades(texto), 300);
+                            }}
+                            required
+                        />
+                        {sugerenciasUnidades.length > 0 && (
+                            <ul className="list-group position-absolute w-100 z-3">
+                                {sugerenciasUnidades.map((u) => (
+                                    <li
+                                        key={u.id}
+                                        className="list-group-item list-group-item-action"
+                                        onClick={() => {
+                                            setUnidadInput(`${u.codigo} - ${u.descripcion}`);
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                unidad_organizacional_id: u.id.toString(),
+                                                unidad_organizacional: u.codigo,
+                                                ambiente_id: '',
+                                                ambiente: '',
+                                                codigo: '',
+                                            }));
+                                            setSugerenciasUnidades([]);
+                                            setAmbienteInput('');
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {u.codigo} - {u.descripcion}
+                                    </li>
                                 ))}
-                            </select>
-                        </div>
+                            </ul>
+                        )}
+                    </div>
 
-                        {/* Unidad Organizacional - Autocomplete */}
-                        <div className="mb-3 position-relative">
-                            <label className="form-label">Unidad Organizacional</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Buscar unidad organizacional..."
-                                value={unidadInput}
-                                disabled={!formData.area_id}
-                                onChange={(e) => {
-                                    const texto = e.target.value;
-                                    setUnidadInput(texto);
-                                    setMostrarSugerenciasUnidad(true);
-                                    clearTimeout(debounceTimeout);
-                                    debounceTimeout = setTimeout(() => buscarUnidades(texto), 300);
-                                }}
-                                required
-                            />
-                            {mostrarSugerenciasUnidad && sugerenciasUnidades.length > 0 && (
-                                <ul className="list-group position-absolute w-100 z-3">
-                                    {sugerenciasUnidades.map((unidad) => (
-                                        <li
-                                            key={unidad.id}
-                                            className="list-group-item list-group-item-action"
-                                            onClick={() => {
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    unidad_organizacional_id: unidad.id.toString(),
-                                                    unidad_organizacional: unidad.codigo,
-                                                    ambiente_id: '',
-                                                    ambiente: '',
-                                                    codigo: '',
-                                                }));
-                                                setUnidadInput(`${unidad.codigo} - ${unidad.descripcion}`);
-                                                setMostrarSugerenciasUnidad(false);
-                                            }}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            {unidad.codigo} - {unidad.descripcion}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
+                    {/* Ambiente */}
+                    <div className="mb-3 position-relative">
+                        <label className="form-label">Ambiente</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Buscar ambiente..."
+                            value={ambienteInput}
+                            disabled={!formData.unidad_organizacional_id}
+                            onChange={(e) => {
+                                const texto = e.target.value;
+                                setAmbienteInput(texto);
+                                clearTimeout(debounceTimeout);
+                                debounceTimeout = setTimeout(() => buscarAmbientes(texto), 300);
+                            }}
+                            required
+                        />
+                        {sugerenciasAmbientes.length > 0 && (
+                            <ul className="list-group position-absolute w-100 z-3">
+                                {sugerenciasAmbientes.map((a) => (
+                                    <li
+                                        key={a.id}
+                                        className="list-group-item list-group-item-action"
+                                        onClick={() => {
+                                            setAmbienteInput(`${a.codigo} - ${a.descripcion}`);
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                ambiente_id: a.id.toString(),
+                                                ambiente: a.codigo,
+                                            }));
+                                            setSugerenciasAmbientes([]);
+                                            generarCodigo(a.codigo);
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {a.codigo} - {a.descripcion}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
 
-                        {/* Ambiente - Autocomplete */}
-                        <div className="mb-3 position-relative">
-                            <label className="form-label">Ambiente</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Buscar ambiente..."
-                                value={ambienteInput}
-                                disabled={!formData.unidad_organizacional_id}
-                                onChange={(e) => {
-                                    const texto = e.target.value;
-                                    setAmbienteInput(texto);
-                                    setMostrarSugerenciasAmbiente(true);
-                                    clearTimeout(debounceTimeout);
-                                    debounceTimeout = setTimeout(() => buscarAmbientes(texto), 300);
-                                }}
-                                required
-                            />
-                            {mostrarSugerenciasAmbiente && sugerenciasAmbientes.length > 0 && (
-                                <ul className="list-group position-absolute w-100 z-3">
-                                    {sugerenciasAmbientes.map((ambiente) => (
-                                        <li
-                                            key={ambiente.id}
-                                            className="list-group-item list-group-item-action"
-                                            onClick={async () => {
-                                                setFormData(prev => ({
-                                                    ...prev,
-                                                    ambiente_id: ambiente.id.toString(),
-                                                    ambiente: ambiente.codigo,
-                                                }));
-                                                setAmbienteInput(`${ambiente.codigo} - ${ambiente.descripcion}`);
-                                                setMostrarSugerenciasAmbiente(false);
+                    {/* Código */}
+                    <div className="mb-3">
+                        <label className="form-label">Código generado</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={formData.codigo}
+                            readOnly
+                        />
+                        {mensajeCodigo && <div className="text-danger mt-1">{mensajeCodigo}</div>}
+                    </div>
 
-                                                try {
-                                                    const res = await axios.get<{ codigo: string }>(
-                                                        `/parametros/cargos/siguiente-codigo?ambiente_codigo=${ambiente.codigo}`,
-                                                        { headers: authHeaders() }
-                                                    );
-                                                    setFormData(prev => ({ ...prev, codigo: res.data.codigo }));
-                                                } catch (error) {
-                                                    console.error('Error generando código:', error);
-                                                    setMensajeCodigo('No se pudo generar el código automáticamente.');
-                                                }
-                                            }}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            {ambiente.codigo} - {ambiente.descripcion}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
+                    {/* Cargo */}
+                    <div className="mb-3">
+                        <label className="form-label">Descripción / Cargo</label>
+                        <input
+                            type="text"
+                            className="form-control"
+                            name="cargo"
+                            value={formData.cargo}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
 
-                        {/* Código */}
-                        <div className="mb-3">
-                            <label className="form-label">Código</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                value={formData.codigo}
-                                disabled
-                            />
-                            {mensajeCodigo && <div className="text-danger mt-1">{mensajeCodigo}</div>}
-                        </div>
-
-                        {/* Cargo */}
-                        <div className="mb-3">
-                            <label className="form-label">Descripción / Cargo</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                name="cargo"
-                                value={formData.cargo}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        {/* 
-                        <div className="mb-3">
-                            <label className="form-label">Estado</label>
-                            <select
-                                className="form-select"
-                                name="estado"
-                                value={formData.estado}
-                                onChange={handleChange}
-                                required
-                            >
-                                <option value="ACTIVO">ACTIVO</option>
-                                <option value="INACTIVO">INACTIVO</option>
-                            </select>
-                        </div>
- */}
-                        <div className="d-flex justify-content-end">
-                            <button type="submit" className="btn btn-primary">
-                                <i className="bi bi-save me-2"></i> Guardar
-                            </button>
-                            <button
-                                type="button"
-                                className="btn btn-secondary ms-2"
-                                onClick={() => navigate('/parametros/cargos')}
-                            >
-                                Cancelar
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    {/* Botones */}
+                    <div className="d-flex justify-content-end">
+                        <button type="submit" className="btn btn-primary" disabled={cargando}>
+                            {cargando ? 'Guardando...' : <><i className="bi bi-save me-2"></i> Guardar</>}
+                        </button>
+                        <button
+                            type="button"
+                            className="btn btn-secondary ms-2"
+                            onClick={() => navigate('/parametros/cargos')}
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );

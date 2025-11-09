@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
-import { obtenerPermisosUsuario } from '../../../utils/permisos'; // ✅ Importa para verificar permisos
+import { obtenerPermisosUsuario } from '../../../utils/permisos';
 
 export interface Usuario {
     id: number;
@@ -32,13 +32,11 @@ export interface GrupoContable {
 const Auxiliares = () => {
     const [auxiliares, setAuxiliares] = useState<Auxiliar[]>([]);
     const [gruposContables, setGruposContables] = useState<GrupoContable[]>([]);
-    const [codigoGrupoFiltro, setCodigoGrupoFiltro] = useState<string>('');
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
     const [auxiliaresFiltrados, setAuxiliaresFiltrados] = useState<Auxiliar[]>([]);
     const navigate = useNavigate();
 
-    // Filtros
     const [filtroCodigo, setFiltroCodigo] = useState('');
     const [filtroDescripcion, setFiltroDescripcion] = useState('');
     const [filtroCodigoGrupo, setFiltroCodigoGrupo] = useState('');
@@ -46,7 +44,6 @@ const Auxiliares = () => {
     const [filtroCreadoPor, setFiltroCreadoPor] = useState('');
     const [filtroActualizadoPor, setFiltroActualizadoPor] = useState('');
 
-    // ✅ Permisos del usuario logueado
     const [permisos, setPermisos] = useState<string[]>([]);
 
     useEffect(() => {
@@ -61,7 +58,7 @@ const Auxiliares = () => {
         } else {
             setCargando(false);
         }
-    }, [estadoFiltro, codigoGrupoFiltro, permisos]);
+    }, [estadoFiltro, permisos]);
 
     useEffect(() => {
         aplicarFiltros();
@@ -90,8 +87,7 @@ const Auxiliares = () => {
                             ? 'ACTIVO'
                             : estadoFiltro === 'inactivos'
                                 ? 'INACTIVO'
-                                : 'todos',
-                    ...(codigoGrupoFiltro ? { codigo_grupo: codigoGrupoFiltro } : {})
+                                : 'todos'
                 },
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -143,7 +139,7 @@ const Auxiliares = () => {
 
         try {
             const response = await axios.get(
-                `/parametros/auxiliares/exportar/pdf?estado=${estadoSeleccionado}&codigo_grupo=${codigoGrupoFiltro}`,
+                `/parametros/auxiliares/exportar/pdf?estado=${estadoSeleccionado}`,
                 { responseType: 'blob', headers: { Authorization: `Bearer ${token}` } }
             );
             const blob = new Blob([response.data as Blob], { type: 'application/pdf' });
@@ -155,7 +151,6 @@ const Auxiliares = () => {
         }
     };
 
-    // 🔒 Si no tiene permiso para listar, mostrar acceso denegado
     if (!permisos.includes('auxiliares:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -167,6 +162,11 @@ const Auxiliares = () => {
             </div>
         );
     }
+
+    const obtenerDescripcionGrupo = (codigoGrupo: string) => {
+        const grupo = gruposContables.find((g) => g.codigo === codigoGrupo);
+        return grupo ? `${grupo.codigo} - ${grupo.descripcion}` : codigoGrupo;
+    };
 
     return (
         <div className="container mt-4">
@@ -211,21 +211,6 @@ const Auxiliares = () => {
                             <option value="inactivos">Solo Inactivos</option>
                         </select>
                     </div>
-
-                    <div style={{ minWidth: '220px' }}>
-                        <select
-                            className="form-select"
-                            value={codigoGrupoFiltro}
-                            onChange={(e) => setCodigoGrupoFiltro(e.target.value)}
-                        >
-                            <option value="">Todos los Grupos</option>
-                            {gruposContables.map((grupo) => (
-                                <option key={grupo.id} value={grupo.codigo}>
-                                    {grupo.codigo} - {grupo.descripcion}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
                 </div>
             </div>
 
@@ -234,15 +219,67 @@ const Auxiliares = () => {
                     <thead className="table-light">
                         <tr>
                             <th>Nro.</th>
+                            <th>Código Grupo</th>
                             <th>Código</th>
                             <th>Descripción</th>
-                            <th>Código Grupo</th>
                             <th>Estado</th>
                             <th>Creado por</th>
                             <th>Fecha de Registro</th>
                             <th>Actualizado por</th>
                             <th>Fecha de Actualización</th>
                             <th>Acciones</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar Grupo"
+                                    value={filtroCodigoGrupo}
+                                    onChange={(e) => setFiltroCodigoGrupo(e.target.value)}
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar Código"
+                                    value={filtroCodigo}
+                                    onChange={(e) => setFiltroCodigo(e.target.value)}
+                                />
+                            </th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar Descripción"
+                                    value={filtroDescripcion}
+                                    onChange={(e) => setFiltroDescripcion(e.target.value)}
+                                />
+                            </th>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar Creado por"
+                                    value={filtroCreadoPor}
+                                    onChange={(e) => setFiltroCreadoPor(e.target.value)}
+                                />
+                            </th>
+                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    placeholder="Filtrar Actualizado por"
+                                    value={filtroActualizadoPor}
+                                    onChange={(e) => setFiltroActualizadoPor(e.target.value)}
+                                />
+                            </th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -254,9 +291,9 @@ const Auxiliares = () => {
                             auxiliaresFiltrados.map((aux, index) => (
                                 <tr key={aux.id}>
                                     <td>{index + 1}</td>
+                                    <td>{obtenerDescripcionGrupo(aux.codigo_grupo)}</td>
                                     <td>{aux.codigo}</td>
                                     <td>{aux.descripcion}</td>
-                                    <td>{aux.codigo_grupo || '—'}</td>
                                     <td>{aux.estado}</td>
                                     <td>{aux.creado_por?.nombre || '—'}</td>
                                     <td>{new Date(aux.created_at).toLocaleDateString('es-BO')}</td>
@@ -271,7 +308,6 @@ const Auxiliares = () => {
                                                 <i className="bi bi-pencil-square"></i>
                                             </button>
                                         )}
-
                                         {(permisos.includes('auxiliares:cambiar-estado') ||
                                             permisos.includes('auxiliares:eliminar')) && (
                                                 <button
@@ -281,7 +317,6 @@ const Auxiliares = () => {
                                                 >
                                                     <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
-
                                             )}
                                     </td>
                                 </tr>
