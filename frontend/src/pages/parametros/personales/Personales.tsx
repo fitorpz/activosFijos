@@ -34,15 +34,21 @@ interface Personal {
 
 const Personales = () => {
     const [personales, setPersonales] = useState<Personal[]>([]);
+    const [personalesFiltrados, setPersonalesFiltrados] = useState<Personal[]>([]);
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
     const [permisos, setPermisos] = useState<string[]>([]);
-    const [filtroCI, setFiltroCI] = useState('');
-    const [filtroNombre, setFiltroNombre] = useState('');
-    const [personalesFiltrados, setPersonalesFiltrados] = useState<Personal[]>([]);
     const navigate = useNavigate();
 
-    // 🔹 Cargar permisos del usuario
+    // 🔹 Filtros
+    const [filtroNombre, setFiltroNombre] = useState('');
+    const [filtroCI, setFiltroCI] = useState('');
+    const [filtroCelular, setFiltroCelular] = useState('');
+    const [filtroEmail, setFiltroEmail] = useState('');
+    const [filtroCreadoPor, setFiltroCreadoPor] = useState('');
+    const [filtroActualizadoPor, setFiltroActualizadoPor] = useState('');
+
+    // 🔹 Cargar permisos
     useEffect(() => {
         const permisosUsuario = obtenerPermisosUsuario();
         setPermisos(permisosUsuario);
@@ -57,17 +63,29 @@ const Personales = () => {
         }
     }, [estadoFiltro, permisos]);
 
-    // 🔹 Aplicar filtros por CI y nombre
+    // 🔹 Aplicar filtros
     useEffect(() => {
         const filtrados = personales.filter((p) => {
-            const coincideCI = p.ci?.toLowerCase().includes(filtroCI.toLowerCase());
-            const coincideNombre = p.nombre?.toLowerCase().includes(filtroNombre.toLowerCase());
-            return coincideCI && coincideNombre;
+            const ci = p.ci?.toLowerCase() ?? '';
+            const nombre = p.nombre?.toLowerCase() ?? '';
+            const celular = p.celular?.toLowerCase() ?? '';
+            const email = p.email?.toLowerCase() ?? '';
+            const creadoPor = p.creado_por?.nombre?.toLowerCase() ?? '';
+            const actualizadoPor = p.actualizado_por?.nombre?.toLowerCase() ?? '';
+
+            return (
+                ci.includes(filtroCI.toLowerCase()) &&
+                nombre.includes(filtroNombre.toLowerCase()) &&
+                celular.includes(filtroCelular.toLowerCase()) &&
+                email.includes(filtroEmail.toLowerCase()) &&
+                creadoPor.includes(filtroCreadoPor.toLowerCase()) &&
+                actualizadoPor.includes(filtroActualizadoPor.toLowerCase())
+            );
         });
         setPersonalesFiltrados(filtrados);
-    }, [filtroCI, filtroNombre, personales]);
+    }, [filtroCI, filtroNombre, filtroCelular, filtroEmail, filtroCreadoPor, filtroActualizadoPor, personales]);
 
-    // 🔹 Obtener todos los personales
+    // 🔹 Obtener personales
     const obtenerPersonales = async () => {
         try {
             const res = await axiosInstance.get<Personal[]>('/parametros/personal');
@@ -86,7 +104,13 @@ const Personales = () => {
         }
     };
 
-    // 🔹 Formateadores visuales
+    // 🔹 Formateadores
+    const formatearFecha = (fecha?: string) => {
+        if (!fecha) return '—';
+        const d = new Date(fecha);
+        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-BO');
+    };
+
     const obtenerTextoEstadoCivil = (valor?: number): string => {
         switch (valor) {
             case 1: return 'Soltero';
@@ -106,20 +130,17 @@ const Personales = () => {
         }
     };
 
-    const formatearFecha = (fecha?: string) => {
-        if (!fecha) return '—';
-        const d = new Date(fecha);
-        return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-BO');
-    };
+    // 🔹 Cambiar estado
+    const cambiarEstado = async (id: number, estadoActual: string) => {
+        const nuevoEstado = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+        if (!window.confirm(`¿Seguro que deseas cambiar el estado a ${nuevoEstado}?`)) return;
 
-    // 🔹 Cambiar estado (activo/inactivo)
-    const cambiarEstado = async (id: number) => {
-        if (!window.confirm('¿Estás seguro de cambiar el estado de este personal?')) return;
         try {
-            await axiosInstance.put(`/parametros/personal/${id}/estado`);
+            await axiosInstance.put(`/parametros/personal/${id}/estado`, { estado: nuevoEstado });
             obtenerPersonales();
         } catch (error) {
             console.error('Error al cambiar estado:', error);
+            alert('❌ Error al cambiar estado del personal.');
         }
     };
 
@@ -143,7 +164,7 @@ const Personales = () => {
         }
     };
 
-    // 🔹 Si no tiene permiso de listar
+    // 🔹 Verificación de permisos
     if (!permisos.includes('personales:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -158,7 +179,7 @@ const Personales = () => {
 
     return (
         <div className="container mt-4">
-            {/* Encabezado y acciones */}
+            {/* Encabezado */}
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                 <div>
                     <h4 className="mb-0 text-primary fw-bold">Personal</h4>
@@ -167,10 +188,7 @@ const Personales = () => {
 
                 <div className="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
                     {permisos.includes('personales:crear') && (
-                        <button
-                            className="btn btn-primary"
-                            onClick={() => navigate('/parametros/personales/registrar')}
-                        >
+                        <button className="btn btn-primary" onClick={() => navigate('/parametros/personales/registrar')}>
                             <i className="bi bi-plus-lg me-1"></i> Nuevo Personal
                         </button>
                     )}
@@ -181,27 +199,30 @@ const Personales = () => {
                         </button>
                     )}
 
-                    <button
-                        className="btn btn-outline-secondary"
-                        onClick={() => navigate('/parametros')}
-                    >
-                        <i className="bi bi-arrow-left me-1"></i> Volver a Parámetros
-                    </button>
+                    <div className="d-flex align-items-center gap-2 flex-nowrap">
+                        <button
+                            className="btn btn-outline-secondary text-nowrap"
+                            style={{ whiteSpace: 'nowrap' }}
+                            onClick={() => navigate('/parametros')}
+                        >
+                            <i className="bi bi-arrow-left me-1"></i> Volver a Parámetros
+                        </button>
 
-                    <select
-                        className="form-select"
-                        style={{ minWidth: '160px' }}
-                        value={estadoFiltro}
-                        onChange={(e) => setEstadoFiltro(e.target.value)}
-                    >
-                        <option value="todos">Todos</option>
-                        <option value="activos">Solo Activos</option>
-                        <option value="inactivos">Solo Inactivos</option>
-                    </select>
+                        <select
+                            className="form-select form-select-sm"
+                            style={{ minWidth: '160px' }}
+                            value={estadoFiltro}
+                            onChange={(e) => setEstadoFiltro(e.target.value)}
+                        >
+                            <option value="todos">Todos</option>
+                            <option value="activos">Solo Activos</option>
+                            <option value="inactivos">Solo Inactivos</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            {/* Tabla de datos */}
+            {/* Tabla */}
             <div className="table-responsive">
                 <table className="table table-bordered table-hover table-striped align-middle">
                     <thead className="table-light">
@@ -225,27 +246,26 @@ const Personales = () => {
                             <th>F. Actualización</th>
                             <th>Acciones</th>
                         </tr>
+
+                        {/* Filtros */}
                         <tr>
-                            <th colSpan={4}></th>
-                            <th>
-                                <input
-                                    type="text"
-                                    className="form-control form-control-sm"
-                                    placeholder="Filtrar CI"
-                                    value={filtroCI}
-                                    onChange={(e) => setFiltroCI(e.target.value)}
-                                />
-                            </th>
-                            <th>
-                                <input
-                                    type="text"
-                                    className="form-control form-control-sm"
-                                    placeholder="Filtrar nombre"
-                                    value={filtroNombre}
-                                    onChange={(e) => setFiltroNombre(e.target.value)}
-                                />
-                            </th>
-                            <th colSpan={13}></th>
+                            <th></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Nombre" value={filtroNombre} onChange={(e) => setFiltroNombre(e.target.value)} /></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="CI" value={filtroCI} onChange={(e) => setFiltroCI(e.target.value)} /></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Celular" value={filtroCelular} onChange={(e) => setFiltroCelular(e.target.value)} /></th>
+                            <th></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Email" value={filtroEmail} onChange={(e) => setFiltroEmail(e.target.value)} /></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Creado por" value={filtroCreadoPor} onChange={(e) => setFiltroCreadoPor(e.target.value)} /></th>
+                            <th></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Actualizado por" value={filtroActualizadoPor} onChange={(e) => setFiltroActualizadoPor(e.target.value)} /></th>
+                            <th colSpan={2}></th>
                         </tr>
                     </thead>
 
@@ -276,7 +296,7 @@ const Personales = () => {
                                     <td>{formatearFecha(p.created_at)}</td>
                                     <td>{p.actualizado_por?.nombre ?? '—'}</td>
                                     <td>{formatearFecha(p.updated_at)}</td>
-                                    <td className="text-center">
+                                    <td>
                                         <div className="d-flex justify-content-center gap-2">
                                             {permisos.includes('personales:editar') && (
                                                 <button
@@ -293,7 +313,7 @@ const Personales = () => {
                                                         type="button"
                                                         className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                         title={p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                        onClick={() => cambiarEstado(p.id)}
+                                                        onClick={() => cambiarEstado(p.id, p.estado)}
                                                         aria-label={p.estado === 'ACTIVO' ? 'Inactivar personal' : 'Activar personal'}
                                                     >
                                                         <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
@@ -301,7 +321,6 @@ const Personales = () => {
                                                 )}
                                         </div>
                                     </td>
-
                                 </tr>
                             ))
                         ) : (

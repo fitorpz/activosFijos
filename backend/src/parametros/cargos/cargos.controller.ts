@@ -113,24 +113,85 @@ export class CargosController {
             ? 'INACTIVO'
             : undefined;
 
+      // 🔹 Obtener cargos filtrados por estado
       const cargos = await this.cargosService.findAll(estado);
 
-      const filasHTML = cargos
-        .map(
-          (cargo, index) => `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${cargo.area}</td>
-            <td>${cargo.unidad_organizacional}</td>    
-            <td>${cargo.ambiente}</td>
-            <td>${cargo.codigo}</td>
-            <td>${cargo.cargo || ''}</td>    
-            <td>${cargo.estado}</td>    
-          </tr>
-        `,
-        )
-        .join('');
+      if (!cargos.length) {
+        return res.status(404).json({ message: 'No hay cargos para exportar' });
+      }
 
+      // 🔹 Ordenar por área, unidad organizacional, ambiente y código
+      cargos.sort((a, b) => {
+        const area = a.area.localeCompare(b.area);
+        if (area !== 0) return area;
+
+        const unidad = a.unidad_organizacional.localeCompare(b.unidad_organizacional);
+        if (unidad !== 0) return unidad;
+
+        const ambiente = a.ambiente.localeCompare(b.ambiente);
+        if (ambiente !== 0) return ambiente;
+
+        return a.codigo.localeCompare(b.codigo);
+      });
+
+      // 🔹 Agrupar jerárquicamente
+      const agrupado = cargos.reduce((acc, cargo) => {
+        if (!acc[cargo.area]) acc[cargo.area] = {};
+        if (!acc[cargo.area][cargo.unidad_organizacional])
+          acc[cargo.area][cargo.unidad_organizacional] = {};
+        if (!acc[cargo.area][cargo.unidad_organizacional][cargo.ambiente])
+          acc[cargo.area][cargo.unidad_organizacional][cargo.ambiente] = [];
+
+        acc[cargo.area][cargo.unidad_organizacional][cargo.ambiente].push(cargo);
+        return acc;
+      }, {} as Record<string, Record<string, Record<string, any[]>>>);
+
+      // 🔹 Construir HTML agrupado
+      let filasHTML = '';
+      let contador = 1;
+
+      for (const [area, unidades] of Object.entries(agrupado)) {
+        filasHTML += `
+        <tr>
+          <td colspan="7" style="background:#cfe2ff;font-weight:bold;font-size:14px;">
+            Área: ${area}
+          </td>
+        </tr>
+      `;
+
+        for (const [unidad, ambientes] of Object.entries(unidades)) {
+          filasHTML += `
+          <tr>
+            <td colspan="7" style="background:#e2e3e5;font-weight:bold;padding-left:20px;font-size:13px;">
+              Unidad Organizacional: ${unidad}
+            </td>
+          </tr>
+        `;
+
+          for (const [ambiente, listaCargos] of Object.entries(ambientes)) {
+            filasHTML += `
+            <tr>
+              <td colspan="7" style="background:#f8f9fa;font-weight:bold;padding-left:40px;font-size:12.5px;">
+                Ambiente: ${ambiente}
+              </td>
+            </tr>
+          `;
+
+            listaCargos.forEach((cargo) => {
+              filasHTML += `
+              <tr>
+                <td>${contador++}</td>                
+                <td>${cargo.codigo}</td>
+                <td>${cargo.cargo || ''}</td>
+                <td>${cargo.estado}</td>
+              </tr>
+            `;
+            });
+          }
+        }
+      }
+
+      // 🔹 Cargar logo y plantilla HTML
       const logoPath = path.join(
         process.cwd(),
         'templates',
@@ -170,6 +231,7 @@ export class CargosController {
         estado ? `Mostrando cargos ${estado.toLowerCase()}` : 'Todos los cargos',
       );
 
+      // 🔹 Generar PDF
       const buffer = await generarPDFDesdeHTML(html);
 
       res.setHeader('Content-Type', 'application/pdf');
@@ -180,4 +242,5 @@ export class CargosController {
       return res.status(500).json({ message: 'Error al exportar PDF' });
     }
   }
+
 }

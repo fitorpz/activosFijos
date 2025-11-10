@@ -143,7 +143,7 @@ const Cargos = () => {
 
     return (
         <div className="container mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <div>
                     <h4 className="mb-0">Cargos</h4>
                     <p className="text-muted small">Gestión de cargos registrados</p>
@@ -216,9 +216,25 @@ const Cargos = () => {
                                 />
                             </th>
                             <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    value={filtroCreadoPor}
+                                    onChange={(e) => setFiltroCreadoPor(e.target.value)}
+                                    placeholder="Filtrar creador"
+                                />
+                            </th>
                             <th></th>
-                            <th></th>
-                            <th></th>
+                            <th>
+                                <input
+                                    type="text"
+                                    className="form-control form-control-sm"
+                                    value={filtroActualizadoPor}
+                                    onChange={(e) => setFiltroActualizadoPor(e.target.value)}
+                                    placeholder="Filtrar actualizador"
+                                />
+                            </th>
                             <th></th>
                             <th></th>
                         </tr>
@@ -231,7 +247,7 @@ const Cargos = () => {
                                 <tr key={cargo.id}>
                                     <td>{index + 1}</td>
                                     <td>{cargo.codigo}</td>
-                                    <td>{cargo.cargo}</td>
+                                    <td>{cargo.descripcion || cargo.cargo}</td>
                                     <td>{cargo.estado}</td>
                                     <td>{cargo.creado_por?.nombre || '—'}</td>
                                     <td>{new Date(cargo.created_at).toLocaleDateString('es-BO')}</td>
@@ -252,10 +268,15 @@ const Cargos = () => {
                                                 permisos.includes('cargos:eliminar')) && (
                                                     <button
                                                         type="button"
-                                                        className={`btn btn-sm ${cargo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                        title={cargo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        className={`btn btn-sm ${cargo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'
+                                                            }`}
                                                         onClick={() => cambiarEstado(cargo.id)}
-                                                        aria-label={cargo.estado === 'ACTIVO' ? 'Inactivar cargo' : 'Activar cargo'}
+                                                        title={cargo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        aria-label={
+                                                            cargo.estado === 'ACTIVO'
+                                                                ? 'Inactivar cargo'
+                                                                : 'Activar cargo'
+                                                        }
                                                     >
                                                         <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                     </button>
