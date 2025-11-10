@@ -238,29 +238,31 @@ const Cargos = () => {
                                     <td>{cargo.actualizado_por?.nombre || '—'}</td>
                                     <td>{cargo.updated_at ? new Date(cargo.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('cargos:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/cargos/editar/${cargo.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-
-                                        {(permisos.includes('cargos:cambiar-estado') ||
-                                            permisos.includes('cargos:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('cargos:editar') && (
                                                 <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${cargo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    title={cargo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    onClick={() => cambiarEstado(cargo.id)}
-                                                    aria-label={cargo.estado === 'ACTIVO' ? 'Inactivar cargo' : 'Activar cargo'}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/cargos/editar/${cargo.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
                                             )}
 
+                                            {(permisos.includes('cargos:cambiar-estado') ||
+                                                permisos.includes('cargos:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${cargo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={cargo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        onClick={() => cambiarEstado(cargo.id)}
+                                                        aria-label={cargo.estado === 'ACTIVO' ? 'Inactivar cargo' : 'Activar cargo'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

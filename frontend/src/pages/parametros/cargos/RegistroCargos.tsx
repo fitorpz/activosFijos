@@ -12,6 +12,7 @@ interface UnidadOrganizacional {
     id: number;
     codigo: string;
     descripcion: string;
+    area_id: number;
 }
 
 interface Ambiente {
@@ -65,45 +66,51 @@ const RegistroCargos = () => {
         cargarAreas();
     }, []);
 
-    // 🔹 Buscar unidades organizacionales por texto y área
+    //  Buscar unidades organizacionales por texto y área
     const buscarUnidades = async (texto: string) => {
-        if (!formData.area_id || texto.trim().length === 0) {
+        if (!formData.area_id) {
             setSugerenciasUnidades([]);
             return;
         }
 
         try {
             const res = await axios.get<UnidadOrganizacional[]>(
-                `/parametros/unidades-organizacionales/buscar`,
+                '/parametros/unidades-organizacionales/buscar',
                 {
                     params: {
-                        q: texto,
                         estado: 'ACTIVO',
-                        area_id: formData.area_id,
+                        area_id: parseInt(formData.area_id, 10),
+                        q: texto || '', // ✅ permite buscar aunque esté vacío
                     },
                     headers: authHeaders(),
                 }
             );
-            setSugerenciasUnidades(res.data);
+
+            // Filtrar por área localmente también (por seguridad)
+            const areaIdNum = parseInt(formData.area_id, 10);
+            const filtradas = res.data.filter(u => u.area_id === areaIdNum);
+
+            setSugerenciasUnidades(filtradas);
         } catch (error) {
             console.error('❌ Error al buscar unidades:', error);
             setSugerenciasUnidades([]);
         }
     };
 
-    // 🔹 Buscar ambientes por texto y unidad organizacional
+
+    //  Buscar ambientes por texto y unidad organizacional
     const buscarAmbientes = async (texto: string) => {
-        if (!formData.unidad_organizacional_id || texto.trim().length === 0) {
+        if (!formData.unidad_organizacional_id) {
             setSugerenciasAmbientes([]);
             return;
         }
 
         try {
             const res = await axios.get<Ambiente[]>(
-                `/parametros/ambientes/buscar`,
+                '/parametros/ambientes/buscar',
                 {
                     params: {
-                        search: texto,
+                        search: texto || '', // ✅ permite buscar incluso vacío
                         unidad_organizacional_id: formData.unidad_organizacional_id,
                     },
                     headers: authHeaders(),
@@ -116,7 +123,8 @@ const RegistroCargos = () => {
         }
     };
 
-    // 🔹 Cambiar valores del formulario
+
+    //  Cambiar valores del formulario
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === 'area_id') {
@@ -140,7 +148,7 @@ const RegistroCargos = () => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // 🔹 Generar código automático
+    //  Generar código automático
     const generarCodigo = async (ambienteCodigo: string) => {
         try {
             const res = await axios.get<{ codigo: string }>(
@@ -157,7 +165,7 @@ const RegistroCargos = () => {
         }
     };
 
-    // 🔹 Enviar formulario
+    //  Enviar formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -234,6 +242,7 @@ const RegistroCargos = () => {
                             placeholder="Buscar unidad organizacional..."
                             value={unidadInput}
                             disabled={!formData.area_id}
+                            onFocus={() => buscarUnidades('')} // 👈 carga sugerencias al hacer click
                             onChange={(e) => {
                                 const texto = e.target.value;
                                 setUnidadInput(texto);
@@ -242,6 +251,7 @@ const RegistroCargos = () => {
                             }}
                             required
                         />
+
                         {sugerenciasUnidades.length > 0 && (
                             <ul className="list-group position-absolute w-100 z-3">
                                 {sugerenciasUnidades.map((u) => (
@@ -269,7 +279,6 @@ const RegistroCargos = () => {
                             </ul>
                         )}
                     </div>
-
                     {/* Ambiente */}
                     <div className="mb-3 position-relative">
                         <label className="form-label">Ambiente</label>
@@ -279,6 +288,7 @@ const RegistroCargos = () => {
                             placeholder="Buscar ambiente..."
                             value={ambienteInput}
                             disabled={!formData.unidad_organizacional_id}
+                            onFocus={() => buscarAmbientes('')} // 👈 carga sugerencias al hacer click
                             onChange={(e) => {
                                 const texto = e.target.value;
                                 setAmbienteInput(texto);
@@ -311,6 +321,7 @@ const RegistroCargos = () => {
                             </ul>
                         )}
                     </div>
+
 
                     {/* Código */}
                     <div className="mb-3">

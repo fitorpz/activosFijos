@@ -335,8 +335,6 @@ const GruposContables = () => {
                                                     >
                                                         <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                     </button>
-
-
                                                 )}
                                             </div>
                                         </td>

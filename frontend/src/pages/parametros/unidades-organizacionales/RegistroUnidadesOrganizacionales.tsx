@@ -1,28 +1,48 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../utils/axiosConfig';
 
-const RegistroBase = () => {
+interface Area {
+    id: number;
+    descripcion: string;
+}
+
+const RegistroUnidadOrganizacional = () => {
     const [formData, setFormData] = useState({
+        area_id: '',
         codigo: '',
         descripcion: '',
         estado: 'ACTIVO',
     });
 
+    const [areas, setAreas] = useState<Area[]>([]);
     const [codigoDisponible, setCodigoDisponible] = useState<boolean | null>(null);
     const [mensajeCodigo, setMensajeCodigo] = useState<string | null>(null);
     const [cargando, setCargando] = useState(false);
-
     const navigate = useNavigate();
 
-    // 🧩 Manejo genérico de cambios
+    // 🔹 Cargar áreas al iniciar
+    useEffect(() => {
+        const obtenerAreas = async () => {
+            try {
+                const res = await axios.get<Area[]>('/parametros/areas');
+                setAreas(res.data);
+            } catch (error) {
+                console.error('❌ Error al obtener áreas:', error);
+                alert('Error al cargar las áreas');
+            }
+        };
+        obtenerAreas();
+    }, []);
+
+    // 🔹 Manejo genérico de cambios
     const handleChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
         const { name, value } = e.target;
         let newValue = value;
 
-        // Forzar mayúsculas en campos de código o siglas
+        // Forzar mayúsculas en campos específicos
         if (['codigo', 'sigla', 'abreviatura'].includes(name)) {
             newValue = newValue.toUpperCase();
         }
@@ -33,7 +53,7 @@ const RegistroBase = () => {
         }));
     };
 
-    // 🧩 Verificar disponibilidad del código (si aplica)
+    // 🔹 Verificar código disponible
     const verificarCodigoDisponible = async (codigo: string) => {
         if (!codigo.trim()) return;
 
@@ -61,22 +81,27 @@ const RegistroBase = () => {
         }
     };
 
-    // 🧩 Enviar formulario
+    // 🔹 Enviar formulario
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setCargando(true);
 
         try {
             const token = localStorage.getItem('token');
-            await axios.post('/parametros/unidades-organizacionales', formData, {
+            const payload = {
+                ...formData,
+                area_id: parseInt(formData.area_id),
+            };
+
+            await axios.post('/parametros/unidades-organizacionales', payload, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            alert('✅ Registro exitoso');
+            alert('✅ Unidad Organizacional registrada correctamente.');
             navigate('/parametros/unidades-organizacionales');
         } catch (error: any) {
-            console.error('❌ Error al registrar:', error);
-            alert(error?.response?.data?.message || 'Error al registrar');
+            console.error('❌ Error al registrar unidad organizacional:', error);
+            alert(error?.response?.data?.message || 'Error al registrar la unidad.');
         } finally {
             setCargando(false);
         }
@@ -99,6 +124,28 @@ const RegistroBase = () => {
                 <h4 className="mb-4">Registrar Unidad Organizacional</h4>
 
                 <form onSubmit={handleSubmit}>
+                    {/* Campo Área */}
+                    <div className="mb-3">
+                        <label htmlFor="area_id" className="form-label">
+                            Área
+                        </label>
+                        <select
+                            id="area_id"
+                            name="area_id"
+                            className="form-select"
+                            value={formData.area_id}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Seleccione un área</option>
+                            {areas.map((area) => (
+                                <option key={area.id} value={area.id}>
+                                    {area.descripcion}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     {/* Campo Código */}
                     <div className="mb-3">
                         <label htmlFor="codigo" className="form-label">
@@ -113,7 +160,7 @@ const RegistroBase = () => {
                             onChange={handleChange}
                             onBlur={(e) => verificarCodigoDisponible(e.target.value)}
                             required
-                            style={{ textTransform: 'uppercase' }} // 🔠 Visualmente en mayúsculas
+                            style={{ textTransform: 'uppercase' }}
                         />
                         {mensajeCodigo && (
                             <small className="text-muted d-block mt-1">{mensajeCodigo}</small>
@@ -159,4 +206,4 @@ const RegistroBase = () => {
     );
 };
 
-export default RegistroBase;
+export default RegistroUnidadOrganizacional;

@@ -55,7 +55,6 @@ const UnidadesOrganizacionales = () => {
         }
     }, [estadoFiltro, permisos]);
 
-
     const manejarCambioFiltro = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFiltros((prev) => ({ ...prev, [name]: value }));
@@ -133,7 +132,10 @@ const UnidadesOrganizacionales = () => {
                 unidad.codigo.toLowerCase().includes(f.codigo.toLowerCase()) &&
                 unidad.descripcion.toLowerCase().includes(f.descripcion.toLowerCase()) &&
                 (f.estado ? unidad.estado === f.estado.toUpperCase() : true) &&
-                unidad.area.codigo.toLowerCase().includes(f.area.toLowerCase()) &&
+                (
+                    unidad.area?.codigo.toLowerCase().includes(f.area.toLowerCase()) ||
+                    unidad.area?.descripcion.toLowerCase().includes(f.area.toLowerCase())
+                ) &&
                 (!f.creado_por || unidad.creado_por?.nombre.toLowerCase().includes(f.creado_por.toLowerCase())) &&
                 (!f.actualizado_por || unidad.actualizado_por?.nombre.toLowerCase().includes(f.actualizado_por.toLowerCase()))
             );
@@ -189,7 +191,7 @@ const UnidadesOrganizacionales = () => {
                             <th>Nro.</th>
                             <th>Área</th>
                             <th>Código</th>
-                            <th>Descripción</th>                            
+                            <th>Descripción</th>
                             <th>Estado</th>
                             <th>Creado por</th>
                             <th>Fecha de Registro</th>
@@ -201,7 +203,7 @@ const UnidadesOrganizacionales = () => {
                             <th></th>
                             <th><input name="area" value={filtros.area} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar área" /></th>
                             <th><input name="codigo" value={filtros.codigo} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar código" /></th>
-                            <th><input name="descripcion" value={filtros.descripcion} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar descripción" /></th>                            
+                            <th><input name="descripcion" value={filtros.descripcion} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar descripción" /></th>
                             <th></th>
                             <th><input name="creado_por" value={filtros.creado_por} onChange={manejarCambioFiltro} className="form-control form-control-sm" placeholder="Buscar creador" /></th>
                             <th></th>
@@ -217,33 +219,38 @@ const UnidadesOrganizacionales = () => {
                             unidadesFiltradas.map((item, index) => (
                                 <tr key={item.id}>
                                     <td>{index + 1}</td>
+                                    <td>{item.area ? `${item.area.codigo} - ${item.area.descripcion}` : '—'}</td>
                                     <td>{item.codigo}</td>
                                     <td>{item.descripcion}</td>
-                                    <td>{item.area?.codigo || '—'}</td>
                                     <td>{item.estado}</td>
                                     <td>{item.creado_por?.nombre || '—'}</td>
                                     <td>{item.created_at ? new Date(item.created_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>{item.actualizado_por?.nombre || '—'}</td>
                                     <td>{item.updated_at ? new Date(item.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('unidades-organizacionales:editar') && (
-                                            <button className="btn btn-sm btn-warning me-2" onClick={() => navigate(`/parametros/unidades-organizacionales/editar/${item.id}`)}>
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-                                        {(permisos.includes('unidades-organizacionales:cambiar-estado') ||
-                                            permisos.includes('unidades-organizacionales:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('unidades-organizacionales:editar') && (
                                                 <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    onClick={() => cambiarEstado(item.id)}
-                                                    aria-label={item.estado === 'ACTIVO' ? 'Inactivar unidad' : 'Activar unidad'}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/unidades-organizacionales/editar/${item.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
                                             )}
 
+                                            {(permisos.includes('unidades-organizacionales:cambiar-estado') ||
+                                                permisos.includes('unidades-organizacionales:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        onClick={() => cambiarEstado(item.id)}
+                                                        aria-label={item.estado === 'ACTIVO' ? 'Inactivar unidad' : 'Activar unidad'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))

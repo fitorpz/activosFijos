@@ -277,29 +277,31 @@ const Personales = () => {
                                     <td>{p.actualizado_por?.nombre ?? '—'}</td>
                                     <td>{formatearFecha(p.updated_at)}</td>
                                     <td className="text-center">
-                                        {permisos.includes('personales:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/personales/editar/${p.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-
-                                        {(permisos.includes('personales:cambiar-estado') ||
-                                            permisos.includes('personales:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('personales:editar') && (
                                                 <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    title={p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    onClick={() => cambiarEstado(p.id)}
-                                                    aria-label={p.estado === 'ACTIVO' ? 'Inactivar personal' : 'Activar personal'}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/personales/editar/${p.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
                                             )}
 
+                                            {(permisos.includes('personales:cambiar-estado') ||
+                                                permisos.includes('personales:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        onClick={() => cambiarEstado(p.id)}
+                                                        aria-label={p.estado === 'ACTIVO' ? 'Inactivar personal' : 'Activar personal'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

@@ -127,13 +127,13 @@ const Ciudades = () => {
                 .includes(filtros.descripcion.toLowerCase());
             const filtroCreadoPor = filtros.creado_por
                 ? ciudad.creado_por?.nombre
-                      ?.toLowerCase()
-                      .includes(filtros.creado_por.toLowerCase()) ?? false
+                    ?.toLowerCase()
+                    .includes(filtros.creado_por.toLowerCase()) ?? false
                 : true;
             const filtroActualizadoPor = filtros.actualizado_por
                 ? ciudad.actualizado_por?.nombre
-                      ?.toLowerCase()
-                      .includes(filtros.actualizado_por.toLowerCase()) ?? false
+                    ?.toLowerCase()
+                    .includes(filtros.actualizado_por.toLowerCase()) ?? false
                 : true;
 
             return (
@@ -289,45 +289,47 @@ const Ciudades = () => {
                                             : '—'}
                                     </td>
                                     <td>
-                                        {permisos.includes('ciudades:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() =>
-                                                    navigate(`/parametros/ciudades/editar/${ciudad.id}`)
-                                                }
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('ciudades:editar') && (
+                                                <button
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() =>
+                                                        navigate(`/parametros/ciudades/editar/${ciudad.id}`)
+                                                    }
+                                                >
+                                                    <i className="bi bi-pencil-square"></i>
+                                                </button>
+                                            )}
 
-                                        {(permisos.includes('ciudades:cambiar-estado') ||
-                                            permisos.includes('ciudades:eliminar')) && (
-                                            <button
-                                                type="button"
-                                                className={`btn btn-sm ${
-                                                    ciudad.estado === 'ACTIVO'
-                                                        ? 'btn-success'
-                                                        : 'btn-danger'
-                                                }`}
-                                                onClick={() => cambiarEstado(ciudad.id)}
-                                                title={
-                                                    ciudad.estado === 'ACTIVO'
-                                                        ? 'Inactivar'
-                                                        : 'Activar'
-                                                }
-                                                aria-label={
-                                                    ciudad.estado === 'ACTIVO'
-                                                        ? 'Inactivar ciudad'
-                                                        : 'Activar ciudad'
-                                                }
-                                            >
-                                                <i
-                                                    className="bi bi-arrow-repeat"
-                                                    style={{ color: '#000' }}
-                                                ></i>
-                                            </button>
-                                        )}
+                                            {(permisos.includes('ciudades:cambiar-estado') ||
+                                                permisos.includes('ciudades:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${ciudad.estado === 'ACTIVO'
+                                                                ? 'btn-success'
+                                                                : 'btn-danger'
+                                                            }`}
+                                                        onClick={() => cambiarEstado(ciudad.id)}
+                                                        title={
+                                                            ciudad.estado === 'ACTIVO'
+                                                                ? 'Inactivar'
+                                                                : 'Activar'
+                                                        }
+                                                        aria-label={
+                                                            ciudad.estado === 'ACTIVO'
+                                                                ? 'Inactivar ciudad'
+                                                                : 'Activar ciudad'
+                                                        }
+                                                    >
+                                                        <i
+                                                            className="bi bi-arrow-repeat"
+                                                            style={{ color: '#000' }}
+                                                        ></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

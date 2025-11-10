@@ -107,7 +107,16 @@ const Auxiliares = () => {
         if (filtroEstado !== 'TODOS') resultado = resultado.filter((a) => a.estado === filtroEstado);
         if (filtroCodigo.trim() !== '') resultado = resultado.filter((a) => a.codigo.toLowerCase().includes(filtroCodigo.toLowerCase()));
         if (filtroDescripcion.trim() !== '') resultado = resultado.filter((a) => a.descripcion.toLowerCase().includes(filtroDescripcion.toLowerCase()));
-        if (filtroCodigoGrupo.trim() !== '') resultado = resultado.filter((a) => a.codigo_grupo.toLowerCase().includes(filtroCodigoGrupo.toLowerCase()));
+        if (filtroCodigoGrupo.trim() !== '') {
+            const termino = filtroCodigoGrupo.toLowerCase();
+            resultado = resultado.filter((a) => {
+                const grupo = gruposContables.find((g) => g.codigo === a.codigo_grupo);
+                return (
+                    a.codigo_grupo.toLowerCase().includes(termino) ||
+                    grupo?.descripcion.toLowerCase().includes(termino)
+                );
+            });
+        }
         if (filtroCreadoPor.trim() !== '') resultado = resultado.filter((a) => a.creado_por?.nombre.toLowerCase().includes(filtroCreadoPor.toLowerCase()));
         if (filtroActualizadoPor.trim() !== '') resultado = resultado.filter((a) => a.actualizado_por?.nombre?.toLowerCase().includes(filtroActualizadoPor.toLowerCase()));
 
@@ -300,17 +309,19 @@ const Auxiliares = () => {
                                     <td>{aux.actualizado_por?.nombre || '—'}</td>
                                     <td>{aux.updated_at ? new Date(aux.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('auxiliares:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/auxiliares/editar/${aux.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-                                        {(permisos.includes('auxiliares:cambiar-estado') ||
-                                            permisos.includes('auxiliares:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('auxiliares:editar') && (
                                                 <button
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/auxiliares/editar/${aux.id}`)}
+                                                >
+                                                    <i className="bi bi-pencil-square"></i>
+                                                </button>
+                                            )}
+
+                                            {(permisos.includes('auxiliares:cambiar-estado') || permisos.includes('auxiliares:eliminar')) && (
+                                                <button
+                                                    type="button"
                                                     className={`btn btn-sm ${aux.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
                                                     title={aux.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
                                                     onClick={() => cambiarEstado(aux.id)}
@@ -318,6 +329,7 @@ const Auxiliares = () => {
                                                     <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
                                                 </button>
                                             )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))

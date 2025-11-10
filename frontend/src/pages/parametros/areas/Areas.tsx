@@ -208,7 +208,7 @@ const Areas = () => {
 
             <div className="table-responsive">
                 <table className="table table-bordered table-hover align-middle">
-                   <thead className="table-light">
+                    <thead className="table-light">
                         <tr>
                             <th>Nro.</th>
                             <th>Código</th>
@@ -287,29 +287,31 @@ const Areas = () => {
                                     <td>{area.actualizado_por?.nombre || '—'}</td>
                                     <td>{area.updated_at ? new Date(area.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('areas:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/areas/editar/${area.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-
-                                        {(permisos.includes('areas:cambiar-estado') ||
-                                            permisos.includes('areas:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('areas:editar') && (
                                                 <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${area.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    title={area.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    onClick={() => cambiarEstado(area.id)}
-                                                    aria-label={area.estado === 'ACTIVO' ? 'Inactivar área' : 'Activar área'}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/areas/editar/${area.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
-
                                             )}
+
+                                            {(permisos.includes('areas:cambiar-estado') ||
+                                                permisos.includes('areas:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${area.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={area.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        onClick={() => cambiarEstado(area.id)}
+                                                        aria-label={area.estado === 'ACTIVO' ? 'Inactivar área' : 'Activar área'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

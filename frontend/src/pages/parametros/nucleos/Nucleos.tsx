@@ -291,26 +291,31 @@ const Nucleos = () => {
                                     <td>{nucleo.actualizado_por?.nombre || '—'}</td>
                                     <td>{nucleo.updated_at ? new Date(nucleo.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('nucleos:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/nucleos/editar/${nucleo.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('nucleos:editar') && (
+                                                <button
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/nucleos/editar/${nucleo.id}`)}
+                                                >
+                                                    <i className="bi bi-pencil-square"></i>
+                                                </button>
+                                            )}
 
-                                        {(permisos.includes('nucleos:cambiar-estado') ||
-                                            permisos.includes('nucleos:eliminar')) && (
-                                            <button
-                                                className={`btn btn-sm ${nucleo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                onClick={() => cambiarEstado(nucleo.id)}
-                                                title={nucleo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                            >
-                                                <i className="bi bi-arrow-repeat"></i>
-                                            </button>
-                                        )}
+                                            {(permisos.includes('nucleos:cambiar-estado') ||
+                                                permisos.includes('nucleos:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${nucleo.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        onClick={() => cambiarEstado(nucleo.id)}
+                                                        title={nucleo.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        aria-label={nucleo.estado === 'ACTIVO' ? 'Inactivar núcleo' : 'Activar núcleo'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

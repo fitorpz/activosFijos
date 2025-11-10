@@ -281,27 +281,30 @@ const DireccionesAdministrativas = () => {
                                     <td>{item.actualizado_por?.nombre || '—'}</td>
                                     <td>{item.updated_at ? new Date(item.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('direcciones-administrativas:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/direcciones-administrativas/editar/${item.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-
-                                        {(permisos.includes('direcciones-administrativas:cambiar-estado') ||
-                                            permisos.includes('direcciones-administrativas:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('direcciones-administrativas:editar') && (
                                                 <button
-                                                    className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    onClick={() => cambiarEstado(item.id)}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/direcciones-administrativas/editar/${item.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat"></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
-
                                             )}
+
+                                            {(permisos.includes('direcciones-administrativas:cambiar-estado') ||
+                                                permisos.includes('direcciones-administrativas:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        onClick={() => cambiarEstado(item.id)}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat"></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

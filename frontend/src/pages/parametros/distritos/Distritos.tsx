@@ -265,29 +265,31 @@ const Distritos = () => {
                                     <td>{distrito.actualizado_por?.nombre || '—'}</td>
                                     <td>{distrito.updated_at ? new Date(distrito.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('distritos:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/distritos/editar/${distrito.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-
-                                        {(permisos.includes('distritos:cambiar-estado') ||
-                                            permisos.includes('distritos:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('distritos:editar') && (
                                                 <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${distrito.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    onClick={() => cambiarEstado(distrito.id)}
-                                                    title={distrito.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    aria-label={distrito.estado === 'ACTIVO' ? 'Inactivar distrito' : 'Activar distrito'}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/distritos/editar/${distrito.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
-
                                             )}
+
+                                            {(permisos.includes('distritos:cambiar-estado') ||
+                                                permisos.includes('distritos:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${distrito.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        onClick={() => cambiarEstado(distrito.id)}
+                                                        title={distrito.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        aria-label={distrito.estado === 'ACTIVO' ? 'Inactivar distrito' : 'Activar distrito'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (

@@ -333,28 +333,31 @@ const Ambientes = () => {
                                     <td>{item.actualizado_por?.nombre || '—'}</td>
                                     <td>{item.updated_at ? new Date(item.updated_at).toLocaleDateString('es-BO') : '—'}</td>
                                     <td>
-                                        {permisos.includes('ambientes:editar') && (
-                                            <button
-                                                className="btn btn-sm btn-warning me-2"
-                                                onClick={() => navigate(`/parametros/ambientes/editar/${item.id}`)}
-                                            >
-                                                <i className="bi bi-pencil-square"></i>
-                                            </button>
-                                        )}
-
-                                        {(permisos.includes('ambientes:cambiar-estado') ||
-                                            permisos.includes('ambientes:eliminar')) && (
+                                        <div className="d-flex justify-content-center gap-2">
+                                            {permisos.includes('ambientes:editar') && (
                                                 <button
-                                                    type="button"
-                                                    className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                    title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
-                                                    onClick={() => cambiarEstado(item.id)}
-                                                    aria-label={item.estado === 'ACTIVO' ? 'Inactivar ambiente' : 'Activar ambiente'}
+                                                    className="btn btn-sm btn-warning"
+                                                    onClick={() => navigate(`/parametros/ambientes/editar/${item.id}`)}
                                                 >
-                                                    <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </button>
                                             )}
+
+                                            {(permisos.includes('ambientes:cambiar-estado') ||
+                                                permisos.includes('ambientes:eliminar')) && (
+                                                    <button
+                                                        type="button"
+                                                        className={`btn btn-sm ${item.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
+                                                        title={item.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        onClick={() => cambiarEstado(item.id)}
+                                                        aria-label={item.estado === 'ACTIVO' ? 'Inactivar ambiente' : 'Activar ambiente'}
+                                                    >
+                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                    </button>
+                                                )}
+                                        </div>
                                     </td>
+
                                 </tr>
                             ))
                         ) : (
