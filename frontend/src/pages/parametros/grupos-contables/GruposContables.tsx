@@ -201,7 +201,7 @@ const GruposContables = () => {
                         className="btn btn-outline-secondary"
                         onClick={() => navigate('/parametros')}
                     >
-                        <i className="bi bi-arrow-left me-1"></i> Volver
+                        <i className="bi bi-arrow-left me-1"></i> Volver a Parámetros
                     </button>
                     <div style={{ minWidth: '160px' }}>
                         <select

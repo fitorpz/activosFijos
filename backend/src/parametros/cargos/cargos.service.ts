@@ -34,32 +34,74 @@ export class CargosService {
   }
 
   // Obtener todos los cargos
-  async findAll(estado?: 'ACTIVO' | 'INACTIVO'): Promise<Cargo[]> {
-    const where = estado ? { estado } : {};
-    return this.cargoRepository.find({
-      where,
-      order: { id: 'DESC' },
-      relations: ['creado_por', 'actualizado_por'],
-    });
+  async findAll(estado?: string): Promise<Cargo[]> {
+    const query = this.cargoRepository
+      .createQueryBuilder('cargo')
+      .leftJoinAndSelect('cargo.creado_por', 'creado_por')
+      .leftJoinAndSelect('cargo.actualizado_por', 'actualizado_por')
+      .orderBy('cargo.id', 'DESC');
+
+    if (estado && estado.toUpperCase() !== 'TODOS') {
+      query.andWhere('cargo.estado = :estado', { estado: estado.toUpperCase() });
+    }
+
+    const cargos = await query.getMany();
+    return cargos;
   }
 
-  // Obtener un cargo por ID
-  async findOne(id: number): Promise<Cargo> {
-    const cargo = await this.cargoRepository.findOne({
-      where: { id },
-      relations: ['creado_por', 'actualizado_por'],
-    });
+
+  async findOne(id: number): Promise<any> {
+    const cargo = await this.cargoRepository
+      .createQueryBuilder('cargo')
+      .leftJoinAndSelect('cargo.ambiente_relacion', 'ambiente')
+      .leftJoinAndSelect('ambiente.unidad_organizacional', 'unidad')
+      .leftJoinAndSelect('unidad.area', 'area')
+      .leftJoinAndSelect('cargo.creado_por', 'creado_por')
+      .leftJoinAndSelect('cargo.actualizado_por', 'actualizado_por')
+      .where('cargo.id = :id', { id })
+      .getOne();
 
     if (!cargo) {
       throw new NotFoundException(`Cargo ${id} no encontrado`);
     }
 
-    return cargo;
+    // ✅ Estructura limpia para el frontend
+    return {
+      id: cargo.id,
+      codigo: cargo.codigo,
+      cargo: cargo.cargo,
+      estado: cargo.estado,
+      ambiente_id: cargo.ambiente_id ?? null,
+
+      area: cargo.ambiente_relacion?.unidad_organizacional?.area
+        ? {
+          codigo: cargo.ambiente_relacion.unidad_organizacional.area.codigo,
+          descripcion: cargo.ambiente_relacion.unidad_organizacional.area.descripcion,
+        }
+        : cargo.area
+          ? { codigo: cargo.area, descripcion: '' } // fallback si es string
+          : null,
+
+      unidad_organizacional: cargo.ambiente_relacion?.unidad_organizacional
+        ? {
+          codigo: cargo.ambiente_relacion.unidad_organizacional.codigo,
+          descripcion: cargo.ambiente_relacion.unidad_organizacional.descripcion,
+        }
+        : cargo.unidad_organizacional
+          ? { codigo: cargo.unidad_organizacional, descripcion: '' } // fallback
+          : null,
+
+      ambiente: cargo.ambiente_relacion
+        ? {
+          codigo: cargo.ambiente_relacion.codigo,
+          descripcion: cargo.ambiente_relacion.descripcion,
+        }
+        : cargo.ambiente
+          ? { codigo: cargo.ambiente, descripcion: '' }
+          : null,
+    };
   }
 
-  // Actualizar un cargo
-  // Actualizar un cargo
-  // En tu service CargosService
 
   async update(id: number, dto: UpdateCargosDto, userId: number): Promise<Cargo> {
     const cargo = await this.findOne(id);
@@ -90,14 +132,20 @@ export class CargosService {
 
 
   // Cambiar estado ACTIVO/INACTIVO
-  async cambiarEstado(id: number, estado: 'ACTIVO' | 'INACTIVO', userId: number): Promise<Cargo> {
+  async cambiarEstado(id: number, estado: string, userId: number): Promise<Cargo> {
     const cargo = await this.findOne(id);
-
     const usuario = await this.usuarioRepo.findOneBy({ id: userId });
     if (!usuario) throw new NotFoundException(`Usuario ${userId} no encontrado`);
 
-    cargo.estado = estado;
+    //  Interpreta 'toggle' como "alternar estado"
+    if (estado === 'toggle') {
+      cargo.estado = cargo.estado === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
+    } else if (estado) {
+      cargo.estado = estado.toUpperCase();
+    }
+
     cargo.actualizado_por = usuario;
+    cargo.updated_at = new Date();
 
     return this.cargoRepository.save(cargo);
   }

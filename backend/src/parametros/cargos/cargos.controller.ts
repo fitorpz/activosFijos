@@ -80,6 +80,16 @@ export class CargosController {
     return this.cargosService.findOne(id);
   }
 
+  @Put(':id/estado')
+  cambiarEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('estado') estado: string,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.id;
+    return this.cargosService.cambiarEstado(id, estado, userId);
+  }
+
   @Put(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -88,16 +98,6 @@ export class CargosController {
   ) {
     const userId = req.user.id;
     return this.cargosService.update(id, dto, userId);
-  }
-
-  @Put(':id/estado')
-  cambiarEstado(
-    @Param('id', ParseIntPipe) id: number,
-    @Body('estado') estado: 'ACTIVO' | 'INACTIVO',
-    @Req() req: RequestWithUser,
-  ) {
-    const userId = req.user.id;
-    return this.cargosService.cambiarEstado(id, estado, userId);
   }
 
   @Get('exportar/pdf')

@@ -34,19 +34,20 @@ interface Personal {
 
 const Personales = () => {
     const [personales, setPersonales] = useState<Personal[]>([]);
-    const [personalesFiltrados, setPersonalesFiltrados] = useState<Personal[]>([]);
     const [estadoFiltro, setEstadoFiltro] = useState<string>('activos');
     const [cargando, setCargando] = useState(true);
     const [permisos, setPermisos] = useState<string[]>([]);
-    const navigate = useNavigate();
 
-    // 🔹 Filtros
-    const [filtroNombre, setFiltroNombre] = useState('');
+    // Filtros
     const [filtroCI, setFiltroCI] = useState('');
     const [filtroCelular, setFiltroCelular] = useState('');
     const [filtroEmail, setFiltroEmail] = useState('');
-    const [filtroCreadoPor, setFiltroCreadoPor] = useState('');
-    const [filtroActualizadoPor, setFiltroActualizadoPor] = useState('');
+    const [filtroCreado_por, setFiltroCreado_por] = useState('');
+    const [filtroActualizado_por, setFiltroActualizado_por] = useState('');
+    const [filtroNombre, setFiltroNombre] = useState('');
+
+    const [personalesFiltrados, setPersonalesFiltrados] = useState<Personal[]>([]);
+    const navigate = useNavigate();
 
     // 🔹 Cargar permisos
     useEffect(() => {
@@ -66,24 +67,34 @@ const Personales = () => {
     // 🔹 Aplicar filtros
     useEffect(() => {
         const filtrados = personales.filter((p) => {
-            const ci = p.ci?.toLowerCase() ?? '';
-            const nombre = p.nombre?.toLowerCase() ?? '';
-            const celular = p.celular?.toLowerCase() ?? '';
-            const email = p.email?.toLowerCase() ?? '';
-            const creadoPor = p.creado_por?.nombre?.toLowerCase() ?? '';
-            const actualizadoPor = p.actualizado_por?.nombre?.toLowerCase() ?? '';
+            const coincideCI = p.ci?.toLowerCase().includes(filtroCI.toLowerCase()) ?? true;
+            const coincideNombre = p.nombre?.toLowerCase().includes(filtroNombre.toLowerCase()) ?? true;
+            const coincideCelular = p.celular?.toLowerCase().includes(filtroCelular.toLowerCase()) ?? true;
+            const coincideEmail = p.email?.toLowerCase().includes(filtroEmail.toLowerCase()) ?? true;
+            const coincideCreado_por =
+                p.creado_por?.nombre?.toLowerCase().includes(filtroCreado_por.toLowerCase()) ?? true;
+            const coincideActualizado_por =
+                p.actualizado_por?.nombre?.toLowerCase().includes(filtroActualizado_por.toLowerCase()) ?? true;
 
             return (
-                ci.includes(filtroCI.toLowerCase()) &&
-                nombre.includes(filtroNombre.toLowerCase()) &&
-                celular.includes(filtroCelular.toLowerCase()) &&
-                email.includes(filtroEmail.toLowerCase()) &&
-                creadoPor.includes(filtroCreadoPor.toLowerCase()) &&
-                actualizadoPor.includes(filtroActualizadoPor.toLowerCase())
+                coincideCI &&
+                coincideNombre &&
+                coincideCelular &&
+                coincideEmail &&
+                coincideCreado_por &&
+                coincideActualizado_por
             );
         });
         setPersonalesFiltrados(filtrados);
-    }, [filtroCI, filtroNombre, filtroCelular, filtroEmail, filtroCreadoPor, filtroActualizadoPor, personales]);
+    }, [
+        filtroCI,
+        filtroNombre,
+        filtroCelular,
+        filtroEmail,
+        filtroCreado_por,
+        filtroActualizado_por,
+        personales,
+    ]);
 
     // 🔹 Obtener personales
     const obtenerPersonales = async () => {
@@ -104,39 +115,24 @@ const Personales = () => {
         }
     };
 
-    // 🔹 Formateadores
     const formatearFecha = (fecha?: string) => {
         if (!fecha) return '—';
         const d = new Date(fecha);
         return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-BO');
     };
 
-    const obtenerTextoEstadoCivil = (valor?: number): string => {
-        switch (valor) {
-            case 1: return 'Soltero';
-            case 2: return 'Casado';
-            case 3: return 'Viudo';
-            case 4: return 'Divorciado';
-            case 5: return 'Unión libre';
-            default: return '—';
-        }
-    };
-
-    const obtenerTextoSexo = (valor?: number): string => {
-        switch (valor) {
-            case 1: return 'Masculino';
-            case 2: return 'Femenino';
-            default: return '—';
-        }
-    };
-
-    // 🔹 Cambiar estado
+    // 🔹 Cambiar estado (activo/inactivo)
     const cambiarEstado = async (id: number, estadoActual: string) => {
         const nuevoEstado = estadoActual === 'ACTIVO' ? 'INACTIVO' : 'ACTIVO';
         if (!window.confirm(`¿Seguro que deseas cambiar el estado a ${nuevoEstado}?`)) return;
 
         try {
+            // 👇 Si tu API acepta un body con el nuevo estado:
             await axiosInstance.put(`/parametros/personal/${id}/estado`, { estado: nuevoEstado });
+
+            // 👇 Si tu API usa un endpoint sin body, descomenta esta línea:
+            // await axiosInstance.put(`/parametros/personal/${id}/estado`);
+
             obtenerPersonales();
         } catch (error) {
             console.error('Error al cambiar estado:', error);
@@ -164,7 +160,6 @@ const Personales = () => {
         }
     };
 
-    // 🔹 Verificación de permisos
     if (!permisos.includes('personales:listar')) {
         return (
             <div className="container mt-5 text-center">
@@ -179,7 +174,7 @@ const Personales = () => {
 
     return (
         <div className="container mt-4">
-            {/* Encabezado */}
+            {/* Encabezado y acciones */}
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap">
                 <div>
                     <h4 className="mb-0 text-primary fw-bold">Personal</h4>
@@ -188,7 +183,10 @@ const Personales = () => {
 
                 <div className="d-flex flex-wrap align-items-center gap-2 mt-2 mt-md-0">
                     {permisos.includes('personales:crear') && (
-                        <button className="btn btn-primary" onClick={() => navigate('/parametros/personales/registrar')}>
+                        <button
+                            className="btn btn-primary"
+                            onClick={() => navigate('/parametros/personales/registrar')}
+                        >
                             <i className="bi bi-plus-lg me-1"></i> Nuevo Personal
                         </button>
                     )}
@@ -199,6 +197,7 @@ const Personales = () => {
                         </button>
                     )}
 
+                    {/* Botón volver y filtro juntos */}
                     <div className="d-flex align-items-center gap-2 flex-nowrap">
                         <button
                             className="btn btn-outline-secondary text-nowrap"
@@ -230,15 +229,9 @@ const Personales = () => {
                             <th>Nro.</th>
                             <th>Nombre</th>
                             <th>CI</th>
-                            <th>Expedido</th>
-                            <th>Profesión</th>
                             <th>Dirección</th>
                             <th>Celular</th>
-                            <th>Teléfono</th>
                             <th>Email</th>
-                            <th>Fec. Nac.</th>
-                            <th>Estado Civil</th>
-                            <th>Sexo</th>
                             <th>Estado</th>
                             <th>Creado por</th>
                             <th>F. Registro</th>
@@ -253,18 +246,12 @@ const Personales = () => {
                             <th><input type="text" className="form-control form-control-sm" placeholder="Nombre" value={filtroNombre} onChange={(e) => setFiltroNombre(e.target.value)} /></th>
                             <th><input type="text" className="form-control form-control-sm" placeholder="CI" value={filtroCI} onChange={(e) => setFiltroCI(e.target.value)} /></th>
                             <th></th>
-                            <th></th>
-                            <th></th>
                             <th><input type="text" className="form-control form-control-sm" placeholder="Celular" value={filtroCelular} onChange={(e) => setFiltroCelular(e.target.value)} /></th>
-                            <th></th>
                             <th><input type="text" className="form-control form-control-sm" placeholder="Email" value={filtroEmail} onChange={(e) => setFiltroEmail(e.target.value)} /></th>
                             <th></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Creado por" value={filtroCreado_por} onChange={(e) => setFiltroCreado_por(e.target.value)} /></th>
                             <th></th>
-                            <th></th>
-                            <th></th>
-                            <th><input type="text" className="form-control form-control-sm" placeholder="Creado por" value={filtroCreadoPor} onChange={(e) => setFiltroCreadoPor(e.target.value)} /></th>
-                            <th></th>
-                            <th><input type="text" className="form-control form-control-sm" placeholder="Actualizado por" value={filtroActualizadoPor} onChange={(e) => setFiltroActualizadoPor(e.target.value)} /></th>
+                            <th><input type="text" className="form-control form-control-sm" placeholder="Actualizado por" value={filtroActualizado_por} onChange={(e) => setFiltroActualizado_por(e.target.value)} /></th>
                             <th colSpan={2}></th>
                         </tr>
                     </thead>
@@ -282,22 +269,16 @@ const Personales = () => {
                                     <td>{index + 1}</td>
                                     <td>{p.nombre ?? '—'}</td>
                                     <td>{p.ci ?? '—'}</td>
-                                    <td>{p.expedido ?? '—'}</td>
-                                    <td>{p.profesion ?? '—'}</td>
                                     <td>{p.direccion ?? '—'}</td>
                                     <td>{p.celular ?? '—'}</td>
-                                    <td>{p.telefono ?? '—'}</td>
                                     <td>{p.email ?? '—'}</td>
-                                    <td>{formatearFecha(p.fecnac)}</td>
-                                    <td>{obtenerTextoEstadoCivil(p.estciv)}</td>
-                                    <td>{obtenerTextoSexo(p.sexo)}</td>
                                     <td>{p.estado}</td>
                                     <td>{p.creado_por?.nombre ?? '—'}</td>
                                     <td>{formatearFecha(p.created_at)}</td>
                                     <td>{p.actualizado_por?.nombre ?? '—'}</td>
                                     <td>{formatearFecha(p.updated_at)}</td>
                                     <td>
-                                        <div className="d-flex justify-content-center gap-2">
+                                        <div className="d-flex justify-content-center align-items-center gap-2">
                                             {permisos.includes('personales:editar') && (
                                                 <button
                                                     className="btn btn-sm btn-warning"
@@ -311,12 +292,16 @@ const Personales = () => {
                                                 permisos.includes('personales:eliminar')) && (
                                                     <button
                                                         type="button"
-                                                        className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'}`}
-                                                        title={p.estado === 'ACTIVO' ? 'Inactivar' : 'Activar'}
+                                                        className={`btn btn-sm ${p.estado === 'ACTIVO' ? 'btn-success' : 'btn-danger'
+                                                            }`}
+                                                        title={
+                                                            p.estado === 'ACTIVO'
+                                                                ? 'Inactivar'
+                                                                : 'Activar'
+                                                        }
                                                         onClick={() => cambiarEstado(p.id, p.estado)}
-                                                        aria-label={p.estado === 'ACTIVO' ? 'Inactivar personal' : 'Activar personal'}
                                                     >
-                                                        <i className="bi bi-arrow-repeat" style={{ color: '#000' }}></i>
+                                                        <i className="bi bi-arrow-repeat"></i>
                                                     </button>
                                                 )}
                                         </div>

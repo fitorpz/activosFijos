@@ -104,15 +104,16 @@ const Cargos = () => {
         if (!window.confirm('¿Estás seguro de cambiar el estado de este cargo?')) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`/parametros/cargos/${id}/cambiar-estado`, null, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await axios.put(
+                `/parametros/cargos/${id}/estado`,
+                { estado: 'toggle' }, // el body puede usarse si luego decides enviar valor explícito
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             obtenerCargos();
         } catch (error) {
             console.error('Error al cambiar estado:', error);
         }
     };
-
     const exportarPDF = async () => {
         const token = localStorage.getItem('token');
         const estado = estadoFiltro === 'activos' ? 'ACTIVO' : estadoFiltro === 'inactivos' ? 'INACTIVO' : 'todos';

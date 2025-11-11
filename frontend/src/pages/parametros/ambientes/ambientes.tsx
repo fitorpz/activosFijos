@@ -209,7 +209,7 @@ const Ambientes = () => {
                         className="btn btn-outline-secondary"
                         onClick={() => navigate('/parametros')}
                     >
-                        <i className="bi bi-arrow-left me-1"></i> Volver
+                        <i className="bi bi-arrow-left me-1"></i> Volver a Parámetros
                     </button>
 
                     <div style={{ minWidth: '160px' }}>
@@ -323,8 +323,17 @@ const Ambientes = () => {
                             ambientesFiltrados.map((item, index) => (
                                 <tr key={item.id}>
                                     <td>{index + 1}</td>
-                                    <td>{item.unidad_organizacional?.area?.codigo || '—'}</td>
-                                    <td>{item.unidad_organizacional?.codigo || '—'}</td>
+                                    <td>
+                                        {item.unidad_organizacional?.area
+                                            ? `${item.unidad_organizacional.area.codigo} - ${item.unidad_organizacional.area.descripcion}`
+                                            : '—'}
+                                    </td>
+
+                                    <td>
+                                        {item.unidad_organizacional
+                                            ? `${item.unidad_organizacional.codigo} - ${item.unidad_organizacional.descripcion}`
+                                            : '—'}
+                                    </td>
                                     <td>{item.codigo}</td>
                                     <td>{item.descripcion}</td>
                                     <td>{item.estado}</td>

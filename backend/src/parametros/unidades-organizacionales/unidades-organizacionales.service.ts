@@ -169,4 +169,38 @@ export class UnidadesOrganizacionalesService {
 
     return qb.getMany();
   }
+
+  async generarSiguienteCodigo(area_id: number): Promise<{ codigo: string }> {
+    const area = await this.areaRepo.findOne({ where: { id: area_id } });
+    if (!area) throw new NotFoundException(`Área con ID ${area_id} no encontrada`);
+
+    // Buscar todas las unidades de esa área
+    const unidades = await this.unidadRepo.find({
+      where: { area_id },
+      order: { codigo: 'ASC' },
+    });
+
+    // Si no hay unidades, empieza desde 0001
+    if (unidades.length === 0) {
+      return { codigo: `${area.codigo}.0001` };
+    }
+
+    // Buscar el máximo correlativo según el formato del código del área
+    let maxCorrelativo = 0;
+    for (const unidad of unidades) {
+      const partes = unidad.codigo.split('.');
+      const partesArea = area.codigo.split('.');
+      const indexCorrelativo = partesArea.length;
+      const correlativoStr = partes[indexCorrelativo] ?? '';
+      const correlativoNum = parseInt(correlativoStr, 10);
+
+      if (!isNaN(correlativoNum) && correlativoNum > maxCorrelativo) {
+        maxCorrelativo = correlativoNum;
+      }
+    }
+
+    const siguiente = (maxCorrelativo + 1).toString().padStart(4, '0');
+    return { codigo: `${area.codigo}.${siguiente}` };
+  }
+
 }

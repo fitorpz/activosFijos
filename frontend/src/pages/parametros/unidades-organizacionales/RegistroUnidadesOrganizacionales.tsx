@@ -4,6 +4,7 @@ import axios from '../../../utils/axiosConfig';
 
 interface Area {
     id: number;
+    codigo: string;
     descripcion: string;
 }
 
@@ -21,11 +22,14 @@ const RegistroUnidadOrganizacional = () => {
     const [cargando, setCargando] = useState(false);
     const navigate = useNavigate();
 
-    // 🔹 Cargar áreas al iniciar
     useEffect(() => {
         const obtenerAreas = async () => {
             try {
-                const res = await axios.get<Area[]>('/parametros/areas');
+                const token = localStorage.getItem('token');
+                const res = await axios.get<Area[]>('/parametros/areas', {
+                    headers: { Authorization: `Bearer ${token}` },
+                    params: { estado: 'ACTIVO' }, //  solo áreas activas
+                });
                 setAreas(res.data);
             } catch (error) {
                 console.error('❌ Error al obtener áreas:', error);
@@ -34,6 +38,32 @@ const RegistroUnidadOrganizacional = () => {
         };
         obtenerAreas();
     }, []);
+
+
+    //  Cargar áreas al iniciar
+    useEffect(() => {
+        const generarCodigo = async () => {
+            if (!formData.area_id) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get<{ codigo: string }>(
+                    '/parametros/unidades-organizacionales/siguiente-codigo',
+                    {
+                        params: { area_id: formData.area_id },
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+
+                setFormData((prev) => ({ ...prev, codigo: res.data.codigo }));
+            } catch (error) {
+                console.error('❌ Error al generar código:', error);
+            }
+        };
+
+        generarCodigo();
+    }, [formData.area_id]);
+
 
     // 🔹 Manejo genérico de cambios
     const handleChange = (
@@ -140,7 +170,7 @@ const RegistroUnidadOrganizacional = () => {
                             <option value="">Seleccione un área</option>
                             {areas.map((area) => (
                                 <option key={area.id} value={area.id}>
-                                    {area.descripcion}
+                                   {area.codigo} {area.descripcion}
                                 </option>
                             ))}
                         </select>

@@ -138,24 +138,40 @@ export class AuxiliaresService {
   async getSiguienteCodigoAuxiliar(codigo_grupo: string): Promise<string> {
     if (!codigo_grupo) throw new Error('Código de grupo contable obligatorio');
 
-    const result = await this.auxiliarRepo
-      .createQueryBuilder('a')
-      .select(`
-      MAX(
-        CASE
-          WHEN SPLIT_PART(a.codigo, '.', 2) ~ '^[0-9]+$'
-          THEN CAST(SPLIT_PART(a.codigo, '.', 2) AS INTEGER)
-          WHEN SPLIT_PART(a.codigo, '.', 3) ~ '^[0-9]+$'
-          THEN CAST(SPLIT_PART(a.codigo, '.', 3) AS INTEGER)
-          ELSE 0
-        END
-      )`, 'maximo')
-      .where('a.codigo_grupo = :grupo', { grupo: codigo_grupo })
-      .getRawOne<{ maximo: number }>();
+    // Buscar auxiliares existentes del grupo
+    const auxiliares = await this.auxiliarRepo.find({
+      where: { codigo_grupo },
+      order: { codigo: 'ASC' },
+    });
 
-    const ultimo = result?.maximo ?? 0;
-    const siguiente = (ultimo + 1).toString().padStart(4, '0');
+    // Si no hay auxiliares, empezar desde el primer correlativo
+    if (auxiliares.length === 0) {
+      // Determinar si el grupo tiene 1 o 2 puntos
+      const nivelGrupo = codigo_grupo.split('.').length;
+      if (nivelGrupo === 1) return `${codigo_grupo}.0001`;
+      if (nivelGrupo === 2) return `${codigo_grupo}.0001`;
+      // Si hay más de dos niveles (por seguridad)
+      return `${codigo_grupo}.0001`;
+    }
 
+    // Determinar automáticamente en qué parte está el correlativo
+    let maxCorrelativo = 0;
+
+    for (const aux of auxiliares) {
+      const partes = aux.codigo.split('.');
+      const partesGrupo = codigo_grupo.split('.');
+
+      // Posible correlativo: siguiente parte después del grupo
+      const indexCorrelativo = partesGrupo.length; // Ej: grupo "111.001" → índice 2 (tercera parte)
+      const correlativoStr = partes[indexCorrelativo] ?? '';
+
+      const correlativoNum = parseInt(correlativoStr, 10);
+      if (!isNaN(correlativoNum) && correlativoNum > maxCorrelativo) {
+        maxCorrelativo = correlativoNum;
+      }
+    }
+
+    const siguiente = (maxCorrelativo + 1).toString().padStart(4, '0');
     return `${codigo_grupo}.${siguiente}`;
   }
 

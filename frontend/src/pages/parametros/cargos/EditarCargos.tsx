@@ -14,15 +14,21 @@ interface Ambiente {
     descripcion: string;
 }
 
+interface Relacion {
+    codigo: string;
+    descripcion: string;
+}
+
 interface CargoData {
-    area: string;
-    unidad_organizacional: string;
-    ambiente: string;
+    area: string | Relacion;
+    unidad_organizacional: string | Relacion;
+    ambiente: string | Relacion;
     ambiente_id: string | number | null;
     codigo: string;
     cargo: string;
     estado: 'ACTIVO' | 'INACTIVO';
 }
+
 
 const EditarCargos = () => {
     const { id } = useParams<{ id?: string }>();
@@ -48,9 +54,11 @@ const EditarCargos = () => {
         return { Authorization: `Bearer ${token}` };
     };
 
-    // 🔎 Buscar unidad organizacional por código
-    const buscarUnidadOrganizacionalId = async (codigo: string): Promise<number | null> => {
+    //  Buscar unidad organizacional por código
+    const buscarUnidadOrganizacionalId = async (dato: string | Relacion): Promise<number | null> => {
+        const codigo = typeof dato === 'object' ? dato.codigo : dato;
         if (!codigo) return null;
+
         try {
             const res = await axios.get<UnidadOrganizacional[]>(
                 '/parametros/unidades-organizacionales/buscar',
@@ -63,15 +71,18 @@ const EditarCargos = () => {
         return null;
     };
 
-    // 🔎 Buscar ambiente por unidad organizacional y código
+    //  Buscar ambiente por unidad organizacional y código
     const buscarAmbienteId = async (
         unidad_organizacional_id: number,
-        ambiente_codigo: string
+        dato: string | Relacion
     ): Promise<number | null> => {
+        const codigo = typeof dato === 'object' ? dato.codigo : dato;
+        if (!codigo) return null;
+
         try {
             const res = await axios.get<Ambiente[]>('/parametros/ambientes/buscar', {
                 headers: authHeaders(),
-                params: { unidad_organizacional_id, search: ambiente_codigo },
+                params: { unidad_organizacional_id, search: codigo },
             });
             if (res.data.length > 0) return res.data[0].id;
         } catch (e) {
@@ -80,7 +91,7 @@ const EditarCargos = () => {
         return null;
     };
 
-    // 🔹 Cargar datos del cargo
+    //  Cargar datos del cargo
     useEffect(() => {
         const cargarCargo = async () => {
             setCargando(true);
@@ -120,13 +131,13 @@ const EditarCargos = () => {
         cargarCargo();
     }, [id]);
 
-    // 🔹 Manejar cambios
+    //  Manejar cambios
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // 🔹 Enviar actualización
+    //  Enviar actualización
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setGuardando(true);
@@ -182,16 +193,47 @@ const EditarCargos = () => {
 
                         <div className="mb-2">
                             <label className="form-label">Área</label>
-                            <input type="text" className="form-control" value={formData.area} readOnly />
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={
+                                    typeof formData.area === 'object' && formData.area !== null
+                                        ? `${formData.area.codigo} - ${formData.area.descripcion}`
+                                        : formData.area || ''
+                                }
+                                readOnly
+                            />
                         </div>
+
                         <div className="mb-2">
                             <label className="form-label">Unidad Organizacional</label>
-                            <input type="text" className="form-control" value={formData.unidad_organizacional} readOnly />
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={
+                                    typeof formData.unidad_organizacional === 'object' && formData.unidad_organizacional !== null
+                                        ? `${formData.unidad_organizacional.codigo} - ${formData.unidad_organizacional.descripcion}`
+                                        : formData.unidad_organizacional || ''
+                                }
+                                readOnly
+                            />
                         </div>
+
                         <div className="mb-2">
                             <label className="form-label">Ambiente</label>
-                            <input type="text" className="form-control" value={formData.ambiente} readOnly />
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={
+                                    typeof formData.ambiente === 'object' && formData.ambiente !== null
+                                        ? `${formData.ambiente.codigo} - ${formData.ambiente.descripcion}`
+                                        : formData.ambiente || ''
+                                }
+                                readOnly
+                            />
                         </div>
+
+
                         <div className="mb-2">
                             <label className="form-label">Código</label>
                             <input

@@ -59,6 +59,16 @@ export class UnidadesOrganizacionalesController {
     return this.unidadesService.findAll(estado, area_id);
   }
 
+  @Get('siguiente-codigo')
+  async obtenerSiguienteCodigo(
+    @Query('area_id', ParseIntPipe) area_id: number
+  ) {
+    if (!area_id) {
+      throw new BadRequestException('El parámetro area_id es obligatorio');
+    }
+
+    return this.unidadesService.generarSiguienteCodigo(area_id);
+  }
 
   @Get('contar')
   async contarPorCodigoArea(@Query('codigo_area') codigoArea: string): Promise<{ total: number }> {
