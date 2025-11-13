@@ -17,9 +17,13 @@ const RegistroGrupoContable = () => {
 
     const navigate = useNavigate();
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
+    // 🔹 Detectar si es subgrupo (tiene punto en el código)
+    const esSubgrupo = formData.codigo.includes('.');
 
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    ) => {
+        const { name, value } = e.target;
         const newValue = name === 'codigo' ? value.toUpperCase() : value;
 
         setFormData((prev) => ({
@@ -27,7 +31,6 @@ const RegistroGrupoContable = () => {
             [name]: newValue,
         }));
     };
-
 
     const verificarCodigoDisponible = async (codigo: string) => {
         try {
@@ -44,9 +47,7 @@ const RegistroGrupoContable = () => {
                 `/parametros/grupos-contables/sugerir-codigo`,
                 {
                     params: { codigo },
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                 }
             );
 
@@ -80,31 +81,26 @@ const RegistroGrupoContable = () => {
         setCargando(true);
 
         try {
+            const token = localStorage.getItem('token');
+            const esSubgrupo = formData.codigo.includes('.');
+
+            // 🔹 Si es subgrupo, tiempo y porcentaje deben ser 0
             const payload = {
-                codigo: formData.codigo.trim(),
-                descripcion: formData.descripcion.trim(),
-                tiempo: Number(formData.tiempo),
-                porcentaje: Number(formData.porcentaje),
-                estado: formData.estado,
+                ...formData,
+                tiempo: esSubgrupo ? 0 : Number(formData.tiempo) || 0,
+                porcentaje: esSubgrupo ? 0 : Number(formData.porcentaje) || 0,
+                estado: formData.estado ?? 'ACTIVO',
             };
 
-            const token = localStorage.getItem('token');
-            const response = await axios.post<{ codigo: string }>(
-                '/parametros/grupos-contables',
-                payload,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            await axios.post('/parametros/grupos-contables', payload, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
 
-            const codigoFinal = response.data.codigo;
-            alert(`✅ Grupo Contable registrado con código: ${codigoFinal}`);
+            alert('✅ Grupo contable registrado correctamente.');
             navigate('/parametros/grupos-contables');
         } catch (error: any) {
             console.error('❌ Error al registrar grupo contable:', error);
-            alert(error?.response?.data?.message || '❌ Error al registrar el grupo contable.');
+            alert(error?.response?.data?.message || '❌ Error al registrar grupo contable.');
         } finally {
             setCargando(false);
         }
@@ -112,7 +108,10 @@ const RegistroGrupoContable = () => {
 
     return (
         <div className="container mt-4">
-            <div className="mx-auto p-4 border rounded shadow" style={{ maxWidth: '600px', backgroundColor: '#fff' }}>
+            <div
+                className="mx-auto p-4 border rounded shadow"
+                style={{ maxWidth: '600px', backgroundColor: '#fff' }}
+            >
                 <button
                     type="button"
                     className="btn btn-outline-secondary btn-sm mb-3 d-inline-flex align-items-center"
@@ -122,10 +121,10 @@ const RegistroGrupoContable = () => {
                     Volver
                 </button>
 
-
                 <h4 className="mb-4">Nuevo Grupo Contable</h4>
 
                 <form onSubmit={handleSubmit}>
+                    {/* Código */}
                     <div className="mb-3">
                         <label htmlFor="codigo" className="form-label">Código</label>
                         <input
@@ -143,6 +142,7 @@ const RegistroGrupoContable = () => {
                         )}
                     </div>
 
+                    {/* Descripción */}
                     <div className="mb-3">
                         <label htmlFor="descripcion" className="form-label">Descripción</label>
                         <textarea
@@ -156,6 +156,7 @@ const RegistroGrupoContable = () => {
                         />
                     </div>
 
+                    {/* Tiempo */}
                     <div className="mb-3">
                         <label htmlFor="tiempo" className="form-label">Tiempo</label>
                         <input
@@ -163,14 +164,20 @@ const RegistroGrupoContable = () => {
                             id="tiempo"
                             name="tiempo"
                             className="form-control"
-                            value={formData.tiempo}
+                            value={esSubgrupo ? 0 : formData.tiempo}
                             onChange={handleChange}
-                            disabled={codigoDisponible === false}
+                            disabled={codigoDisponible === false || esSubgrupo}
                             required
                             min="0"
                         />
+                        {esSubgrupo && (
+                            <small className="text-muted">
+                                Este es un subgrupo. El tiempo se asignará automáticamente como 0.
+                            </small>
+                        )}
                     </div>
 
+                    {/* Porcentaje */}
                     <div className="mb-3">
                         <label htmlFor="porcentaje" className="form-label">Porcentaje</label>
                         <input
@@ -178,38 +185,30 @@ const RegistroGrupoContable = () => {
                             id="porcentaje"
                             name="porcentaje"
                             className="form-control"
-                            value={formData.porcentaje}
+                            value={esSubgrupo ? 0 : formData.porcentaje}
                             onChange={handleChange}
-                            disabled={codigoDisponible === false}
+                            disabled={codigoDisponible === false || esSubgrupo}
                             required
                             min="0"
                             max="100"
                             step="0.01"
                         />
+                        {esSubgrupo && (
+                            <small className="text-muted">
+                                Este es un subgrupo. El porcentaje se asignará automáticamente como 0.
+                            </small>
+                        )}
                     </div>
 
-                    {/* Si deseas habilitar el estado manualmente en el futuro, puedes descomentar este bloque */}
-                    {/* 
-                    <div className="mb-3">
-                        <label htmlFor="estado" className="form-label">Estado</label>
-                        <select
-                            id="estado"
-                            name="estado"
-                            className="form-select"
-                            value={formData.estado}
-                            onChange={handleChange}
-                            disabled={codigoDisponible === false}
-                            required
-                        >
-                            <option value="ACTIVO">ACTIVO</option>
-                            <option value="INACTIVO">INACTIVO</option>
-                        </select>
-                    </div>
-                    */}
-
-                    <button type="submit" className="btn btn-primary" disabled={cargando || codigoDisponible === false}>
+                    {/* Botones */}
+                    <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={cargando || codigoDisponible === false}
+                    >
                         {cargando ? 'Guardando...' : 'Registrar'}
                     </button>
+
                     <button
                         type="button"
                         className="btn btn-secondary ms-2"

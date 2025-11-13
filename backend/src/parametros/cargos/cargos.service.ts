@@ -177,4 +177,35 @@ export class CargosService {
     console.log('📦 Cargos encontrados:', resultados);
     return resultados;
   }
+
+  async findAllConAmbiente(estado?: string): Promise<Cargo[]> {
+    const query = this.cargoRepository
+      .createQueryBuilder("cargo")
+      .leftJoinAndSelect("cargo.ambiente_relacion", "ambiente")
+      .leftJoinAndSelect("ambiente.unidad_organizacional", "unidad")
+      .leftJoinAndSelect("unidad.area", "area");
+
+    if (estado && estado !== "todos") {
+      query.andWhere("cargo.estado = :estado", { estado });
+    }
+
+    return query.orderBy("cargo.codigo", "ASC").getMany();
+  }
+
+  async findAllConRelaciones(estado?: string): Promise<Cargo[]> {
+    const query = this.cargoRepository
+      .createQueryBuilder("cargo")
+      .leftJoinAndSelect("cargo.ambiente_relacion", "ambiente")
+      .leftJoinAndSelect("ambiente.unidad_organizacional", "unidad")
+      .leftJoinAndSelect("unidad.area", "area");
+
+    if (estado && estado !== "todos") {
+      query.andWhere("cargo.estado = :estado", { estado });
+    }
+
+    return query.orderBy("cargo.codigo", "ASC").getMany();
+  }
+
+
+
 }

@@ -107,140 +107,149 @@ export class CargosController {
   ) {
     try {
       const estado =
-        estadoQuery?.toUpperCase() === 'ACTIVO'
-          ? 'ACTIVO'
-          : estadoQuery?.toUpperCase() === 'INACTIVO'
-            ? 'INACTIVO'
+        estadoQuery?.toUpperCase() === "ACTIVO"
+          ? "ACTIVO"
+          : estadoQuery?.toUpperCase() === "INACTIVO"
+            ? "INACTIVO"
             : undefined;
 
-      // 🔹 Obtener cargos filtrados por estado
-      const cargos = await this.cargosService.findAll(estado);
+      // === 1) Obtener cargos con TODAS las relaciones ===
+      const cargos = await this.cargosService.findAllConRelaciones(estado);
 
       if (!cargos.length) {
-        return res.status(404).json({ message: 'No hay cargos para exportar' });
+        return res.status(404).json({ message: "No hay cargos para exportar" });
       }
 
-      // 🔹 Ordenar por área, unidad organizacional, ambiente y código
+      const listaCompleta = cargos;
+
+      // === 2) Orden jerárquico ===
       cargos.sort((a, b) => {
-        const area = a.area.localeCompare(b.area);
-        if (area !== 0) return area;
-
-        const unidad = a.unidad_organizacional.localeCompare(b.unidad_organizacional);
-        if (unidad !== 0) return unidad;
-
-        const ambiente = a.ambiente.localeCompare(b.ambiente);
-        if (ambiente !== 0) return ambiente;
-
-        return a.codigo.localeCompare(b.codigo);
+        return (
+          a.area.localeCompare(b.area) ||
+          a.unidad_organizacional.localeCompare(b.unidad_organizacional) ||
+          a.ambiente.localeCompare(b.ambiente) ||
+          a.codigo.localeCompare(b.codigo)
+        );
       });
 
-      // 🔹 Agrupar jerárquicamente
-      const agrupado = cargos.reduce((acc, cargo) => {
-        if (!acc[cargo.area]) acc[cargo.area] = {};
-        if (!acc[cargo.area][cargo.unidad_organizacional])
-          acc[cargo.area][cargo.unidad_organizacional] = {};
-        if (!acc[cargo.area][cargo.unidad_organizacional][cargo.ambiente])
-          acc[cargo.area][cargo.unidad_organizacional][cargo.ambiente] = [];
+      // === 3) Agrupación jerárquica ===
+      const agrupado: Record<string, Record<string, Record<string, Cargo[]>>> = {};
 
-        acc[cargo.area][cargo.unidad_organizacional][cargo.ambiente].push(cargo);
-        return acc;
-      }, {} as Record<string, Record<string, Record<string, any[]>>>);
+      for (const cargo of cargos) {
+        if (!agrupado[cargo.area]) agrupado[cargo.area] = {};
+        if (!agrupado[cargo.area][cargo.unidad_organizacional])
+          agrupado[cargo.area][cargo.unidad_organizacional] = {};
+        if (!agrupado[cargo.area][cargo.unidad_organizacional][cargo.ambiente])
+          agrupado[cargo.area][cargo.unidad_organizacional][cargo.ambiente] = [];
 
-      // 🔹 Construir HTML agrupado
-      let filasHTML = '';
+        agrupado[cargo.area][cargo.unidad_organizacional][cargo.ambiente].push(
+          cargo,
+        );
+      }
+
+      let filasHTML = "";
       let contador = 1;
 
+      // === 4) Generar HTML por niveles ===
       for (const [area, unidades] of Object.entries(agrupado)) {
+        const regArea = listaCompleta.find((c) => c.area === area);
+        const descripcionArea =
+          regArea?.ambiente_relacion?.unidad_organizacional?.area?.descripcion ??
+          "";
+
         filasHTML += `
         <tr>
           <td colspan="7" style="background:#cfe2ff;font-weight:bold;font-size:14px;">
-            Área: ${area}
+            Área: ${area} ${descripcionArea ? " - " + descripcionArea : ""}
           </td>
         </tr>
       `;
 
         for (const [unidad, ambientes] of Object.entries(unidades)) {
+          const regUnidad = listaCompleta.find(
+            (c) => c.unidad_organizacional === unidad,
+          );
+          const descripcionUnidad =
+            regUnidad?.ambiente_relacion?.unidad_organizacional?.descripcion ??
+            "";
+
           filasHTML += `
           <tr>
             <td colspan="7" style="background:#e2e3e5;font-weight:bold;padding-left:20px;font-size:13px;">
-              Unidad Organizacional: ${unidad}
+              Unidad Organizacional: ${unidad} ${descripcionUnidad ? " - " + descripcionUnidad : ""
+            }
             </td>
           </tr>
         `;
 
-          for (const [ambiente, listaCargos] of Object.entries(ambientes)) {
+          for (const [ambiente, listaCargosAmb] of Object.entries(ambientes)) {
+            const regAmb = listaCompleta.find((c) => c.ambiente === ambiente);
+            const descripcionAmbiente =
+              regAmb?.ambiente_relacion?.descripcion ?? "";
+
             filasHTML += `
             <tr>
               <td colspan="7" style="background:#f8f9fa;font-weight:bold;padding-left:40px;font-size:12.5px;">
-                Ambiente: ${ambiente}
+                Ambiente: ${ambiente} ${descripcionAmbiente ? " - " + descripcionAmbiente : ""
+              }
               </td>
             </tr>
           `;
 
-            listaCargos.forEach((cargo) => {
+            for (const cargo of listaCargosAmb) {
               filasHTML += `
               <tr>
-                <td>${contador++}</td>                
+                <td>${contador++}</td>
                 <td>${cargo.codigo}</td>
-                <td>${cargo.cargo || ''}</td>
+                <td>${cargo.cargo || ""}</td>
                 <td>${cargo.estado}</td>
               </tr>
             `;
-            });
+            }
           }
         }
       }
 
-      // 🔹 Cargar logo y plantilla HTML
+      // === 5) Logo y plantilla ===
       const logoPath = path.join(
         process.cwd(),
-        'templates',
-        'pdf',
-        'parametros',
-        'escudo.png',
+        "templates",
+        "pdf",
+        "parametros",
+        "escudo.png",
       );
 
-      let logoDataURL = '';
+      let logoDataURL = "";
       try {
         const logoBuffer = fs.readFileSync(logoPath);
-        logoDataURL = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-      } catch (e) {
-        console.error('No se pudo cargar el logo:', logoPath);
-      }
+        logoDataURL = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+      } catch { }
 
       const templatePath = path.join(
         process.cwd(),
-        'templates',
-        'pdf',
-        'parametros',
-        'cargos-pdf.html',
+        "templates",
+        "pdf",
+        "parametros",
+        "cargos-pdf.html",
       );
 
-      let html: string;
-      try {
-        html = fs.readFileSync(templatePath, 'utf-8');
-      } catch (e) {
-        console.error('Plantilla PDF no encontrada:', templatePath);
-        throw new Error('Plantilla HTML no encontrada');
-      }
+      let html = fs.readFileSync(templatePath, "utf-8");
 
-      html = html.replace('<!-- FILAS_CARGOS -->', filasHTML);
-      html = html.replace('__LOGO__', logoDataURL);
+      html = html.replace("<!-- FILAS_CARGOS -->", filasHTML);
+      html = html.replace("__LOGO__", logoDataURL);
       html = html.replace(
-        '__FILTRO_ESTADO__',
-        estado ? `Mostrando cargos ${estado.toLowerCase()}` : 'Todos los cargos',
+        "__FILTRO_ESTADO__",
+        estado ? `Mostrando cargos ${estado.toLowerCase()}` : "Todos los cargos",
       );
 
-      // 🔹 Generar PDF
       const buffer = await generarPDFDesdeHTML(html);
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline; filename=cargos.pdf');
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", "inline; filename=cargos.pdf");
       res.end(buffer);
     } catch (error) {
-      console.error('Error al generar PDF:', error);
-      return res.status(500).json({ message: 'Error al exportar PDF' });
+      console.error("❌ Error al generar PDF:", error);
+      return res.status(500).json({ message: "Error al exportar PDF" });
     }
   }
-
 }

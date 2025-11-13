@@ -59,10 +59,14 @@ const RegistroAuxiliar = () => {
                 params: { estado: 'ACTIVO' },
             });
 
-            const opciones = res.data.map((grupo) => ({
+            // Filtrar solo grupos con un punto (segundo nivel)
+            const gruposSegundoNivel = res.data.filter((grupo) => grupo.codigo.includes('.') && grupo.codigo.split('.').length === 2);
+
+            const opciones = gruposSegundoNivel.map((grupo) => ({
                 value: grupo.codigo,
                 label: `${grupo.codigo} - ${grupo.descripcion}`,
             }));
+
 
             setOpcionesGrupo(opciones);
         } catch (error) {
@@ -168,7 +172,7 @@ const RegistroAuxiliar = () => {
                         />
                     </div>
 
-       
+
 
                     <button type="submit" className="btn btn-primary" disabled={cargando}>
                         {cargando ? 'Guardando...' : 'Registrar'}

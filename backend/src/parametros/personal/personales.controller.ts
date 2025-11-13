@@ -73,6 +73,15 @@ export class PersonalesController {
     return this.personalesService.findOne(id);
   }
 
+  @Put(':id/cambiar-estado')
+  async cambiarEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ) {
+    const userId = req.user.id;
+    return this.personalesService.cambiarEstado(id, userId);
+  }
+
   // Actualizar personal
   @Put(':id')
   async update(
@@ -83,6 +92,9 @@ export class PersonalesController {
     const userId = req.user.id;
     return this.personalesService.update(id, dto, userId);
   }
+
+
+
 
 
 

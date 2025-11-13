@@ -127,11 +127,8 @@ const Personales = () => {
         if (!window.confirm(`¿Seguro que deseas cambiar el estado a ${nuevoEstado}?`)) return;
 
         try {
-            // 👇 Si tu API acepta un body con el nuevo estado:
-            await axiosInstance.put(`/parametros/personal/${id}/estado`, { estado: nuevoEstado });
-
-            // 👇 Si tu API usa un endpoint sin body, descomenta esta línea:
-            // await axiosInstance.put(`/parametros/personal/${id}/estado`);
+            //  Si tu API acepta un body con el nuevo estado:
+            await axiosInstance.put(`/parametros/personal/${id}/cambiar-estado`);
 
             obtenerPersonales();
         } catch (error) {

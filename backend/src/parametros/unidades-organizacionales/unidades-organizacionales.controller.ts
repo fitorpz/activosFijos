@@ -169,7 +169,6 @@ export class UnidadesOrganizacionalesController {
           filasHTML += `
           <tr>
             <td>${index++}</td>
-            <td>${unidad.area?.codigo || '—'}</td>
             <td>${unidad.codigo}</td>
             <td>${unidad.descripcion}</td>
           </tr>
