@@ -5,9 +5,11 @@ import {
     IsDateString,
     IsArray,
     IsEnum,
+    IsNotEmpty,
 } from 'class-validator';
 
 export class CreateRemodelacionDto {
+    @IsNotEmpty()
     @IsNumber()
     edificio_id: number;
 
@@ -28,11 +30,11 @@ export class CreateRemodelacionDto {
     proveedor_donante?: string;
 
     @IsOptional()
-    @IsNumber()
+    @IsNumber({}, { message: 'superficie_remodelacion debe ser numérico' })
     superficie_remodelacion?: number;
 
     @IsOptional()
-    @IsNumber()
+    @IsNumber({}, { message: 'valor_remodelacion debe ser numérico' })
     valor_remodelacion?: number;
 
     @IsOptional()

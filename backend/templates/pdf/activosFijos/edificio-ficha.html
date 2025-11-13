@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Ficha Técnica del Edificio</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            color: #333;
+            background-color: #fff;
+            margin: 40px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #004085;
+            padding-bottom: 10px;
+        }
+
+        header img {
+            width: 60px;
+            height: auto;
+        }
+
+        header h1 {
+            flex: 1;
+            text-align: center;
+            color: #004085;
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .info-principal {
+            margin-top: 20px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            padding: 15px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-principal table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-principal td {
+            padding: 6px 10px;
+            vertical-align: top;
+        }
+
+        .info-principal tr:nth-child(even) {
+            background-color: #f4f8fb;
+        }
+
+        .titulo-seccion {
+            margin-top: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #004085;
+            border-bottom: 1px solid #004085;
+            padding-bottom: 4px;
+        }
+
+        .qr-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .qr-section img {
+            border: 2px solid #ddd;
+            padding: 5px;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 11px;
+            color: #777;
+            border-top: 1px solid #ccc;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <img src="__LOGO__" alt="Logo institucional" />
+        <h1>Ficha Técnica del Edificio</h1>
+        <div style="width: 60px;"></div>
+    </header>
+
+    <section class="info-principal">
+        <table>
+            <tbody>
+                <tr>
+                    <td><strong>Código GAMS:</strong></td>
+                    <td>__CODIGO_GAMS__</td>
+                </tr>
+                <tr>
+                    <td><strong>Nombre del Bien:</strong></td>
+                    <td>__NOMBRE_BIEN__</td>
+                </tr>
+                <tr>
+                    <td><strong>Clasificación:</strong></td>
+                    <td>__CLASIFICACION__</td>
+                </tr>
+                <tr>
+                    <td><strong>Unidad Organizacional:</strong></td>
+                    <td>__UNIDAD_ORG__</td>
+                </tr>
+                <tr>
+                    <td><strong>Responsable:</strong></td>
+                    <td>__RESPONSABLE__</td>
+                </tr>
+                <tr>
+                    <td><strong>Ubicación:</strong></td>
+                    <td>__UBICACION__</td>
+                </tr>
+                <tr>
+                    <td><strong>Valor (Bs):</strong></td>
+                    <td>__VALOR__</td>
+                </tr>
+                <tr>
+                    <td><strong>Superficie (m²):</strong></td>
+                    <td>__SUPERFICIE__</td>
+                </tr>
+                <tr>
+                    <td><strong>Uso:</strong></td>
+                    <td>__USO__</td>
+                </tr>
+                <tr>
+                    <td><strong>Estado de Conservación:</strong></td>
+                    <td>__ESTADO_CONSERVACION__</td>
+                </tr>
+                <tr>
+                    <td><strong>Observaciones:</strong></td>
+                    <td>__OBSERVACIONES__</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <div class="qr-section">
+        <img src="__QR_CODE__" alt="QR del edificio" width="130" height="130" />
+        <div class="small">Escanea para ver detalles</div>
+    </div>
+
+
+
+    <footer>
+        Sistema de Activos Fijos - Gobierno Autónomo Municipal<br />
+        Generado automáticamente el __FECHA__
+    </footer>
+</body>
+
+</html>

@@ -26,16 +26,16 @@ export class Edificio {
   @Column({ default: 1101 })
   codigo_institucional: string; // 2
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_direccion_administrativa: string; // 3
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_distrito: string; // 4
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_sector_area: string; // 5
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_unidad_organizacional: string; // 6
 
   @ManyToOne(() => UnidadOrganizacional)
@@ -43,20 +43,20 @@ export class Edificio {
   unidad_organizacional: UnidadOrganizacional;
 
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_cargo: string; // 7
 
   @ManyToOne(() => Cargo)
   @JoinColumn({ name: 'cargo_id' })
   cargo: Cargo;
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_ambiente: string; // 8
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   codigo_grupo_contable: string; // 9
 
-  @Column({ length: 20 })
+  @Column({ length: 30 })
   codigo_correlativo: string; // 10
 
   @Column({ unique: true })
@@ -149,4 +149,6 @@ export class Edificio {
   @OneToMany(() => EdificioBaja, (baja) => baja.edificio)
   bajas: EdificioBaja[];
 
+  @Column({ name: 'codigo_qr', type: 'text', nullable: true })
+  codigo_qr?: string;
 }

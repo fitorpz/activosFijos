@@ -4,8 +4,9 @@ import {
     Post,
     Put,
     Delete,
-    Param,
     Body,
+    Param,
+    Query,
     UseGuards,
     Request,
     ParseIntPipe,
@@ -15,7 +16,7 @@ import { CreateRemodelacionDto } from '../dto/create-remodelacion.dto';
 import { UpdateRemodelacionDto } from '../dto/update-remodelacion.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-@Controller('edificios/remodelaciones')
+@Controller('activos-fijos/edificios/remodelaciones')
 @UseGuards(JwtAuthGuard)
 export class RemodelacionesController {
     constructor(private readonly remodelacionesService: RemodelacionesService) { }
@@ -27,13 +28,16 @@ export class RemodelacionesController {
         return this.remodelacionesService.create(dto, usuarioId);
     }
 
-    // 🔹 Listar remodelaciones
+    // 🔹 Listar remodelaciones (todas o por edificio)
     @Get()
-    async findAll() {
+    async findAll(@Query('edificioId') edificioId?: number) {
+        if (edificioId) {
+            return this.remodelacionesService.findByEdificio(edificioId);
+        }
         return this.remodelacionesService.findAll();
     }
 
-    // 🔹 Obtener una remodelación específica
+    // 🔹 Obtener remodelación específica
     @Get(':id')
     async findOne(@Param('id', ParseIntPipe) id: number) {
         return this.remodelacionesService.findOne(id);

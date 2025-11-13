@@ -44,6 +44,16 @@ export class AmpliacionesService {
         return ampliacionGuardada;
     }
 
+    // 🔹 Listar todas las ampliaciones de un edificio específico
+    async findByEdificio(edificioId: number) {
+        return this.ampliacionesRepo.find({
+            where: { edificio: { id: edificioId } },
+            relations: ['edificio'],
+            order: { created_at: 'DESC' },
+        });
+    }
+
+
     // 🔹 Listar todas las ampliaciones
     async findAll() {
         return this.ampliacionesRepo.find({

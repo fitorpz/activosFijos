@@ -50,6 +50,15 @@ export class PersonalesController {
     return this.personalesService.findAll();
   }
 
+  @Get('activos')
+  async findActivos(): Promise<Personal[]> {
+    return this.personalRepository.find({
+      where: { estado: 'ACTIVO' },
+      relations: ['usuario'],
+    });
+  }
+
+
   // Obtener usuarios disponibles, excluyendo opcionalmente uno
   @Get('usuarios-disponibles')
   async obtenerUsuariosDisponibles() {

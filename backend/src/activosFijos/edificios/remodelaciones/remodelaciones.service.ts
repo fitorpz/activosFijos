@@ -51,6 +51,16 @@ export class RemodelacionesService {
         });
     }
 
+    // 🔹 Listar todas las remodelaciones de un edificio específico
+    async findByEdificio(edificioId: number) {
+        return this.remodelacionesRepo.find({
+            where: { edificio: { id: edificioId } },
+            relations: ['edificio'],
+            order: { created_at: 'DESC' },
+        });
+    }
+
+
     // 🔹 Buscar una remodelación por ID
     async findOne(id: number) {
         const remodelacion = await this.remodelacionesRepo.findOne({

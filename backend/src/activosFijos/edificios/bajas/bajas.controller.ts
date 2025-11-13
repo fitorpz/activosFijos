@@ -4,8 +4,9 @@ import {
     Post,
     Put,
     Delete,
-    Param,
     Body,
+    Param,
+    Query,
     UseGuards,
     Request,
     ParseIntPipe,
@@ -15,7 +16,7 @@ import { CreateBajaDto } from '../dto/create-baja.dto';
 import { UpdateBajaDto } from '../dto/update-baja.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-@Controller('edificios/bajas')
+@Controller('activos-fijos/edificios/bajas')
 @UseGuards(JwtAuthGuard)
 export class BajasController {
     constructor(private readonly bajasService: BajasService) { }
@@ -27,13 +28,16 @@ export class BajasController {
         return this.bajasService.create(dto, usuarioId);
     }
 
-    // 🔹 Listar todas las bajas
+    // 🔹 Listar bajas (todas o por edificio)
     @Get()
-    async findAll() {
+    async findAll(@Query('edificioId') edificioId?: number) {
+        if (edificioId) {
+            return this.bajasService.findByEdificio(edificioId);
+        }
         return this.bajasService.findAll();
     }
 
-    // 🔹 Obtener baja por ID
+    // 🔹 Obtener baja específica
     @Get(':id')
     async findOne(@Param('id', ParseIntPipe) id: number) {
         return this.bajasService.findOne(id);

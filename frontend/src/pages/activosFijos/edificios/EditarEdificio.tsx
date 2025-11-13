@@ -20,7 +20,7 @@ import {
 =========================== */
 interface Edificio {
     id: number;
-    nro_da: string;
+    codigo_direccion_administrativa: string;
     nombre_bien: string;
     descripcion_ingreso: string;
     ubicacion: string;
@@ -40,39 +40,6 @@ interface Personal { id: number; nombre: string; }
 interface Cargo { id: number; nombre: string; }
 interface UnidadOrganizacional { id: number; descripcion: string; }
 
-/* Submódulos */
-interface Ampliacion {
-    id: number;
-    fecha_ingreso: string;
-    valor_ampliacion: number;
-    descripcion_respaldo_legal: string;
-    proveedor_donante?: string;
-}
-
-interface Remodelacion {
-    id: number;
-    fecha_factura_donacion: string;
-    nro_factura: string;
-    valor_remodelacion: number;
-    descripcion_respaldo_legal?: string;
-}
-
-interface Baja {
-    id: number;
-    valor_ufv: number;
-    superficie_desmantelamiento?: number;
-    respaldo_legal?: string;
-    observaciones?: string;
-}
-
-interface Historial {
-    id: number;
-    accion: string;
-    descripcion: string;
-    fecha_accion: string;
-    usuario: { nombre: string };
-}
-
 /* ===========================
    Componente principal
 =========================== */
@@ -90,10 +57,15 @@ const EditarEdificio = () => {
     const [cargos, setCargos] = useState<Cargo[]>([]);
     const [unidades, setUnidades] = useState<UnidadOrganizacional[]>([]);
 
+    /* ===========================
+       Efectos iniciales
+    ============================ */
     useEffect(() => {
-        fetchCatalogos();
-        fetchEdificio();
-    }, []);
+        if (id) {
+            fetchCatalogos();
+            fetchEdificio();
+        }
+    }, [id]);
 
     const fetchCatalogos = async () => {
         try {
@@ -108,28 +80,22 @@ const EditarEdificio = () => {
             setCargos(cargosRes.data);
             setUnidades(unidadesRes.data);
         } catch (error) {
-            console.error("Error cargando catálogos", error);
+            console.error("❌ Error cargando catálogos:", error);
         }
     };
 
-    // 🔹 Función normal (sin hooks dentro)
     const fetchEdificio = async () => {
         try {
             const res = await axiosInstance.get(`/activos-fijos/edificios/${id}`);
-            setEdificio(res.data);
+            setEdificio(res.data.data); // ✅ el backend retorna { data }
         } catch (error) {
-            console.error("Error al cargar edificio", error);
+            console.error("❌ Error al cargar edificio:", error);
         }
     };
 
-    // ✅ Hook fuera de la función, donde debe estar
-    useEffect(() => {
-        if (id) {
-            fetchCatalogos();
-            fetchEdificio();
-        }
-    }, [id]);
-
+    /* ===========================
+       Manejo de formulario
+    ============================ */
     const handleChange = (e: React.ChangeEvent<any>) => {
         const { name, value } = e.target;
         setEdificio((prev) => ({ ...prev, [name]: value }));
@@ -140,8 +106,9 @@ const EditarEdificio = () => {
         setLoading(true);
 
         try {
-            const payload = {
-                nro_da: edificio?.nro_da ?? "",
+            // Construir payload
+            const payload: Partial<Edificio> = {
+                codigo_direccion_administrativa: edificio?.codigo_direccion_administrativa ?? "",
                 nombre_bien: edificio?.nombre_bien ?? "",
                 descripcion_ingreso: edificio?.descripcion_ingreso ?? "",
                 ubicacion: edificio?.ubicacion ?? "",
@@ -150,24 +117,39 @@ const EditarEdificio = () => {
                 estado_conservacion: edificio?.estado_conservacion ?? "",
                 valor_bs: edificio?.valor_bs ?? 0,
                 vida_util_anios: edificio?.vida_util_anios ?? 0,
-                unidad_organizacional_id: edificio?.unidad_organizacional_id ?? null,
-                responsable_id: edificio?.responsable_id ?? null,
-                cargo_id: edificio?.cargo_id ?? null,
+                unidad_organizacional_id: edificio?.unidad_organizacional_id || undefined,
+                responsable_id: edificio?.responsable_id || undefined,
+                cargo_id: edificio?.cargo_id || undefined,
             };
 
+
+            // 🧹 Limpiar valores vacíos o nulos
+            Object.keys(payload).forEach((k) => {
+                const val = payload[k as keyof typeof payload];
+                if (val === "" || val === null || val === undefined) {
+                    delete payload[k as keyof typeof payload];
+                }
+            });
+
+            // Guardar cambios
             await axiosInstance.put(`/activos-fijos/edificios/${id}`, payload);
 
             setMsg({ type: "success", text: "Cambios guardados correctamente." });
+            setTimeout(() => setMsg(null), 3000);
+
+            await fetchEdificio(); // 🔄 refrescar datos
         } catch (error) {
-            console.error("Error al guardar", error);
+            console.error("❌ Error al guardar:", error);
             setMsg({ type: "danger", text: "Error al guardar los cambios." });
+            setTimeout(() => setMsg(null), 3000);
         } finally {
             setLoading(false);
         }
     };
 
-
-
+    /* ===========================
+   Render principal
+============================ */
     return (
         <div className="container mt-4">
             <Card className="shadow-sm border-0">
@@ -239,13 +221,24 @@ const DatosGeneralesTab = ({
         <Row>
             <Col md={6}>
                 <Form.Group className="mb-3">
-                    <Form.Label>Código DA</Form.Label>
-                    <Form.Control name="nro_da" value={edificio.nro_da || ""} onChange={handleChange} required />
+                    <Form.Label>Dirección Administrativa</Form.Label>
+                    <Form.Control
+                        name="codigo_direccion_administrativa"
+                        value={edificio.codigo_direccion_administrativa || ""}
+                        onChange={handleChange}
+                        required
+                    />
                 </Form.Group>
+
 
                 <Form.Group className="mb-3">
                     <Form.Label>Nombre del Bien</Form.Label>
-                    <Form.Control name="nombre_bien" value={edificio.nombre_bien || ""} onChange={handleChange} required />
+                    <Form.Control
+                        name="nombre_bien"
+                        value={edificio.nombre_bien || ""}
+                        onChange={handleChange}
+                        required
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -260,24 +253,41 @@ const DatosGeneralesTab = ({
 
                 <Form.Group className="mb-3">
                     <Form.Label>Ubicación</Form.Label>
-                    <Form.Control name="ubicacion" value={edificio.ubicacion || ""} onChange={handleChange} required />
+                    <Form.Control
+                        name="ubicacion"
+                        value={edificio.ubicacion || ""}
+                        onChange={handleChange}
+                        required
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
                     <Form.Label>Clasificación</Form.Label>
-                    <Form.Control name="clasificacion" value={edificio.clasificacion || ""} onChange={handleChange} />
+                    <Form.Control
+                        name="clasificacion"
+                        value={edificio.clasificacion || ""}
+                        onChange={handleChange}
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
                     <Form.Label>Uso</Form.Label>
-                    <Form.Control name="uso" value={edificio.uso || ""} onChange={handleChange} />
+                    <Form.Control
+                        name="uso"
+                        value={edificio.uso || ""}
+                        onChange={handleChange}
+                    />
                 </Form.Group>
             </Col>
 
             <Col md={6}>
                 <Form.Group className="mb-3">
                     <Form.Label>Estado de Conservación</Form.Label>
-                    <Form.Control name="estado_conservacion" value={edificio.estado_conservacion || ""} onChange={handleChange} />
+                    <Form.Control
+                        name="estado_conservacion"
+                        value={edificio.estado_conservacion || ""}
+                        onChange={handleChange}
+                    />
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -334,7 +344,11 @@ const DatosGeneralesTab = ({
 
                 <Form.Group className="mb-3">
                     <Form.Label>Cargo</Form.Label>
-                    <Form.Select name="cargo_id" value={edificio.cargo_id || ""} onChange={handleChange}>
+                    <Form.Select
+                        name="cargo_id"
+                        value={edificio.cargo_id || ""}
+                        onChange={handleChange}
+                    >
                         <option value="">Seleccione...</option>
                         {cargos.map((c: any) => (
                             <option key={c.id} value={c.id}>
@@ -358,27 +372,46 @@ const DatosGeneralesTab = ({
    TAB: Ampliaciones
 =========================== */
 const AmpliacionesTab = ({ edificioId }: { edificioId: number }) => {
-    const [data, setData] = useState<Ampliacion[]>([]);
+    const [data, setData] = useState<any[]>([]);
     const [show, setShow] = useState(false);
-    const [form, setForm] = useState<Partial<Ampliacion>>({});
+    const [form, setForm] = useState<any>({});
     const [loading, setLoading] = useState(false);
 
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/ampliaciones?edificioId=${edificioId}`);
-        setData(res.data);
+        const res = await axiosInstance.get(`/activos-fijos/edificios/ampliaciones?edificioId=${edificioId}`);
+        setData(res.data.data || res.data);
     };
 
+    useEffect(() => {
+        if (!edificioId || isNaN(edificioId)) return;
+        fetchData();
+    }, [edificioId]);
 
-    useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await axiosInstance.post(`/activos-fijos/ampliaciones`, { ...form, edificioId });
+
+        // construir body limpio
+        const cleanForm: any = {
+            ...form,
+            edificio_id: edificioId
+        };
+
+        // eliminar campos vacíos
+        Object.keys(cleanForm).forEach(key => {
+            if (cleanForm[key] === "" || cleanForm[key] === null || cleanForm[key] === undefined) {
+                delete cleanForm[key];
+            }
+        });
+
+        await axiosInstance.post(`/activos-fijos/edificios/ampliaciones`, cleanForm);
+
         setShow(false);
         fetchData();
         setLoading(false);
     };
+
 
     return (
         <>
@@ -457,23 +490,35 @@ const AmpliacionesTab = ({ edificioId }: { edificioId: number }) => {
    TAB: Remodelaciones
 =========================== */
 const RemodelacionesTab = ({ edificioId }: { edificioId: number }) => {
-    const [data, setData] = useState<Remodelacion[]>([]);
+    const [data, setData] = useState<any[]>([]);
     const [show, setShow] = useState(false);
-    const [form, setForm] = useState<Partial<Remodelacion>>({});
+    const [form, setForm] = useState<any>({});
     const [loading, setLoading] = useState(false);
 
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/remodelaciones?edificioId=${edificioId}`);
-        setData(res.data);
+        const res = await axiosInstance.get(`/activos-fijos/edificios/remodelaciones?edificioId=${edificioId}`);
+        setData(res.data.data || res.data);
     };
 
+    useEffect(() => {
+        if (!edificioId || isNaN(edificioId)) return;
+        fetchData();
+    }, [edificioId]);
 
-    useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await axiosInstance.post(`/activos-fijos/remodelaciones`, { ...form, edificioId });
+
+        const cleanForm: any = { ...form, edificio_id: edificioId };
+
+        Object.keys(cleanForm).forEach(key => {
+            if (cleanForm[key] === "" || cleanForm[key] === null || cleanForm[key] === undefined) {
+                delete cleanForm[key];
+            }
+        });
+
+        await axiosInstance.post(`/activos-fijos/edificios/remodelaciones`, cleanForm);
         setShow(false);
         fetchData();
         setLoading(false);
@@ -557,27 +602,41 @@ const RemodelacionesTab = ({ edificioId }: { edificioId: number }) => {
    TAB: Bajas
 =========================== */
 const BajasTab = ({ edificioId }: { edificioId: number }) => {
-    const [data, setData] = useState<Baja[]>([]);
+    const [data, setData] = useState<any[]>([]);
     const [show, setShow] = useState(false);
-    const [form, setForm] = useState<Partial<Baja>>({});
+    const [form, setForm] = useState<any>({});
     const [loading, setLoading] = useState(false);
 
     const fetchData = async () => {
-        const res = await axiosInstance.get(`/activos-fijos/bajas?edificioId=${edificioId}`);
-        setData(res.data);
+        const res = await axiosInstance.get(`/activos-fijos/edificios/bajas?edificioId=${edificioId}`);
+        setData(res.data.data || res.data);
     };
 
+    useEffect(() => {
+        if (!edificioId || isNaN(edificioId)) return;
+        fetchData();
+    }, [edificioId]);
 
-    useEffect(() => { fetchData(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        await axiosInstance.post(`/activos-fijos/bajas`, { ...form, edificioId });
+
+        const cleanForm: any = { ...form, edificio_id: edificioId };
+
+        Object.keys(cleanForm).forEach(key => {
+            if (cleanForm[key] === "" || cleanForm[key] === null || cleanForm[key] === undefined) {
+                delete cleanForm[key];
+            }
+        });
+
+        await axiosInstance.post(`/activos-fijos/edificios/bajas`, cleanForm);
+
         setShow(false);
         fetchData();
         setLoading(false);
     };
+
 
     return (
         <>
@@ -586,7 +645,7 @@ const BajasTab = ({ edificioId }: { edificioId: number }) => {
                 <thead>
                     <tr>
                         <th>Valor UFV</th>
-                        <th>Superficie Desmantelamiento</th>
+                        <th>Superficie Desmantelamiento (m²)</th>
                         <th>Respaldo Legal</th>
                         <th>Observaciones</th>
                     </tr>
@@ -623,7 +682,9 @@ const BajasTab = ({ edificioId }: { edificioId: number }) => {
                             <Form.Control
                                 type="number"
                                 name="superficie_desmantelamiento"
-                                onChange={(e) => setForm({ ...form, superficie_desmantelamiento: parseFloat(e.target.value) })}
+                                onChange={(e) =>
+                                    setForm({ ...form, superficie_desmantelamiento: parseFloat(e.target.value) })
+                                }
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -655,13 +716,18 @@ const BajasTab = ({ edificioId }: { edificioId: number }) => {
    TAB: Historial
 =========================== */
 const HistorialTab = ({ edificioId }: { edificioId: number }) => {
-    const [data, setData] = useState<Historial[]>([]);
+    const [data, setData] = useState<any[]>([]);
+
     const fetchData = async () => {
+        if (!edificioId || isNaN(edificioId)) return;
         const res = await axiosInstance.get(`/activos-fijos/historial-edificios/${edificioId}`);
-        setData(res.data);
+        setData(res.data.data || res.data);
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => {
+        if (!edificioId || isNaN(edificioId)) return;
+        fetchData();
+    }, [edificioId]);
 
     return (
         <Table bordered hover size="sm">
@@ -677,7 +743,7 @@ const HistorialTab = ({ edificioId }: { edificioId: number }) => {
                 {data.map((h) => (
                     <tr key={h.id}>
                         <td>{new Date(h.fecha_accion).toLocaleString()}</td>
-                        <td>{h.usuario?.nombre}</td>
+                        <td>{h.usuario?.nombre || "—"}</td>
                         <td>{h.accion}</td>
                         <td>{h.descripcion}</td>
                     </tr>
@@ -687,4 +753,7 @@ const HistorialTab = ({ edificioId }: { edificioId: number }) => {
     );
 };
 
+
+
 export default EditarEdificio;
+

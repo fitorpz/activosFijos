@@ -16,6 +16,7 @@ import { generarPDFDesdeHTML } from 'src/utils/generarPDF';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { HistorialEdificioService } from './historial/historial-edificio.service';
+import * as QRCode from 'qrcode';
 
 @Injectable()
 export class EdificiosService {
@@ -72,6 +73,7 @@ export class EdificiosService {
 
     // 🔹 Crear un nuevo edificio
     async create(dto: CreateEdificioDto): Promise<Edificio> {
+        // 🔹 Buscar relaciones requeridas
         const responsable = await this.personalRepo.findOneBy({
             id: dto.responsable_id,
         });
@@ -104,7 +106,7 @@ export class EdificiosService {
         // 🧩 Generar código completo concatenado
         const codigoCompleto = this.construirCodigoCompleto(dto);
 
-        // Validar que no exista
+        // ✅ Validar duplicados
         const existe = await this.edificioRepo.findOne({
             where: { codigo_completo: codigoCompleto },
         });
@@ -114,7 +116,7 @@ export class EdificiosService {
             );
         }
 
-        // 🧱 Crear entidad
+        // 🧱 Crear entidad base
         const payload = this.edificioRepo.create({
             ...dto,
             codigo_completo: codigoCompleto,
@@ -127,10 +129,18 @@ export class EdificiosService {
 
         if (actualizadoPor) payload.actualizado_por = actualizadoPor;
 
-        const nuevo = this.edificioRepo.create(payload);
+        // 💾 Guardar primer registro (sin QR todavía)
         const edificioCreado = await this.edificioRepo.save(payload);
 
-        // 📜 Registrar en historial
+        // 🧠 Generar QR ÚNICO basado en la URL del edificio
+        const urlDetalle = `https://tusistema.com/activos-fijos/edificios/${edificioCreado.id}`;
+        const qrDataUrl = await QRCode.toDataURL(urlDetalle);
+
+        // 🔒 Guardar el QR en el campo `codigo_qr`
+        edificioCreado.codigo_qr = qrDataUrl;
+        await this.edificioRepo.save(edificioCreado);
+
+        // 🕘 Registrar en historial
         await this.historialService.registrarAccion({
             edificioId: edificioCreado.id,
             usuarioId: creadoPor.id,
@@ -335,4 +345,35 @@ export class EdificiosService {
         edificio.fotos_edificio = [...(edificio.fotos_edificio || []), ...rutas];
         return this.edificioRepo.save(edificio);
     }
+
+    // ✅ Generar correlativo único (público, validando duplicados)
+    async generarCorrelativoUnico(): Promise<{ correlativo: string }> {
+        // obtener el último correlativo usado
+        const ultimo = await this.edificioRepo.find({
+            order: { codigo_correlativo: 'DESC' },
+            take: 1,
+        });
+
+        // si no hay registros, el primero será 0001
+        let nuevoCorrelativo = '0001';
+        if (ultimo.length > 0) {
+            const ultimoCodigo = ultimo[0].codigo_correlativo ?? '0000';
+            const siguiente = (parseInt(ultimoCodigo, 10) + 1).toString().padStart(4, '0');
+            nuevoCorrelativo = siguiente;
+        }
+
+        // 🔎 Validar que no exista ningún edificio con ese correlativo
+        const existe = await this.edificioRepo.findOne({
+            where: { codigo_correlativo: nuevoCorrelativo },
+        });
+
+        if (existe) {
+            throw new BadRequestException(
+                `El correlativo ${nuevoCorrelativo} ya existe. Intente nuevamente.`,
+            );
+        }
+
+        return { correlativo: nuevoCorrelativo };
+    }
+
 }

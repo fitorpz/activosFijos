@@ -43,6 +43,15 @@ export class BajasService {
         return guardada;
     }
 
+    // 🔹 Listar todas las bajas de un edificio específico
+    async findByEdificio(edificioId: number) {
+        return this.bajasRepo.find({
+            where: { edificio: { id: edificioId } },
+            relations: ['edificio'],
+            order: { created_at: 'DESC' },
+        });
+    }
+
     // 🔹 Listar todas las bajas
     async findAll() {
         return this.bajasRepo.find({

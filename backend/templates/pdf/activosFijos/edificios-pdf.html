@@ -1,50 +1,142 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
     <meta charset="UTF-8" />
     <title>Listado de Edificios</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+        @page {
+            margin: 40px 30px;
         }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* 🔹 Encabezado */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .header img {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+
+        .header h1 {
+            font-size: 20px;
+            color: #2c3e50;
+            text-align: center;
+            margin: 0;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: #555;
+            margin-bottom: 25px;
+            font-size: 13px;
+        }
+
+        /* 🔹 Tabla */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         th,
         td {
-            border: 1px solid #333;
-            padding: 5px;
+            padding: 10px 12px;
             text-align: left;
+            vertical-align: middle;
         }
 
-        th {
-            background-color: #f2f2f2;
+        thead {
+            background-color: #2471a3;
+            color: #fff;
         }
 
-        h2 {
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #eef6fb;
+        }
+
+        th:first-child,
+        td:first-child {
             text-align: center;
-            margin-bottom: 10px;
+            width: 30px;
+        }
+
+        /* 🔹 Etiqueta de estado */
+        .estado {
+            display: inline-block;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 11px;
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .estado.ACTIVO {
+            background-color: #27ae60;
+        }
+
+        .estado.INACTIVO {
+            background-color: #c0392b;
+        }
+
+        /* 🔹 Pie de página */
+        footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px;
+            color: #888;
         }
     </style>
 </head>
 
 <body>
-    <h2>Listado de Edificios</h2>
+    <div class="header">
+        <img src="__LOGO__" alt="Logo">
+        <h1>Listado de Edificios</h1>
+    </div>
+
+    <div class="subtitulo">__FILTRO_ESTADO__</div>
+
     <table>
         <thead>
             <tr>
                 <th>N°</th>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Área</th>
+                <th>Código GAMS</th>
+                <th>Nombre del Bien</th>
+                <th>Clasificación</th>
                 <th>Unidad Organizacional</th>
-                <th>Ambiente</th>
+                <th>Ubicación</th>
                 <th>Estado</th>
             </tr>
         </thead>
@@ -52,6 +144,8 @@
             <!-- FILAS_EDIFICIOS -->
         </tbody>
     </table>
+    <footer>
+    </footer>
 </body>
 
 </html>

@@ -4,9 +4,11 @@ import {
     IsNumber,
     IsArray,
     IsEnum,
+    IsNotEmpty,
 } from 'class-validator';
 
 export class CreateBajaDto {
+    @IsNotEmpty()
     @IsNumber()
     edificio_id: number;
 
@@ -19,11 +21,11 @@ export class CreateBajaDto {
     descripcion_respaldo_legal?: string;
 
     @IsOptional()
-    @IsNumber()
+    @IsNumber({}, { message: 'superficie_desmantelamiento debe ser numérico' })
     superficie_desmantelamiento?: number;
 
     @IsOptional()
-    @IsNumber()
+    @IsNumber({}, { message: 'valor_ufv debe ser numérico' })
     valor_ufv?: number;
 
     @IsOptional()

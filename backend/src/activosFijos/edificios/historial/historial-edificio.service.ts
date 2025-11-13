@@ -1,9 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HistorialEdificio } from './entities/historial-edificio.entity';
 import { Repository } from 'typeorm';
-import { Edificio } from '../../edificios/entities/edificio.entity';
-import { Usuario } from 'src/usuarios/entities/usuario.entity';
 
 @Injectable()
 export class HistorialEdificioService {
@@ -12,6 +10,7 @@ export class HistorialEdificioService {
         private readonly historialRepo: Repository<HistorialEdificio>,
     ) { }
 
+    // 🔹 Registrar acción en el historial
     async registrarAccion(data: {
         edificioId: number;
         usuarioId: number;
@@ -31,4 +30,15 @@ export class HistorialEdificioService {
         return await this.historialRepo.save(historial);
     }
 
+    // 🔹 Obtener historial por edificio
+    async obtenerPorEdificio(edificioId: number) {
+        const resultado = await this.historialRepo.find({
+            where: {
+                edificio: { id: edificioId }
+            },
+            order: { fecha_accion: 'DESC' }
+        });
+
+        return { data: resultado };
+    }
 }
